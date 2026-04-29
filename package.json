@@ -1,0 +1,36 @@
+{
+  "name": "@microlink/difftool",
+  "description": "Visual diff between two URLs using Microlink full-page screenshots.",
+  "version": "0.0.0",
+  "type": "module",
+  "bin": {
+    "microlink-difftool": "./bin/cli.js"
+  },
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "files": [
+    "bin",
+    "src"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Kiko Beats",
+    "email": "josefrancisco.verdu@gmail.com",
+    "url": "https://kikobeats.com"
+  },
+  "dependencies": {
+    "@microlink/mql": "~0.16.0",
+    "cac": "~6.7.14",
+    "canvas": "~3.2.3",
+    "pixelmatch": "~7.1.0",
+    "pngjs": "~7.0.0"
+  },
+  "scripts": {
+    "start": "./bin/cli.js"
+  }
+}

@@ -1,0 +1,198 @@
+name: microlink-difftool
+description: Visual diff between two URLs using Microlink full-page screenshots, posted as a sticky PR comment.
+author: Microlink HQ
+branding:
+  icon: image
+  color: purple
+
+inputs:
+  base:
+    description: Production / baseline URL
+    required: true
+  head:
+    description: Preview URL to compare against base
+    required: true
+  routes:
+    description: Comma-separated paths to diff (e.g. "/,/kikobeats")
+    default: '/'
+  threshold:
+    description: Max acceptable diff ratio (0..1) before the action fails
+    default: '0.001'
+  pixel-threshold:
+    description: Per-pixel sensitivity (0..1)
+    default: '0.1'
+  viewport-width:
+    default: '1280'
+  viewport-height:
+    default: '800'
+  microlink-api-key:
+    description: Optional Microlink paid-tier key (recommended for CI)
+    required: false
+  assets-branch:
+    description: Orphan branch in the consumer repo where screenshots are pushed
+    default: microlink-difftool-assets
+  comment-marker:
+    description: HTML comment marker so re-runs edit the same PR comment
+    default: '<!-- microlink-difftool -->'
+  github-token:
+    description: Token used to push assets and comment on the PR
+    default: ${{ github.token }}
+
+outputs:
+  passed:
+    description: '"true" if all routes are within threshold, else "false"'
+    value: ${{ steps.diff.outputs.passed }}
+  summary-json:
+    description: Path to summary.json on the runner
+    value: ${{ steps.diff.outputs.summary-json }}
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install CLI dependencies
+      shell: bash
+      run: |
+        corepack enable
+        cd "${{ github.action_path }}"
+        pnpm install --frozen-lockfile
+
+    - name: Run microlink-difftool
+      id: diff
+      shell: bash
+      env:
+        MICROLINK_API_KEY: ${{ inputs.microlink-api-key }}
+        OUT_DIR: ${{ runner.temp }}/microlink-difftool
+      run: |
+        set +e
+        node "${{ github.action_path }}/bin/cli.js" \
+          --base "${{ inputs.base }}" \
+          --head "${{ inputs.head }}" \
+          --routes "${{ inputs.routes }}" \
+          --threshold "${{ inputs.threshold }}" \
+          --pixel-threshold "${{ inputs.pixel-threshold }}" \
+          --viewport-width "${{ inputs.viewport-width }}" \
+          --viewport-height "${{ inputs.viewport-height }}" \
+          --out "$OUT_DIR"
+        DIFF_EXIT=$?
+        set -e
+
+        if [ "$DIFF_EXIT" -eq 2 ]; then
+          echo "::error::microlink-difftool failed to run (exit 2)"
+          exit 2
+        fi
+
+        if [ "$DIFF_EXIT" -eq 0 ]; then
+          echo "passed=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "passed=false" >> "$GITHUB_OUTPUT"
+        fi
+        echo "summary-json=$OUT_DIR/summary.json" >> "$GITHUB_OUTPUT"
+        echo "diff-exit=$DIFF_EXIT" >> "$GITHUB_OUTPUT"
+
+    - name: Push screenshots to assets branch
+      id: push-assets
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        ASSETS_BRANCH: ${{ inputs.assets-branch }}
+        OUT_DIR: ${{ runner.temp }}/microlink-difftool
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        PR_SHA: ${{ github.event.pull_request.head.sha }}
+        REPO: ${{ github.repository }}
+      run: |
+        set -e
+        TARGET_REL="pr-${PR_NUMBER}/${PR_SHA}"
+        WORKTREE="${RUNNER_TEMP}/microlink-difftool-assets"
+
+        git config --global user.name "microlink-difftool[bot]"
+        git config --global user.email "actions@github.com"
+
+        AUTH_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/${REPO}.git"
+        git remote set-url origin "$AUTH_URL" 2>/dev/null || true
+
+        git fetch origin "$ASSETS_BRANCH" 2>/dev/null || true
+
+        if git rev-parse --verify "origin/$ASSETS_BRANCH" >/dev/null 2>&1; then
+          git worktree add "$WORKTREE" "origin/$ASSETS_BRANCH"
+          (cd "$WORKTREE" && git checkout -B "$ASSETS_BRANCH")
+        else
+          git worktree add --detach "$WORKTREE" HEAD
+          (cd "$WORKTREE" && git checkout --orphan "$ASSETS_BRANCH" && git rm -rf . 2>/dev/null || true)
+        fi
+
+        cd "$WORKTREE"
+        rm -rf "pr-${PR_NUMBER}"
+        mkdir -p "$TARGET_REL"
+        cp -R "$OUT_DIR/." "$TARGET_REL/"
+
+        git add -A
+        if git diff --cached --quiet; then
+          echo "no asset changes to push"
+        else
+          git commit -m "diff: pr-${PR_NUMBER} sha-${PR_SHA}"
+          git push "$AUTH_URL" "$ASSETS_BRANCH"
+        fi
+
+        OWNER="${REPO%%/*}"
+        NAME="${REPO##*/}"
+        ASSET_BASE="https://raw.githubusercontent.com/${OWNER}/${NAME}/${ASSETS_BRANCH}/${TARGET_REL}"
+        echo "asset-base=$ASSET_BASE" >> "$GITHUB_OUTPUT"
+
+    - name: Render comment markdown
+      id: render
+      shell: bash
+      env:
+        SUMMARY: ${{ steps.diff.outputs.summary-json }}
+        ASSET_BASE: ${{ steps.push-assets.outputs.asset-base }}
+        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        MARKER: ${{ inputs.comment-marker }}
+        BODY_PATH: ${{ runner.temp }}/microlink-difftool-comment.md
+      run: |
+        node "${{ github.action_path }}/bin/cli.js" render-comment "$SUMMARY" \
+          --asset-base "$ASSET_BASE" \
+          --run-url "$RUN_URL" \
+          --marker "$MARKER" > "$BODY_PATH"
+        echo "body-path=$BODY_PATH" >> "$GITHUB_OUTPUT"
+
+    - name: Post or update sticky PR comment
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const fs = require('fs')
+          const body = fs.readFileSync(process.env.BODY_PATH, 'utf8')
+          const marker = process.env.MARKER
+          const { owner, repo } = context.repo
+          const issue_number = context.issue.number
+          if (!issue_number) {
+            core.setFailed('microlink-difftool must run on a pull_request event')
+            return
+          }
+          try {
+            const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number, per_page: 100 })
+            const existing = comments.find(c => c.body && c.body.includes(marker))
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body })
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body })
+            }
+          } catch (err) {
+            core.error('failed to post PR comment — ensure your workflow has `permissions: pull-requests: write`. See https://github.com/microlinkhq/microlink-difftool#permissions')
+            throw err
+          }
+      env:
+        BODY_PATH: ${{ steps.render.outputs.body-path }}
+        MARKER: ${{ inputs.comment-marker }}
+
+    - name: Fail if any route exceeded threshold
+      shell: bash
+      run: |
+        if [ "${{ steps.diff.outputs.diff-exit }}" -ne 0 ]; then
+          echo "::error::microlink-difftool: at least one route exceeded the threshold"
+          exit 1
+        fi

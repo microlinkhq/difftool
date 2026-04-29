@@ -1,0 +1,40 @@
+# Save as .github/workflows/microlink-difftool-cleanup.yml in your repo.
+# When a PR is closed (merged or not), removes its screenshots from the
+# assets branch so it doesn't grow unbounded.
+name: Visual diff cleanup
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: microlink-difftool-assets
+          fetch-depth: 1
+        continue-on-error: true
+
+      - name: Remove this PR's assets
+        run: |
+          set -e
+          if [ ! -d "pr-${{ github.event.pull_request.number }}" ]; then
+            echo "no assets for pr-${{ github.event.pull_request.number }} — nothing to clean"
+            exit 0
+          fi
+
+          rm -rf "pr-${{ github.event.pull_request.number }}"
+          git config user.name "microlink-difftool[bot]"
+          git config user.email "actions@github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "nothing to commit"
+          else
+            git commit -m "cleanup: pr-${{ github.event.pull_request.number }}"
+            git push
+          fi
