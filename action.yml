@@ -65,7 +65,7 @@ runs:
       run: |
         corepack enable
         cd "${{ github.action_path }}"
-        pnpm install --frozen-lockfile
+        pnpm install --no-frozen-lockfile
 
     - name: Run microlink-difftool
       id: diff
