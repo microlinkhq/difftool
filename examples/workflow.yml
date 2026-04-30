@@ -25,10 +25,12 @@ jobs:
       - id: preview
         run: echo "url=https://your-preview-url.vercel.app" >> "$GITHUB_OUTPUT"
 
-      - uses: microlinkhq/microlink-difftool@v1
+      - uses: microlinkhq/difftool@master
         with:
           base: https://your-production-domain.com
           head: ${{ steps.preview.outputs.url }}
           routes: '/,/about,/pricing'
           threshold: '0.005'
+          pr-number: ${{ github.event.pull_request.number }}
+          sha: ${{ github.event.pull_request.head.sha }}
           microlink-api-key: ${{ secrets.MICROLINK_API_KEY }}

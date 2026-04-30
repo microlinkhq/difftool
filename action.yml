@@ -12,6 +12,12 @@ inputs:
   head:
     description: Preview URL to compare against base
     required: true
+  pr-number:
+    description: Pull request number to comment on
+    required: true
+  sha:
+    description: Commit SHA used in the assets path (typically the PR head SHA)
+    required: true
   routes:
     description: Comma-separated paths to diff (e.g. "/,/kikobeats")
     default: '/'
@@ -101,8 +107,8 @@ runs:
         GITHUB_TOKEN: ${{ inputs.github-token }}
         ASSETS_BRANCH: ${{ inputs.assets-branch }}
         OUT_DIR: ${{ runner.temp }}/microlink-difftool
-        PR_NUMBER: ${{ github.event.pull_request.number }}
-        PR_SHA: ${{ github.event.pull_request.head.sha }}
+        PR_NUMBER: ${{ inputs.pr-number }}
+        PR_SHA: ${{ inputs.sha }}
         REPO: ${{ github.repository }}
       run: |
         set -e
@@ -167,10 +173,10 @@ runs:
           const fs = require('fs')
           const body = fs.readFileSync(process.env.BODY_PATH, 'utf8')
           const marker = process.env.MARKER
+          const issue_number = Number(process.env.PR_NUMBER)
           const { owner, repo } = context.repo
-          const issue_number = context.issue.number
           if (!issue_number) {
-            core.setFailed('microlink-difftool must run on a pull_request event')
+            core.setFailed('microlink-difftool: pr-number input is required')
             return
           }
           try {
@@ -182,12 +188,13 @@ runs:
               await github.rest.issues.createComment({ owner, repo, issue_number, body })
             }
           } catch (err) {
-            core.error('failed to post PR comment — ensure your workflow has `permissions: pull-requests: write`. See https://github.com/microlinkhq/microlink-difftool#permissions')
+            core.error('failed to post PR comment — ensure your workflow has `permissions: pull-requests: write`. See https://github.com/microlinkhq/difftool#permissions')
             throw err
           }
       env:
         BODY_PATH: ${{ steps.render.outputs.body-path }}
         MARKER: ${{ inputs.comment-marker }}
+        PR_NUMBER: ${{ inputs.pr-number }}
 
     - name: Fail if any route exceeded threshold
       shell: bash

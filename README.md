@@ -4,7 +4,7 @@ Visual diff between two URLs using Microlink full-page screenshots. Built so PR 
 
 Two surfaces:
 
-- **GitHub Action** — `microlinkhq/microlink-difftool@v1`. Posts a sticky PR comment with a diff table + screenshots. See [GitHub Action](#github-action) below.
+- **GitHub Action** — `microlinkhq/difftool@master`. Posts a sticky PR comment with a diff table + screenshots. See [GitHub Action](#github-action) below.
 - **Local CLI** — clone this repo and run `./bin/cli.js`. Useful for ad-hoc checks and for debugging the action.
 
 ## Local usage
@@ -92,12 +92,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: microlinkhq/microlink-difftool@v1
+      - uses: microlinkhq/difftool@master
         with:
           base: https://unavatar.io
           head: ${{ steps.preview.outputs.url }}
           routes: '/,/kikobeats'
           threshold: '0.005'
+          pr-number: ${{ github.event.pull_request.number }}
+          sha: ${{ github.event.pull_request.head.sha }}
           microlink-api-key: ${{ secrets.MICROLINK_API_KEY }}
 ```
 
@@ -115,6 +117,8 @@ The action commits screenshots to an orphan branch in your repo (default: `micro
 | --- | --- | --- |
 | `base` | *(required)* | Production / baseline URL |
 | `head` | *(required)* | Preview URL to compare against |
+| `pr-number` | *(required)* | Pull request number to comment on |
+| `sha` | *(required)* | Commit SHA used in the assets path |
 | `routes` | `/` | Comma-separated paths to diff |
 | `threshold` | `0.001` | Max acceptable diff ratio (0..1) |
 | `pixel-threshold` | `0.1` | Per-pixel sensitivity (0..1) |
