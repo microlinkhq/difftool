@@ -34,9 +34,9 @@ inputs:
   microlink-api-key:
     description: Optional Microlink paid-tier key (recommended for CI)
     required: false
-  assets-branch:
-    description: Orphan branch in the consumer repo where screenshots are pushed
-    default: microlink-difftool-assets
+  release-tag-prefix:
+    description: Prefix for the per-PR release tag (final tag is "<prefix>-<pr-number>")
+    default: microlink-difftool-pr
   comment-marker:
     description: HTML comment marker so re-runs edit the same PR comment
     default: '<!-- microlink-difftool -->'
@@ -107,67 +107,104 @@ runs:
         echo "summary-json=$OUT_DIR/summary.json" >> "$GITHUB_OUTPUT"
         echo "diff-exit=$DIFF_EXIT" >> "$GITHUB_OUTPUT"
 
-    - name: Push screenshots to assets branch
-      id: push-assets
-      shell: bash
+    - name: Upload screenshots to GitHub Release
+      id: upload-assets
+      uses: actions/github-script@v7
       env:
-        GITHUB_TOKEN: ${{ inputs.github-token }}
-        ASSETS_BRANCH: ${{ inputs.assets-branch }}
+        SUMMARY_PATH: ${{ steps.diff.outputs.summary-json }}
         OUT_DIR: ${{ runner.temp }}/microlink-difftool
         PR_NUMBER: ${{ inputs.pr-number }}
         PR_SHA: ${{ inputs.sha }}
-        REPO: ${{ github.repository }}
-      run: |
-        set -e
-        TARGET_REL="pr-${PR_NUMBER}/${PR_SHA}"
-        WORKTREE="${RUNNER_TEMP}/microlink-difftool-assets"
+        TAG_PREFIX: ${{ inputs.release-tag-prefix }}
+        URLS_PATH: ${{ runner.temp }}/microlink-difftool-urls.json
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const fs = require('fs')
+          const path = require('path')
+          const { owner, repo } = context.repo
+          const prNumber = Number(process.env.PR_NUMBER)
+          const sha = process.env.PR_SHA
+          const tagPrefix = process.env.TAG_PREFIX
+          const tag = `${tagPrefix}-${prNumber}`
+          const outDir = process.env.OUT_DIR
+          const summary = JSON.parse(fs.readFileSync(process.env.SUMMARY_PATH, 'utf8'))
 
-        git config --global user.name "microlink-difftool[bot]"
-        git config --global user.email "actions@github.com"
+          // Resolve or create the per-PR release.
+          let release
+          try {
+            const got = await github.rest.repos.getReleaseByTag({ owner, repo, tag })
+            release = got.data
+            core.info(`reusing existing release ${tag} (id=${release.id})`)
+          } catch (err) {
+            if (err.status !== 404) throw err
+            const created = await github.rest.repos.createRelease({
+              owner,
+              repo,
+              tag_name: tag,
+              target_commitish: sha,
+              name: `microlink-difftool: PR #${prNumber}`,
+              body: `Visual diff screenshots for #${prNumber}.`,
+              prerelease: true,
+              draft: false
+            })
+            release = created.data
+            core.info(`created release ${tag} (id=${release.id})`)
+          }
 
-        AUTH_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/${REPO}.git"
-        git remote set-url origin "$AUTH_URL" 2>/dev/null || true
+          const FILES = ['base.png', 'head.png', 'diff.png', 'review.png']
+          const urls = {}
 
-        git fetch origin "$ASSETS_BRANCH" 2>/dev/null || true
+          for (const route of summary.routes) {
+            const slug = route.outDir && route.outDir !== '.' ? route.outDir : 'root'
+            const routeDir = !route.outDir || route.outDir === '.' ? outDir : path.join(outDir, route.outDir)
 
-        if git rev-parse --verify "origin/$ASSETS_BRANCH" >/dev/null 2>&1; then
-          git worktree add "$WORKTREE" "origin/$ASSETS_BRANCH"
-          (cd "$WORKTREE" && git checkout -B "$ASSETS_BRANCH")
-        else
-          git worktree add --detach "$WORKTREE" HEAD
-          (cd "$WORKTREE" && git checkout --orphan "$ASSETS_BRANCH" && git rm -rf . 2>/dev/null || true)
-        fi
+            for (const basename of FILES) {
+              const localPath = path.join(routeDir, basename)
+              if (!fs.existsSync(localPath)) {
+                core.warning(`missing local file ${localPath}; skipping`)
+                continue
+              }
+              const assetName = `${slug}-${basename}`
 
-        cd "$WORKTREE"
-        rm -rf "pr-${PR_NUMBER}"
-        mkdir -p "$TARGET_REL"
-        cp -R "$OUT_DIR/." "$TARGET_REL/"
+              // Delete any prior asset with the same name so the new upload doesn't collide.
+              const { data: existing } = await github.rest.repos.listReleaseAssets({
+                owner, repo, release_id: release.id, per_page: 100
+              })
+              const dup = existing.find(a => a.name === assetName)
+              if (dup) {
+                await github.rest.repos.deleteReleaseAsset({ owner, repo, asset_id: dup.id })
+                core.info(`deleted previous asset ${assetName} (id=${dup.id})`)
+              }
 
-        git add -A
-        if git diff --cached --quiet; then
-          echo "no asset changes to push"
-        else
-          git commit -m "diff: pr-${PR_NUMBER} sha-${PR_SHA}"
-          git push "$AUTH_URL" "$ASSETS_BRANCH"
-        fi
+              const data = fs.readFileSync(localPath)
+              const uploaded = await github.rest.repos.uploadReleaseAsset({
+                owner,
+                repo,
+                release_id: release.id,
+                name: assetName,
+                data
+              })
+              urls[`${slug}/${basename}`] = uploaded.data.browser_download_url
+              core.info(`uploaded ${assetName} → ${uploaded.data.browser_download_url}`)
+            }
+          }
 
-        OWNER="${REPO%%/*}"
-        NAME="${REPO##*/}"
-        ASSET_BASE="https://raw.githubusercontent.com/${OWNER}/${NAME}/${ASSETS_BRANCH}/${TARGET_REL}"
-        echo "asset-base=$ASSET_BASE" >> "$GITHUB_OUTPUT"
+          fs.writeFileSync(process.env.URLS_PATH, JSON.stringify(urls, null, 2))
+          core.setOutput('urls-path', process.env.URLS_PATH)
 
     - name: Render comment markdown
       id: render
       shell: bash
       env:
         SUMMARY: ${{ steps.diff.outputs.summary-json }}
-        ASSET_BASE: ${{ steps.push-assets.outputs.asset-base }}
+        URLS_PATH: ${{ steps.upload-assets.outputs.urls-path }}
         RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         MARKER: ${{ inputs.comment-marker }}
         BODY_PATH: ${{ runner.temp }}/microlink-difftool-comment.md
       run: |
         node "${{ github.action_path }}/bin/cli.js" render-comment "$SUMMARY" \
-          --asset-base "$ASSET_BASE" \
+          --asset-urls "$URLS_PATH" \
           --run-url "$RUN_URL" \
           --marker "$MARKER" > "$BODY_PATH"
         echo "body-path=$BODY_PATH" >> "$GITHUB_OUTPUT"

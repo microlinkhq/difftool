@@ -2,26 +2,41 @@ const pct = ratio => `${(ratio * 100).toFixed(2)}%`
 
 const stripProtocol = url => url.replace(/^https?:\/\//, '').replace(/\/+$/, '')
 
-const trimAssetBase = base => base.replace(/\/+$/, '')
+const slugFor = route => {
+  if (!route.outDir || route.outDir === '.') return 'root'
+  return route.outDir
+}
 
-const routeSection = (route, assetBase) => {
+const lookup = (assetUrls, slug, basename) => {
+  const url = assetUrls[`${slug}/${basename}`]
+  return url || null
+}
+
+const imgCell = (url, alt) =>
+  url
+    ? `<img src="${url}" width="280" alt="${alt}">`
+    : `_(asset upload failed: ${alt})_`
+
+const reviewLink = url =>
+  url ? `<a href="${url}">open composite review</a>` : '_(review.png upload failed)_'
+
+const routeSection = (route, assetUrls) => {
   const mark = route.passed ? '✓' : '✗'
   const open = route.passed ? '' : ' open'
-  const base = trimAssetBase(assetBase)
-  const dir = !route.outDir || route.outDir === '.' ? base : `${base}/${route.outDir}`
+  const slug = slugFor(route)
+  const baseUrl = lookup(assetUrls, slug, 'base.png')
+  const headUrl = lookup(assetUrls, slug, 'head.png')
+  const diffUrl = lookup(assetUrls, slug, 'diff.png')
+  const reviewUrl = lookup(assetUrls, slug, 'review.png')
 
   return [
-    `<details${open}><summary><strong><code>${
-      route.route
-    }</code></strong> — ${pct(route.diffRatio)} changed ${mark}</summary>`,
+    `<details${open}><summary><strong><code>${route.route}</code></strong> — ${pct(route.diffRatio)} changed ${mark}</summary>`,
     '',
     '| production | preview | diff |',
     '| --- | --- | --- |',
-    `| <img src="${dir}/base.png" width="280"> | <img src="${dir}/head.png" width="280"> | <img src="${dir}/diff.png" width="280"> |`,
+    `| ${imgCell(baseUrl, 'production')} | ${imgCell(headUrl, 'preview')} | ${imgCell(diffUrl, 'diff')} |`,
     '',
-    `<sub><a href="${dir}/review.png">open composite review</a> · <a href="${
-      route.headUrl
-    }">${stripProtocol(route.headUrl)}</a></sub>`,
+    `<sub>${reviewLink(reviewUrl)} · <a href="${route.headUrl}">${stripProtocol(route.headUrl)}</a></sub>`,
     '',
     '</details>'
   ].join('\n')
@@ -29,13 +44,14 @@ const routeSection = (route, assetBase) => {
 
 export const renderComment = (
   summary,
-  { assetBase, runUrl, marker = '<!-- microlink-difftool -->' } = {}
+  { assetUrls, runUrl, marker = '<!-- microlink-difftool -->' } = {}
 ) => {
-  if (!assetBase) throw new Error('renderComment: assetBase is required')
+  if (!assetUrls || typeof assetUrls !== 'object') {
+    throw new Error('renderComment: assetUrls map is required')
+  }
 
   const total = summary.routes.length
   const failed = summary.routes.filter(r => !r.passed).length
-  const passed = total - failed
 
   const heading = summary.passed
     ? `### 🖼 Visual diff · ✓ ${total}/${total} routes pass`
@@ -53,7 +69,7 @@ export const renderComment = (
     ...summary.routes.filter(r => !r.passed),
     ...summary.routes.filter(r => r.passed)
   ]
-  const sections = ordered.map(r => routeSection(r, assetBase)).join('\n\n')
+  const sections = ordered.map(r => routeSection(r, assetUrls)).join('\n\n')
 
   const footerBits = [
     `threshold ${pct(summary.threshold)}`,
@@ -64,7 +80,5 @@ export const renderComment = (
   if (runUrl) footerBits.push(`<a href="${runUrl}">workflow run</a>`)
   const footer = `<sub>${footerBits.join(' · ')}</sub>`
 
-  return [marker, heading, '', summaryTable, '', sections, '', footer, ''].join(
-    '\n'
-  )
+  return [marker, heading, '', summaryTable, '', sections, '', footer, ''].join('\n')
 }

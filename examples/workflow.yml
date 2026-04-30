@@ -11,15 +11,13 @@ on:
   #   types: [completed]
 
 permissions:
-  contents: write          # push screenshots to the assets branch
+  contents: write          # create per-PR Release + tag to host screenshots
   pull-requests: write     # post / update the sticky comment
 
 jobs:
   visual-diff:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
       # Replace this with however your repo discovers the preview URL
       # (Vercel deployment, Netlify, Cloudflare Pages, etc.)
       - id: preview

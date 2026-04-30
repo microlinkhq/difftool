@@ -99,8 +99,8 @@ cli
     'Render summary.json as a sticky PR-comment markdown body'
   )
   .option(
-    '--asset-base <url>',
-    'Public URL prefix where per-route folders are hosted'
+    '--asset-urls <path>',
+    'JSON file mapping <slug>/<basename> → public URL'
   )
   .option('--run-url <url>', 'Optional workflow-run URL to link in the footer')
   .option(
@@ -111,14 +111,17 @@ cli
     }
   )
   .action(async (summaryPath, opts) => {
-    if (!opts.assetBase) {
-      console.error('render-comment: --asset-base is required')
+    if (!opts.assetUrls) {
+      console.error('render-comment: --asset-urls is required')
       process.exit(2)
     }
     try {
-      const summary = JSON.parse(await readFile(summaryPath, 'utf8'))
+      const [summary, assetUrls] = await Promise.all([
+        readFile(summaryPath, 'utf8').then(JSON.parse),
+        readFile(opts.assetUrls, 'utf8').then(JSON.parse)
+      ])
       const markdown = renderComment(summary, {
-        assetBase: opts.assetBase,
+        assetUrls,
         runUrl: opts.runUrl,
         marker: opts.marker
       })

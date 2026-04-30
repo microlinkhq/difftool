@@ -1,6 +1,6 @@
 # Save as .github/workflows/microlink-difftool-cleanup.yml in your repo.
-# When a PR is closed (merged or not), removes its screenshots from the
-# assets branch so it doesn't grow unbounded.
+# When a PR closes (merged or not), deletes the per-PR GitHub Release
+# (and its tag) that microlink-difftool created to host screenshots.
 name: Visual diff cleanup
 
 on:
@@ -14,27 +14,27 @@ jobs:
   cleanup:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          TAG_PREFIX: microlink-difftool-pr
         with:
-          ref: microlink-difftool-assets
-          fetch-depth: 1
-        continue-on-error: true
-
-      - name: Remove this PR's assets
-        run: |
-          set -e
-          if [ ! -d "pr-${{ github.event.pull_request.number }}" ]; then
-            echo "no assets for pr-${{ github.event.pull_request.number }} — nothing to clean"
-            exit 0
-          fi
-
-          rm -rf "pr-${{ github.event.pull_request.number }}"
-          git config user.name "microlink-difftool[bot]"
-          git config user.email "actions@github.com"
-          git add -A
-          if git diff --cached --quiet; then
-            echo "nothing to commit"
-          else
-            git commit -m "cleanup: pr-${{ github.event.pull_request.number }}"
-            git push
-          fi
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const tag = `${process.env.TAG_PREFIX}-${process.env.PR_NUMBER}`
+            const { owner, repo } = context.repo
+            try {
+              const { data: release } = await github.rest.repos.getReleaseByTag({ owner, repo, tag })
+              await github.rest.repos.deleteRelease({ owner, repo, release_id: release.id })
+              core.info(`deleted release ${tag} (id=${release.id})`)
+            } catch (err) {
+              if (err.status !== 404) throw err
+              core.info(`no release ${tag} to delete`)
+            }
+            try {
+              await github.rest.git.deleteRef({ owner, repo, ref: `tags/${tag}` })
+              core.info(`deleted tag ${tag}`)
+            } catch (err) {
+              if (err.status !== 404 && err.status !== 422) throw err
+              core.info(`no tag ${tag} to delete`)
+            }

@@ -74,7 +74,7 @@ The PR workflow needs:
 
 ```yaml
 permissions:
-  contents: write          # push screenshots to the assets branch
+  contents: write          # create per-PR Release + tag to host screenshots
   pull-requests: write     # post / update the sticky comment
 ```
 
@@ -91,7 +91,6 @@ jobs:
   visual-diff:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
       - uses: microlinkhq/difftool@master
         with:
           base: https://unavatar.io
@@ -105,11 +104,15 @@ jobs:
 
 ### Cleanup workflow
 
-`.github/workflows/microlink-difftool-cleanup.yml` — see [`examples/cleanup.yml`](./examples/cleanup.yml). Removes a PR's screenshots from the assets branch when the PR closes.
+`.github/workflows/microlink-difftool-cleanup.yml` — see [`examples/cleanup.yml`](./examples/cleanup.yml). Deletes the per-PR Release (and its tag) when the PR closes.
 
 ### How image hosting works
 
-The action commits screenshots to an orphan branch in your repo (default: `microlink-difftool-assets`) under `pr-<number>/<sha>/<route>/` and references those `raw.githubusercontent.com` URLs in the PR comment. The orphan branch shares no history with `main`, so it doesn't pollute your code history. The cleanup workflow removes a PR's directory when the PR closes.
+The action creates one **GitHub Release** per pull request, tagged `microlink-difftool-pr-<number>` and marked as a prerelease so it doesn't appear under "Latest release". Screenshots are uploaded as release assets named `<route-slug>-<file>.png` (e.g. `root-base.png`, `kikobeats-diff.png`).
+
+The PR comment references those assets via their `browser_download_url` — release download URLs are served from a public CDN and **render even when the parent repository is private**, so reviewers see the screenshots inline regardless of repo visibility. No external CDN, no extra secrets.
+
+Each workflow run replaces the prior assets in the same release; the cleanup workflow deletes the release entirely when the PR closes.
 
 ### Inputs
 
@@ -125,9 +128,9 @@ The action commits screenshots to an orphan branch in your repo (default: `micro
 | `viewport-width` | `1280` | |
 | `viewport-height` | `800` | |
 | `microlink-api-key` | *(empty)* | Optional paid-tier key |
-| `assets-branch` | `microlink-difftool-assets` | Orphan branch name |
+| `release-tag-prefix` | `microlink-difftool-pr` | Prefix for the per-PR release tag (final tag: `<prefix>-<pr-number>`) |
 | `comment-marker` | `<!-- microlink-difftool -->` | HTML marker for the sticky comment |
-| `github-token` | `${{ github.token }}` | Token for pushing assets and commenting |
+| `github-token` | `${{ github.token }}` | Token for uploading release assets and commenting |
 
 ### Outputs
 
