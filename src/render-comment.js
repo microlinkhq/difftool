@@ -7,7 +7,8 @@ const trimAssetBase = base => base.replace(/\/+$/, '')
 const routeSection = (route, assetBase) => {
   const mark = route.passed ? '✓' : '✗'
   const open = route.passed ? '' : ' open'
-  const dir = trimAssetBase(`${assetBase}/${route.outDir}`)
+  const base = trimAssetBase(assetBase)
+  const dir = !route.outDir || route.outDir === '.' ? base : `${base}/${route.outDir}`
 
   return [
     `<details${open}><summary><strong><code>${
