@@ -55,15 +55,24 @@ export function ImageUploader({ label, image, onImageChange }: ImageUploaderProp
     if (!urlValue.trim()) return
     setIsLoadingUrl(true)
     try {
-      // Validate URL by trying to load it
-      const img = new window.Image()
-      img.crossOrigin = "anonymous"
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve()
-        img.onerror = () => reject(new Error("Failed to load image"))
-        img.src = urlValue
+      // Use proxy to bypass CORS restrictions
+      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(urlValue)}`
+      
+      // Fetch through proxy and convert to data URL for reliable cross-origin canvas access
+      const response = await fetch(proxyUrl)
+      if (!response.ok) {
+        throw new Error("Failed to fetch image")
+      }
+      
+      const blob = await response.blob()
+      const reader = new FileReader()
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string)
+        reader.onerror = () => reject(new Error("Failed to read image"))
+        reader.readAsDataURL(blob)
       })
-      onImageChange(urlValue, urlValue.split("/").pop() || "URL Image")
+      
+      onImageChange(dataUrl, urlValue.split("/").pop() || "URL Image")
       setShowUrlInput(false)
       setUrlValue("")
     } catch {
