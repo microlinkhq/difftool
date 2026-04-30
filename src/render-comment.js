@@ -14,11 +14,11 @@ const lookup = (assetUrls, slug, basename) => {
 
 const imgCell = (url, alt) =>
   url
-    ? `<img src="${url}" width="280" alt="${alt}">`
-    : `_(asset upload failed: ${alt})_`
+    ? `<img src="${url}" width="280" alt="${alt}" style="display:block;">`
+    : `<em>(asset upload failed: ${alt})</em>`
 
 const reviewLink = url =>
-  url ? `<a href="${url}">open composite review</a>` : '_(review.png upload failed)_'
+  url ? `<a href="${url}">open composite review</a>` : '<em>(review.png upload failed)</em>'
 
 const routeSection = (route, assetUrls) => {
   const mark = route.passed ? '✓' : '✗'
@@ -32,9 +32,22 @@ const routeSection = (route, assetUrls) => {
   return [
     `<details${open}><summary><strong><code>${route.route}</code></strong> — ${pct(route.diffRatio)} changed ${mark}</summary>`,
     '',
-    '| production | preview | diff |',
-    '| --- | --- | --- |',
-    `| ${imgCell(baseUrl, 'production')} | ${imgCell(headUrl, 'preview')} | ${imgCell(diffUrl, 'diff')} |`,
+    '<table>',
+    '  <thead>',
+    '    <tr>',
+    '      <th>production</th>',
+    '      <th>preview</th>',
+    '      <th>diff</th>',
+    '    </tr>',
+    '  </thead>',
+    '  <tbody>',
+    '    <tr>',
+    `      <td valign="top">${imgCell(baseUrl, 'production')}</td>`,
+    `      <td valign="top">${imgCell(headUrl, 'preview')}</td>`,
+    `      <td valign="top">${imgCell(diffUrl, 'diff')}</td>`,
+    '    </tr>',
+    '  </tbody>',
+    '</table>',
     '',
     `<sub>${reviewLink(reviewUrl)} · <a href="${route.headUrl}">${stripProtocol(route.headUrl)}</a></sub>`,
     '',
