@@ -66,27 +66,20 @@ Set `MICROLINK_API_KEY` to use a paid plan; otherwise the free tier applies.
 
 ## GitHub Action
 
-Drop these two workflows in your repo to get visual diffs as PR comments automatically.
-
-### Required permissions
-
-The PR workflow needs:
+One workflow file. The action handles PR-time diff runs and PR-close cleanup internally.
 
 ```yaml
+# .github/workflows/visual-diff.yml
+name: Visual diff
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
 permissions:
-  contents: write          # create per-PR Release + tag to host screenshots
-  pull-requests: write     # post / update the sticky comment
-```
+  contents: write       # create + delete per-PR Release/tag
+  pull-requests: write  # post / update sticky comment
+  deployments: read     # poll Vercel deployment status when head=vercel
 
-### Main workflow
-
-`.github/workflows/microlink-difftool.yml` — see [`examples/workflow.yml`](./examples/workflow.yml).
-
-```yaml
-on: pull_request
-permissions:
-  contents: write
-  pull-requests: write
 jobs:
   visual-diff:
     runs-on: ubuntu-latest
@@ -94,17 +87,16 @@ jobs:
       - uses: microlinkhq/difftool@master
         with:
           base: https://unavatar.io
-          head: ${{ steps.preview.outputs.url }}
-          routes: '/,/kikobeats'
-          threshold: '0.005'
-          pr-number: ${{ github.event.pull_request.number }}
-          sha: ${{ github.event.pull_request.head.sha }}
+          head: vercel
+          routes: '/'
           microlink-api-key: ${{ secrets.MICROLINK_API_KEY }}
 ```
 
-### Cleanup workflow
+That's it. No checkout, no separate cleanup workflow, no pre-step to discover the preview URL.
 
-`.github/workflows/microlink-difftool-cleanup.yml` — see [`examples/cleanup.yml`](./examples/cleanup.yml). Deletes the per-PR Release (and its tag) when the PR closes.
+### `head: vercel`
+
+Pass `head: vercel` and the action waits for the Vercel deployment associated with the PR's head SHA to be ready, then uses its preview URL. Tune the polling with `provider-timeout` (seconds, default `600`) and `provider-interval` (seconds, default `10`). For other providers — or to bypass auto-discovery entirely — pass an explicit URL.
 
 ### How image hosting works
 
@@ -112,25 +104,28 @@ The action creates one **GitHub Release** per pull request, tagged `microlink-di
 
 The PR comment references those assets via their `browser_download_url` — release download URLs are served from a public CDN and **render even when the parent repository is private**, so reviewers see the screenshots inline regardless of repo visibility. No external CDN, no extra secrets.
 
-Each workflow run replaces the prior assets in the same release; the cleanup workflow deletes the release entirely when the PR closes.
+Each workflow run replaces the prior assets in the same release. When the PR closes (`pull_request: closed`), the action deletes the release and its tag in a single step.
 
 ### Inputs
 
 | Input | Default | Description |
 | --- | --- | --- |
 | `base` | *(required)* | Production / baseline URL |
-| `head` | *(required)* | Preview URL to compare against |
-| `pr-number` | *(required)* | Pull request number to comment on |
-| `sha` | *(required)* | Commit SHA used in the assets path |
+| `head` | *(required)* | Preview URL, or `vercel` to auto-discover |
+| `pr-number` | *(event)* | PR number; defaults to the current `pull_request` event |
+| `sha` | *(event)* | Commit SHA; defaults to `github.event.pull_request.head.sha` |
 | `routes` | `/` | Comma-separated paths to diff |
 | `threshold` | `0.001` | Max acceptable diff ratio (0..1) |
 | `pixel-threshold` | `0.1` | Per-pixel sensitivity (0..1) |
 | `viewport-width` | `1280` | |
 | `viewport-height` | `800` | |
 | `microlink-api-key` | *(empty)* | Optional paid-tier key |
-| `release-tag-prefix` | `microlink-difftool-pr` | Prefix for the per-PR release tag (final tag: `<prefix>-<pr-number>`) |
+| `provider-timeout` | `600` | Max seconds to wait for `head: vercel` discovery |
+| `provider-interval` | `10` | Seconds between deployment-status polls |
+| `release-tag-prefix` | `microlink-difftool-pr` | Per-PR release tag prefix |
 | `comment-marker` | `<!-- microlink-difftool -->` | HTML marker for the sticky comment |
-| `github-token` | `${{ github.token }}` | Token for uploading release assets and commenting |
+| `token` | *(empty)* | Token for the action; falls back to `github-token` |
+| `github-token` | `${{ github.token }}` | Default token |
 
 ### Outputs
 

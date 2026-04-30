@@ -10,14 +10,14 @@ inputs:
     description: Production / baseline URL
     required: true
   head:
-    description: Preview URL to compare against base
+    description: Preview URL to compare against base. Use the literal value `vercel` to auto-discover from Vercel deployments on this PR's head SHA.
     required: true
   pr-number:
-    description: Pull request number to comment on
-    required: true
+    description: Pull request number to comment on. Defaults to the current pull_request event's number.
+    required: false
   sha:
-    description: Commit SHA used in the assets path (typically the PR head SHA)
-    required: true
+    description: Commit SHA used for the per-PR release. Defaults to the current pull_request event's head SHA.
+    required: false
   routes:
     description: Comma-separated paths to diff (e.g. "/,/kikobeats")
     default: '/'
@@ -40,8 +40,17 @@ inputs:
   comment-marker:
     description: HTML comment marker so re-runs edit the same PR comment
     default: '<!-- microlink-difftool -->'
+  provider-timeout:
+    description: When head=vercel, max seconds to wait for the deployment to be ready.
+    default: '600'
+  provider-interval:
+    description: When head=vercel, seconds between deployment-status polls.
+    default: '10'
+  token:
+    description: Token used to upload release assets and comment on the PR. Alias for github-token.
+    required: false
   github-token:
-    description: Token used to push assets and comment on the PR
+    description: Token used to upload release assets and comment on the PR.
     default: ${{ github.token }}
 
 outputs:
@@ -55,7 +64,131 @@ outputs:
 runs:
   using: composite
   steps:
+    - name: Resolve PR context
+      id: pr
+      shell: bash
+      env:
+        INPUT_PR_NUMBER: ${{ inputs.pr-number }}
+        INPUT_SHA: ${{ inputs.sha }}
+        EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}
+        EVENT_PR_SHA: ${{ github.event.pull_request.head.sha }}
+        EVENT_ACTION: ${{ github.event.action }}
+      run: |
+        PR_NUMBER="${INPUT_PR_NUMBER:-$EVENT_PR_NUMBER}"
+        PR_SHA="${INPUT_SHA:-$EVENT_PR_SHA}"
+
+        if [ -z "$PR_NUMBER" ]; then
+          echo "::error::microlink-difftool: pr-number is required (pass explicitly or run on a pull_request event)"
+          exit 2
+        fi
+
+        echo "number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+        echo "sha=$PR_SHA" >> "$GITHUB_OUTPUT"
+
+        if [ "$EVENT_ACTION" = "closed" ]; then
+          echo "mode=cleanup" >> "$GITHUB_OUTPUT"
+        else
+          echo "mode=diff" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Cleanup on PR close
+      if: steps.pr.outputs.mode == 'cleanup'
+      uses: actions/github-script@v7
+      env:
+        PR_NUMBER: ${{ steps.pr.outputs.number }}
+        TAG_PREFIX: ${{ inputs.release-tag-prefix }}
+      with:
+        github-token: ${{ inputs.token || inputs.github-token }}
+        script: |
+          const tag = `${process.env.TAG_PREFIX}-${process.env.PR_NUMBER}`
+          const { owner, repo } = context.repo
+          try {
+            const { data: release } = await github.rest.repos.getReleaseByTag({ owner, repo, tag })
+            await github.rest.repos.deleteRelease({ owner, repo, release_id: release.id })
+            core.info(`deleted release ${tag} (id=${release.id})`)
+          } catch (err) {
+            if (err.status !== 404) throw err
+            core.info(`no release ${tag} to delete`)
+          }
+          try {
+            await github.rest.git.deleteRef({ owner, repo, ref: `tags/${tag}` })
+            core.info(`deleted tag ${tag}`)
+          } catch (err) {
+            if (err.status !== 404 && err.status !== 422) throw err
+            core.info(`no tag ${tag} to delete`)
+          }
+
+    - name: Resolve head URL
+      id: resolve-head
+      if: steps.pr.outputs.mode == 'diff'
+      uses: actions/github-script@v7
+      env:
+        HEAD_INPUT: ${{ inputs.head }}
+        PR_SHA: ${{ steps.pr.outputs.sha }}
+        MAX_SECONDS: ${{ inputs.provider-timeout }}
+        INTERVAL_SECONDS: ${{ inputs.provider-interval }}
+      with:
+        github-token: ${{ inputs.token || inputs.github-token }}
+        script: |
+          const headInput = process.env.HEAD_INPUT
+          if (headInput !== 'vercel') {
+            core.info(`using explicit head URL: ${headInput}`)
+            core.setOutput('url', headInput)
+            return
+          }
+
+          const sha = process.env.PR_SHA
+          if (!sha) {
+            core.setFailed('head=vercel requires a SHA (pass `sha` input or run on a pull_request event)')
+            return
+          }
+
+          const { owner, repo } = context.repo
+          const intervalMs = Number(process.env.INTERVAL_SECONDS) * 1000
+          const maxAttempts = Math.ceil(Number(process.env.MAX_SECONDS) / Number(process.env.INTERVAL_SECONDS))
+          const sleep = ms => new Promise(r => setTimeout(r, ms))
+
+          core.info(`polling for vercel preview · sha=${sha} · up to ${maxAttempts} attempts · ${intervalMs / 1000}s interval`)
+
+          for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            const { data: deployments } = await github.rest.repos.listDeployments({
+              owner, repo, sha, environment: 'Preview', per_page: 100
+            })
+            const vercel = deployments.find(d => d.creator && d.creator.login === 'vercel[bot]')
+
+            if (!vercel) {
+              core.info(`attempt ${attempt}/${maxAttempts}: no vercel deployment yet for ${sha}`)
+              if (attempt === maxAttempts) break
+              await sleep(intervalMs)
+              continue
+            }
+
+            const { data: statuses } = await github.rest.repos.listDeploymentStatuses({
+              owner, repo, deployment_id: vercel.id, per_page: 100
+            })
+            const success = statuses.find(s => s.state === 'success')
+            const failed = statuses.find(s => s.state === 'failure' || s.state === 'error')
+
+            if (failed) {
+              core.setFailed(`vercel deployment ${vercel.id} reported state=${failed.state}`)
+              return
+            }
+            if (success && success.environment_url) {
+              core.info(`vercel preview ready: ${success.environment_url}`)
+              core.setOutput('url', success.environment_url)
+              return
+            }
+
+            const lastState = statuses[0] ? statuses[0].state : 'pending'
+            core.info(`attempt ${attempt}/${maxAttempts}: deployment ${vercel.id} state=${lastState}`)
+            if (attempt === maxAttempts) break
+            await sleep(intervalMs)
+          }
+
+          core.setFailed(`timed out after ${maxAttempts} attempts waiting for vercel preview for ${sha}`)
+
     - name: Install canvas native dependencies
+      if: steps.pr.outputs.mode == 'diff'
       shell: bash
       run: |
         sudo apt-get update -qq
@@ -63,11 +196,13 @@ runs:
           libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
 
     - name: Setup Node
+      if: steps.pr.outputs.mode == 'diff'
       uses: actions/setup-node@v4
       with:
         node-version: '20'
 
     - name: Install CLI dependencies
+      if: steps.pr.outputs.mode == 'diff'
       shell: bash
       run: |
         corepack enable
@@ -76,6 +211,7 @@ runs:
 
     - name: Run microlink-difftool
       id: diff
+      if: steps.pr.outputs.mode == 'diff'
       shell: bash
       env:
         MICROLINK_API_KEY: ${{ inputs.microlink-api-key }}
@@ -84,7 +220,7 @@ runs:
         set +e
         node "${{ github.action_path }}/bin/cli.js" \
           --base "${{ inputs.base }}" \
-          --head "${{ inputs.head }}" \
+          --head "${{ steps.resolve-head.outputs.url }}" \
           --routes "${{ inputs.routes }}" \
           --threshold "${{ inputs.threshold }}" \
           --pixel-threshold "${{ inputs.pixel-threshold }}" \
@@ -109,16 +245,17 @@ runs:
 
     - name: Upload screenshots to GitHub Release
       id: upload-assets
+      if: steps.pr.outputs.mode == 'diff'
       uses: actions/github-script@v7
       env:
         SUMMARY_PATH: ${{ steps.diff.outputs.summary-json }}
         OUT_DIR: ${{ runner.temp }}/microlink-difftool
-        PR_NUMBER: ${{ inputs.pr-number }}
-        PR_SHA: ${{ inputs.sha }}
+        PR_NUMBER: ${{ steps.pr.outputs.number }}
+        PR_SHA: ${{ steps.pr.outputs.sha }}
         TAG_PREFIX: ${{ inputs.release-tag-prefix }}
         URLS_PATH: ${{ runner.temp }}/microlink-difftool-urls.json
       with:
-        github-token: ${{ inputs.github-token }}
+        github-token: ${{ inputs.token || inputs.github-token }}
         script: |
           const fs = require('fs')
           const path = require('path')
@@ -130,7 +267,6 @@ runs:
           const outDir = process.env.OUT_DIR
           const summary = JSON.parse(fs.readFileSync(process.env.SUMMARY_PATH, 'utf8'))
 
-          // Resolve or create the per-PR release.
           let release
           try {
             const got = await github.rest.repos.getReleaseByTag({ owner, repo, tag })
@@ -167,7 +303,6 @@ runs:
               }
               const assetName = `${slug}-${basename}`
 
-              // Delete any prior asset with the same name so the new upload doesn't collide.
               const { data: existing } = await github.rest.repos.listReleaseAssets({
                 owner, repo, release_id: release.id, per_page: 100
               })
@@ -195,6 +330,7 @@ runs:
 
     - name: Render comment markdown
       id: render
+      if: steps.pr.outputs.mode == 'diff'
       shell: bash
       env:
         SUMMARY: ${{ steps.diff.outputs.summary-json }}
@@ -210,9 +346,10 @@ runs:
         echo "body-path=$BODY_PATH" >> "$GITHUB_OUTPUT"
 
     - name: Post or update sticky PR comment
+      if: steps.pr.outputs.mode == 'diff'
       uses: actions/github-script@v7
       with:
-        github-token: ${{ inputs.github-token }}
+        github-token: ${{ inputs.token || inputs.github-token }}
         script: |
           const fs = require('fs')
           const body = fs.readFileSync(process.env.BODY_PATH, 'utf8')
@@ -220,7 +357,7 @@ runs:
           const issue_number = Number(process.env.PR_NUMBER)
           const { owner, repo } = context.repo
           if (!issue_number) {
-            core.setFailed('microlink-difftool: pr-number input is required')
+            core.setFailed('microlink-difftool: pr-number is required')
             return
           }
           try {
@@ -238,9 +375,10 @@ runs:
       env:
         BODY_PATH: ${{ steps.render.outputs.body-path }}
         MARKER: ${{ inputs.comment-marker }}
-        PR_NUMBER: ${{ inputs.pr-number }}
+        PR_NUMBER: ${{ steps.pr.outputs.number }}
 
     - name: Fail if any route exceeded threshold
+      if: steps.pr.outputs.mode == 'diff'
       shell: bash
       run: |
         if [ "${{ steps.diff.outputs.diff-exit }}" -ne 0 ]; then

@@ -1,34 +1,23 @@
-# Save as .github/workflows/microlink-difftool.yml in your repo.
-# Triggered when a Vercel preview deployment is ready; diffs it against
-# production and posts the result as a sticky PR comment.
+# Save as .github/workflows/visual-diff.yml in your repo.
+# One workflow handles both PR-time diff runs and PR-close cleanup.
 name: Visual diff
 
 on:
   pull_request:
-  # Or, if your preview URL is published by another workflow:
-  # workflow_run:
-  #   workflows: ['Vercel Preview']
-  #   types: [completed]
+    types: [opened, synchronize, reopened, closed]
 
 permissions:
-  contents: write          # create per-PR Release + tag to host screenshots
-  pull-requests: write     # post / update the sticky comment
+  contents: write       # create + delete per-PR Release/tag
+  pull-requests: write  # post / update sticky comment
+  deployments: read     # poll Vercel deployment status when head=vercel
 
 jobs:
   visual-diff:
     runs-on: ubuntu-latest
     steps:
-      # Replace this with however your repo discovers the preview URL
-      # (Vercel deployment, Netlify, Cloudflare Pages, etc.)
-      - id: preview
-        run: echo "url=https://your-preview-url.vercel.app" >> "$GITHUB_OUTPUT"
-
       - uses: microlinkhq/difftool@master
         with:
           base: https://your-production-domain.com
-          head: ${{ steps.preview.outputs.url }}
-          routes: '/,/about,/pricing'
-          threshold: '0.005'
-          pr-number: ${{ github.event.pull_request.number }}
-          sha: ${{ github.event.pull_request.head.sha }}
+          head: vercel
+          routes: '/'
           microlink-api-key: ${{ secrets.MICROLINK_API_KEY }}
