@@ -12,11 +12,17 @@ inputs:
   head:
     description: Preview URL to compare against base. Use the literal value `vercel` to auto-discover from Vercel deployments on this PR's head SHA.
     required: true
+  s3-config:
+    description: |
+      JSON object with S3-compatible storage credentials. Required keys:
+      accessKeyId, secretAccessKey, bucket. Optional: endpoint (provider URL),
+      region, forcePathStyle, presignedTtlSeconds. Pass via a secret.
+    required: true
   pr-number:
     description: Pull request number to comment on. Defaults to the current pull_request event's number.
     required: false
   sha:
-    description: Commit SHA used for the per-PR release. Defaults to the current pull_request event's head SHA.
+    description: Commit SHA used for the per-PR object key prefix. Defaults to the current pull_request event's head SHA.
     required: false
   routes:
     description: Comma-separated paths to diff (e.g. "/,/kikobeats")
@@ -34,9 +40,9 @@ inputs:
   microlink-api-key:
     description: Optional Microlink paid-tier key (recommended for CI)
     required: false
-  release-tag-prefix:
-    description: Prefix for the per-PR release tag (final tag is "<prefix>-<pr-number>")
-    default: microlink-difftool-pr
+  presigned-ttl-seconds:
+    description: TTL in seconds for pre-signed URLs in the comment. Overrides s3-config.presignedTtlSeconds. Defaults to 86400 (24h).
+    required: false
   comment-marker:
     description: HTML comment marker so re-runs edit the same PR comment
     default: '<!-- microlink-difftool -->'
@@ -47,10 +53,10 @@ inputs:
     description: When head=vercel, seconds between deployment-status polls.
     default: '10'
   token:
-    description: Token used to upload release assets and comment on the PR. Alias for github-token.
+    description: Token for posting the PR comment. Alias for github-token.
     required: false
   github-token:
-    description: Token used to upload release assets and comment on the PR.
+    description: Token for posting the PR comment.
     default: ${{ github.token }}
 
 outputs:
@@ -91,32 +97,73 @@ runs:
           echo "mode=diff" >> "$GITHUB_OUTPUT"
         fi
 
+    - name: Stage S3 credentials
+      id: s3
+      shell: bash
+      env:
+        S3_CONFIG: ${{ inputs.s3-config }}
+        CONFIG_PATH: ${{ runner.temp }}/microlink-difftool-s3.json
+      run: |
+        if [ -z "$S3_CONFIG" ]; then
+          echo "::error::microlink-difftool: s3-config is required. See https://github.com/microlinkhq/difftool#s3-storage-setup"
+          exit 2
+        fi
+
+        # Quick structural check before writing.
+        echo "$S3_CONFIG" | node -e "
+          let data='';
+          process.stdin.on('data',c=>data+=c);
+          process.stdin.on('end',()=>{
+            try {
+              const cfg = JSON.parse(data);
+              const missing = ['accessKeyId','secretAccessKey','bucket'].filter(k => !cfg[k]);
+              if (missing.length) {
+                console.error('s3-config missing required field(s): ' + missing.join(', '));
+                process.exit(2);
+              }
+            } catch (e) {
+              console.error('s3-config is not valid JSON: ' + e.message);
+              process.exit(2);
+            }
+          });
+        "
+
+        umask 077
+        printf '%s' "$S3_CONFIG" > "$CONFIG_PATH"
+        echo "config-path=$CONFIG_PATH" >> "$GITHUB_OUTPUT"
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install canvas native dependencies
+      if: steps.pr.outputs.mode == 'diff'
+      shell: bash
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends \
+          libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
+
+    - name: Install CLI dependencies
+      shell: bash
+      run: |
+        corepack enable
+        cd "${{ github.action_path }}"
+        pnpm install --no-frozen-lockfile
+
     - name: Cleanup on PR close
       if: steps.pr.outputs.mode == 'cleanup'
-      uses: actions/github-script@v7
+      shell: bash
       env:
+        CONFIG_PATH: ${{ steps.s3.outputs.config-path }}
+        OWNER: ${{ github.repository_owner }}
+        NAME: ${{ github.event.repository.name }}
         PR_NUMBER: ${{ steps.pr.outputs.number }}
-        TAG_PREFIX: ${{ inputs.release-tag-prefix }}
-      with:
-        github-token: ${{ inputs.token || inputs.github-token }}
-        script: |
-          const tag = `${process.env.TAG_PREFIX}-${process.env.PR_NUMBER}`
-          const { owner, repo } = context.repo
-          try {
-            const { data: release } = await github.rest.repos.getReleaseByTag({ owner, repo, tag })
-            await github.rest.repos.deleteRelease({ owner, repo, release_id: release.id })
-            core.info(`deleted release ${tag} (id=${release.id})`)
-          } catch (err) {
-            if (err.status !== 404) throw err
-            core.info(`no release ${tag} to delete`)
-          }
-          try {
-            await github.rest.git.deleteRef({ owner, repo, ref: `tags/${tag}` })
-            core.info(`deleted tag ${tag}`)
-          } catch (err) {
-            if (err.status !== 404 && err.status !== 422) throw err
-            core.info(`no tag ${tag} to delete`)
-          }
+      run: |
+        node "${{ github.action_path }}/bin/cli.js" cleanup-s3 \
+          --s3-config "$CONFIG_PATH" \
+          --key-prefix "$OWNER/$NAME/pr-$PR_NUMBER"
 
     - name: Resolve head URL
       id: resolve-head
@@ -187,28 +234,6 @@ runs:
 
           core.setFailed(`timed out after ${maxAttempts} attempts waiting for vercel preview for ${sha}`)
 
-    - name: Install canvas native dependencies
-      if: steps.pr.outputs.mode == 'diff'
-      shell: bash
-      run: |
-        sudo apt-get update -qq
-        sudo apt-get install -y --no-install-recommends \
-          libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
-
-    - name: Setup Node
-      if: steps.pr.outputs.mode == 'diff'
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-
-    - name: Install CLI dependencies
-      if: steps.pr.outputs.mode == 'diff'
-      shell: bash
-      run: |
-        corepack enable
-        cd "${{ github.action_path }}"
-        pnpm install --no-frozen-lockfile
-
     - name: Run microlink-difftool
       id: diff
       if: steps.pr.outputs.mode == 'diff'
@@ -243,94 +268,33 @@ runs:
         echo "summary-json=$OUT_DIR/summary.json" >> "$GITHUB_OUTPUT"
         echo "diff-exit=$DIFF_EXIT" >> "$GITHUB_OUTPUT"
 
-    - name: Upload screenshots to GitHub Release
+    - name: Upload screenshots to S3-compatible storage
       id: upload-assets
       if: steps.pr.outputs.mode == 'diff'
-      uses: actions/github-script@v7
+      shell: bash
       env:
         SUMMARY_PATH: ${{ steps.diff.outputs.summary-json }}
         OUT_DIR: ${{ runner.temp }}/microlink-difftool
+        URLS_PATH: ${{ runner.temp }}/microlink-difftool-urls.json
+        CONFIG_PATH: ${{ steps.s3.outputs.config-path }}
+        OWNER: ${{ github.repository_owner }}
+        NAME: ${{ github.event.repository.name }}
         PR_NUMBER: ${{ steps.pr.outputs.number }}
         PR_SHA: ${{ steps.pr.outputs.sha }}
-        TAG_PREFIX: ${{ inputs.release-tag-prefix }}
-        URLS_PATH: ${{ runner.temp }}/microlink-difftool-urls.json
-      with:
-        github-token: ${{ inputs.token || inputs.github-token }}
-        script: |
-          const fs = require('fs')
-          const path = require('path')
-          const { owner, repo } = context.repo
-          const prNumber = Number(process.env.PR_NUMBER)
-          const sha = process.env.PR_SHA
-          const tagPrefix = process.env.TAG_PREFIX
-          const tag = `${tagPrefix}-${prNumber}`
-          const outDir = process.env.OUT_DIR
-          const summary = JSON.parse(fs.readFileSync(process.env.SUMMARY_PATH, 'utf8'))
-
-          let release
-          try {
-            const got = await github.rest.repos.getReleaseByTag({ owner, repo, tag })
-            release = got.data
-            core.info(`reusing existing release ${tag} (id=${release.id})`)
-          } catch (err) {
-            if (err.status !== 404) throw err
-            const created = await github.rest.repos.createRelease({
-              owner,
-              repo,
-              tag_name: tag,
-              target_commitish: sha,
-              name: `microlink-difftool: PR #${prNumber}`,
-              body: `Visual diff screenshots for #${prNumber}.`,
-              prerelease: true,
-              draft: false
-            })
-            release = created.data
-            core.info(`created release ${tag} (id=${release.id})`)
-          }
-
-          const FILES = ['base.png', 'head.png', 'diff.png', 'review.png']
-          const urls = {}
-
-          for (const route of summary.routes) {
-            const slug = route.outDir && route.outDir !== '.' ? route.outDir : 'root'
-            const routeDir = !route.outDir || route.outDir === '.' ? outDir : path.join(outDir, route.outDir)
-
-            for (const basename of FILES) {
-              const localPath = path.join(routeDir, basename)
-              if (!fs.existsSync(localPath)) {
-                core.warning(`missing local file ${localPath}; skipping`)
-                continue
-              }
-              const assetName = `${slug}-${basename}`
-
-              const { data: existing } = await github.rest.repos.listReleaseAssets({
-                owner, repo, release_id: release.id, per_page: 100
-              })
-              const dup = existing.find(a => a.name === assetName)
-              if (dup) {
-                await github.rest.repos.deleteReleaseAsset({ owner, repo, asset_id: dup.id })
-                core.info(`deleted previous asset ${assetName} (id=${dup.id})`)
-              }
-
-              const data = fs.readFileSync(localPath)
-              const uploaded = await github.rest.repos.uploadReleaseAsset({
-                owner,
-                repo,
-                release_id: release.id,
-                name: assetName,
-                data,
-                headers: {
-                  'content-type': 'image/png',
-                  'content-length': data.length
-                }
-              })
-              urls[`${slug}/${basename}`] = uploaded.data.browser_download_url
-              core.info(`uploaded ${assetName} → ${uploaded.data.browser_download_url}`)
-            }
-          }
-
-          fs.writeFileSync(process.env.URLS_PATH, JSON.stringify(urls, null, 2))
-          core.setOutput('urls-path', process.env.URLS_PATH)
+        TTL_INPUT: ${{ inputs.presigned-ttl-seconds }}
+      run: |
+        TTL_FLAG=""
+        if [ -n "$TTL_INPUT" ]; then
+          TTL_FLAG="--ttl-seconds $TTL_INPUT"
+        fi
+        node "${{ github.action_path }}/bin/cli.js" upload-s3 \
+          --summary "$SUMMARY_PATH" \
+          --out-dir "$OUT_DIR" \
+          --s3-config "$CONFIG_PATH" \
+          --key-prefix "$OWNER/$NAME/pr-$PR_NUMBER/$PR_SHA" \
+          --urls-out "$URLS_PATH" \
+          $TTL_FLAG
+        echo "urls-path=$URLS_PATH" >> "$GITHUB_OUTPUT"
 
     - name: Render comment markdown
       id: render

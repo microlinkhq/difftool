@@ -1,5 +1,8 @@
 # Save as .github/workflows/visual-diff.yml in your repo.
 # One workflow handles both PR-time diff runs and PR-close cleanup.
+#
+# Prereq: an S3-compatible bucket + token, with config stored in a
+# repo secret named S3_CONFIG. See the README for templates.
 name: Visual diff
 
 on:
@@ -7,7 +10,6 @@ on:
     types: [opened, synchronize, reopened, closed]
 
 permissions:
-  contents: write       # create + delete per-PR Release/tag
   pull-requests: write  # post / update sticky comment
   deployments: read     # poll Vercel deployment status when head=vercel
 
@@ -21,3 +23,4 @@ jobs:
           head: vercel
           routes: '/'
           microlink-api-key: ${{ secrets.MICROLINK_API_KEY }}
+          s3-config: ${{ secrets.S3_CONFIG }}

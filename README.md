@@ -76,7 +76,6 @@ on:
     types: [opened, synchronize, reopened, closed]
 
 permissions:
-  contents: write       # create + delete per-PR Release/tag
   pull-requests: write  # post / update sticky comment
   deployments: read     # poll Vercel deployment status when head=vercel
 
@@ -90,21 +89,73 @@ jobs:
           head: vercel
           routes: '/'
           microlink-api-key: ${{ secrets.MICROLINK_API_KEY }}
+          s3-config: ${{ secrets.S3_CONFIG }}
 ```
 
-That's it. No checkout, no separate cleanup workflow, no pre-step to discover the preview URL.
+That's it. No checkout, no separate cleanup workflow, no pre-step to discover the preview URL. You do need to set up an S3-compatible bucket — see [S3 storage setup](#s3-storage-setup) below.
 
 ### `head: vercel`
 
 Pass `head: vercel` and the action waits for the Vercel deployment associated with the PR's head SHA to be ready, then uses its preview URL. Tune the polling with `provider-timeout` (seconds, default `600`) and `provider-interval` (seconds, default `10`). For other providers — or to bypass auto-discovery entirely — pass an explicit URL.
 
+### S3 storage setup
+
+The action uploads screenshots to an **S3-compatible object store** that you control, then references them via pre-signed URLs in the PR comment. This works for public *and* private repos, and any provider speaking the S3 API: Cloudflare R2 (recommended — free egress), AWS S3, Backblaze B2, MinIO, DigitalOcean Spaces, etc.
+
+Steps:
+
+1. Create a bucket on your provider of choice.
+2. Create an API token scoped to **PutObject / GetObject / DeleteObject / ListBucket** on that bucket only.
+3. Store the JSON config below as a repo secret named `S3_CONFIG`.
+
+Required keys: `accessKeyId`, `secretAccessKey`, `bucket`. Other keys are provider-dependent.
+
+#### Cloudflare R2 (recommended)
+
+```json
+{
+  "endpoint": "https://<account-id>.r2.cloudflarestorage.com",
+  "region": "auto",
+  "accessKeyId": "...",
+  "secretAccessKey": "...",
+  "bucket": "difftool-assets",
+  "forcePathStyle": true
+}
+```
+
+#### AWS S3
+
+```json
+{
+  "region": "us-east-1",
+  "accessKeyId": "...",
+  "secretAccessKey": "...",
+  "bucket": "difftool-assets"
+}
+```
+
+#### Backblaze B2
+
+```json
+{
+  "endpoint": "https://s3.us-east-005.backblazeb2.com",
+  "region": "us-east-005",
+  "accessKeyId": "...",
+  "secretAccessKey": "...",
+  "bucket": "difftool-assets",
+  "forcePathStyle": true
+}
+```
+
+#### MinIO / DigitalOcean Spaces / other
+
+Use the provider's S3 endpoint URL, set `forcePathStyle: true` for MinIO, and use the provider's regions. Same JSON shape.
+
 ### How image hosting works
 
-The action creates one **GitHub Release** per pull request, tagged `microlink-difftool-pr-<number>` and marked as a prerelease so it doesn't appear under "Latest release". Screenshots are uploaded as release assets named `<route-slug>-<file>.png` (e.g. `root-base.png`, `kikobeats-diff.png`).
+Screenshots are uploaded under `<owner>/<repo>/pr-<number>/<sha>/<route-slug>-<file>.png` (e.g. `microlinkhq/unavatar-www/pr-106/abc123/root-base.png`). The PR comment links to **pre-signed GetObject URLs** — your bucket stays private, the URLs work for anyone viewing the PR, and they expire after `presigned-ttl-seconds` (default 24h).
 
-The PR comment references those assets via their `browser_download_url` — release download URLs are served from a public CDN and **render even when the parent repository is private**, so reviewers see the screenshots inline regardless of repo visibility. No external CDN, no extra secrets.
-
-Each workflow run replaces the prior assets in the same release. When the PR closes (`pull_request: closed`), the action deletes the release and its tag in a single step.
+The comment is regenerated on every workflow run, so reviewers always see fresh URLs. When the PR closes (`pull_request: closed`), the action deletes everything under `pr-<number>/` from your bucket.
 
 ### Inputs
 
@@ -112,6 +163,7 @@ Each workflow run replaces the prior assets in the same release. When the PR clo
 | --- | --- | --- |
 | `base` | *(required)* | Production / baseline URL |
 | `head` | *(required)* | Preview URL, or `vercel` to auto-discover |
+| `s3-config` | *(required)* | JSON config for an S3-compatible bucket (see above) |
 | `pr-number` | *(event)* | PR number; defaults to the current `pull_request` event |
 | `sha` | *(event)* | Commit SHA; defaults to `github.event.pull_request.head.sha` |
 | `routes` | `/` | Comma-separated paths to diff |
@@ -120,9 +172,9 @@ Each workflow run replaces the prior assets in the same release. When the PR clo
 | `viewport-width` | `1280` | |
 | `viewport-height` | `800` | |
 | `microlink-api-key` | *(empty)* | Optional paid-tier key |
+| `presigned-ttl-seconds` | `86400` | Pre-signed URL TTL (overrides `s3-config.presignedTtlSeconds`) |
 | `provider-timeout` | `600` | Max seconds to wait for `head: vercel` discovery |
 | `provider-interval` | `10` | Seconds between deployment-status polls |
-| `release-tag-prefix` | `microlink-difftool-pr` | Per-PR release tag prefix |
 | `comment-marker` | `<!-- microlink-difftool -->` | HTML marker for the sticky comment |
 | `token` | *(empty)* | Token for the action; falls back to `github-token` |
 | `github-token` | `${{ github.token }}` | Default token |

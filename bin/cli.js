@@ -1,11 +1,12 @@
 #!/usr/bin/env node
-import { readFile } from 'node:fs/promises'
+import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
 import { cac } from 'cac'
 
 import { run } from '../src/index.js'
 import { renderComment } from '../src/render-comment.js'
+import { uploadAssets, cleanupPrefix } from '../src/s3.js'
 
 const cli = cac('microlink-difftool')
 
@@ -128,6 +129,67 @@ cli
       process.stdout.write(markdown)
     } catch (err) {
       console.error(`render-comment: ${err.message}`)
+      process.exit(2)
+    }
+  })
+
+cli
+  .command(
+    'upload-s3',
+    'Upload screenshots to an S3-compatible bucket and emit a JSON URL map'
+  )
+  .option('--summary <path>', 'Path to summary.json from a diff run')
+  .option('--out-dir <path>', 'Directory containing the per-route screenshots')
+  .option('--s3-config <path>', 'Path to a JSON file with S3 credentials')
+  .option(
+    '--key-prefix <prefix>',
+    'Object key prefix (e.g. "owner/repo/pr-106/<sha>")'
+  )
+  .option('--urls-out <path>', 'Where to write the slug/basename → URL JSON map')
+  .option('--ttl-seconds <n>', 'Pre-signed URL TTL in seconds')
+  .action(async opts => {
+    if (!opts.summary || !opts.outDir || !opts['s3-config'] || !opts.keyPrefix || !opts.urlsOut) {
+      console.error('upload-s3: --summary, --out-dir, --s3-config, --key-prefix, --urls-out are all required')
+      process.exit(2)
+    }
+    try {
+      const [summary, config] = await Promise.all([
+        readFile(opts.summary, 'utf8').then(JSON.parse),
+        readFile(opts['s3-config'], 'utf8').then(JSON.parse)
+      ])
+      const urls = await uploadAssets({
+        summary,
+        outDir: opts.outDir,
+        config,
+        keyPrefix: opts.keyPrefix,
+        ttlSeconds: opts.ttlSeconds !== undefined ? Number(opts.ttlSeconds) : undefined
+      })
+      await writeFile(opts.urlsOut, JSON.stringify(urls, null, 2))
+      console.error(`upload-s3: wrote ${Object.keys(urls).length} URLs to ${opts.urlsOut}`)
+    } catch (err) {
+      console.error(`upload-s3: ${err.message}`)
+      process.exit(2)
+    }
+  })
+
+cli
+  .command(
+    'cleanup-s3',
+    'Delete all screenshots under a key prefix from an S3-compatible bucket'
+  )
+  .option('--s3-config <path>', 'Path to a JSON file with S3 credentials')
+  .option('--key-prefix <prefix>', 'Object key prefix to delete recursively')
+  .action(async opts => {
+    if (!opts['s3-config'] || !opts.keyPrefix) {
+      console.error('cleanup-s3: --s3-config and --key-prefix are required')
+      process.exit(2)
+    }
+    try {
+      const config = JSON.parse(await readFile(opts['s3-config'], 'utf8'))
+      const deleted = await cleanupPrefix({ config, keyPrefix: opts.keyPrefix })
+      console.error(`cleanup-s3: deleted ${deleted} object(s) under ${opts.keyPrefix}/`)
+    } catch (err) {
+      console.error(`cleanup-s3: ${err.message}`)
       process.exit(2)
     }
   })
