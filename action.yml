@@ -318,7 +318,11 @@ runs:
                 repo,
                 release_id: release.id,
                 name: assetName,
-                data
+                data,
+                headers: {
+                  'content-type': 'image/png',
+                  'content-length': data.length
+                }
               })
               urls[`${slug}/${basename}`] = uploaded.data.browser_download_url
               core.info(`uploaded ${assetName} → ${uploaded.data.browser_download_url}`)
