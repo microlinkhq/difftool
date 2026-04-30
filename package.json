@@ -32,5 +32,10 @@
   },
   "scripts": {
     "start": "./bin/cli.js"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "canvas"
+    ]
   }
 }
