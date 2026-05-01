@@ -12,8 +12,16 @@ const lookup = (assetUrls, slug, basename) => {
   return url || null
 }
 
+const COMPARE_URL = 'https://microlink-difftool.vercel.app'
+
 const openCell = url =>
   url ? `<a href="${url}">open</a>` : '<em>n/a</em>'
+
+const compareCell = (baseUrl, headUrl) => {
+  if (!baseUrl || !headUrl) return '<em>n/a</em>'
+  const params = new URLSearchParams({ base: baseUrl, head: headUrl })
+  return `<a href="${COMPARE_URL}/?${params}">compare</a>`
+}
 
 const routeRow = (route, assetUrls) => {
   const slug = slugFor(route)
@@ -29,6 +37,7 @@ const routeRow = (route, assetUrls) => {
     `      <td>${openCell(baseUrl)}</td>`,
     `      <td>${openCell(headUrl)}</td>`,
     `      <td>${openCell(diffUrl)}</td>`,
+    `      <td>${compareCell(baseUrl, headUrl)}</td>`,
     `      <td>${verdict}</td>`,
     '    </tr>'
   ].join('\n')
@@ -74,6 +83,7 @@ export const renderComment = (
     '      <th>Production</th>',
     '      <th>Preview</th>',
     '      <th>Difference</th>',
+    '      <th>Compare</th>',
     '      <th>Verdict</th>',
     '    </tr>',
     '  </thead>',
