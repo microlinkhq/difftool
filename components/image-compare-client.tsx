@@ -136,41 +136,30 @@ export function ImageCompareClient() {
           </div>
         </div>
       ) : (
-        <div className="min-h-screen flex flex-col">
-          <header className="border-b border-border bg-background">
-            <div className="max-w-5xl mx-auto px-6 h-14 flex items-center">
-              <h1 className="text-sm font-semibold text-foreground">Image Diff Compare</h1>
-            </div>
-          </header>
-          
-          <div className="flex-1 flex items-center justify-center p-6">
-            <div className="w-full max-w-4xl">
-              {isLoading && (
-                <div className="text-center mb-8">
-                  <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Loading images from URL...
-                  </div>
-                </div>
-              )}
-              <div className="grid md:grid-cols-2 gap-6">
-                <ImageUploader
-                  label="Base Image"
-                  image={image1Data}
-                  onImageChange={handleImage1Change}
-                  isLoading={isLoadingImage1}
-                />
-                <ImageUploader
-                  label="Compare Image"
-                  image={image2Data}
-                  onImageChange={handleImage2Change}
-                  isLoading={isLoadingImage2}
-                />
+        <div className="h-screen flex p-2 gap-2">
+          {isLoading && (
+            <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
+              <div className="inline-flex items-center gap-2 text-sm text-muted-foreground bg-background border border-border rounded-md px-3 py-2 shadow-sm">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Loading images from URL...
               </div>
-              <p className="text-center text-sm text-muted-foreground mt-8">
-                Compare two images using different visualization modes
-              </p>
             </div>
+          )}
+          <div className="flex-1 h-full">
+            <ImageUploader
+              label="Base Image"
+              image={image1Data}
+              onImageChange={handleImage1Change}
+              isLoading={isLoadingImage1}
+            />
+          </div>
+          <div className="flex-1 h-full">
+            <ImageUploader
+              label="Compare Image"
+              image={image2Data}
+              onImageChange={handleImage2Change}
+              isLoading={isLoadingImage2}
+            />
           </div>
         </div>
       )}
