@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/input"
 interface ImageUploaderProps {
   label: string
   image: string | null
-  onImageChange: (url: string | null, name?: string) => void
+  onImageChange: (dataUrl: string | null, name?: string, originalUrl?: string) => void
+  isLoading?: boolean
 }
 
-export function ImageUploader({ label, image, onImageChange }: ImageUploaderProps) {
+export function ImageUploader({ label, image, onImageChange, isLoading }: ImageUploaderProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [showUrlInput, setShowUrlInput] = useState(false)
   const [urlValue, setUrlValue] = useState("")
@@ -73,7 +74,8 @@ export function ImageUploader({ label, image, onImageChange }: ImageUploaderProp
       const urlPath = urlValue.split("?")[0]
       const fileName = urlPath.split("/").pop() || "URL Image"
       
-      onImageChange(dataUrl, fileName)
+      // Pass the original URL so it can be stored in query params
+      onImageChange(dataUrl, fileName, urlValue)
       setShowUrlInput(false)
       setUrlValue("")
     } catch {
@@ -83,22 +85,42 @@ export function ImageUploader({ label, image, onImageChange }: ImageUploaderProp
     }
   }, [urlValue, onImageChange])
 
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        <div className="text-sm font-medium text-foreground">{label}</div>
+        <div className="rounded-lg border-2 border-dashed border-border bg-muted/30 aspect-video flex items-center justify-center">
+          <div className="flex flex-col items-center gap-2 text-muted-foreground">
+            <svg className="animate-spin h-8 w-8" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+            <span className="text-sm">Loading image...</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (image) {
     return (
-      <div className="relative rounded-lg border-2 border-dashed border-border bg-muted/30 overflow-hidden aspect-video">
-        <img
-          src={image}
-          alt={label}
-          className="w-full h-full object-contain"
-        />
-        <button
-          onClick={() => onImageChange(null)}
-          className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm rounded-full p-2 text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M18 6L6 18M6 6l12 12" />
-          </svg>
-        </button>
+      <div className="space-y-3">
+        <div className="text-sm font-medium text-foreground">{label}</div>
+        <div className="relative rounded-lg border-2 border-dashed border-border bg-muted/30 overflow-hidden aspect-video">
+          <img
+            src={image}
+            alt={label}
+            className="w-full h-full object-contain"
+          />
+          <button
+            onClick={() => onImageChange(null)}
+            className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm rounded-full p-2 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
       </div>
     )
   }
