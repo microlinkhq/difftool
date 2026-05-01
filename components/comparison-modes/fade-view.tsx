@@ -9,24 +9,29 @@ interface FadeViewProps {
   image2: string
   fadeValue: number
   onFadeChange: (value: number) => void
+  zoom: number
 }
 
-export function FadeView({ image1, image2, fadeValue, onFadeChange }: FadeViewProps) {
+export function FadeView({ image1, image2, fadeValue, onFadeChange, zoom }: FadeViewProps) {
+  const scale = zoom / 100
+
   return (
     <div className="h-full w-full flex flex-col">
-      <div className="flex-1 relative flex items-center justify-center p-4">
-        <div className="relative max-w-full max-h-full">
-          <img
-            src={image1}
-            alt="Base image"
-            className="max-w-full max-h-[calc(100vh-200px)] object-contain rounded-lg shadow-lg"
-          />
-          <img
-            src={image2}
-            alt="Compare image"
-            className="absolute inset-0 max-w-full max-h-full object-contain rounded-lg shadow-lg transition-opacity"
-            style={{ opacity: fadeValue / 100 }}
-          />
+      <div className="flex-1 overflow-auto p-4">
+        <div className="min-h-full flex items-start justify-center">
+          <div className="relative" style={{ transform: `scale(${scale})`, transformOrigin: 'top center' }}>
+            <img
+              src={image1}
+              alt="Base image"
+              className="block rounded-lg shadow-lg"
+            />
+            <img
+              src={image2}
+              alt="Compare image"
+              className="absolute inset-0 rounded-lg shadow-lg transition-opacity"
+              style={{ opacity: fadeValue / 100 }}
+            />
+          </div>
         </div>
       </div>
       <div className="border-t border-border bg-card p-4">

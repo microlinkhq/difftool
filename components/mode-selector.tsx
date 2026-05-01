@@ -18,15 +18,15 @@ const modes: { id: ComparisonMode; label: string; icon: React.ReactNode }[] = [
 
 export function ModeSelector({ mode, onModeChange }: ModeSelectorProps) {
   return (
-    <div className="flex items-center justify-center gap-1 p-2 border-t border-border">
+    <div className="flex items-center justify-center gap-1 py-3 bg-background">
       {modes.map((m) => (
         <button
           key={m.id}
           onClick={() => onModeChange(m.id)}
           className={`
-            flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors
+            flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-all
             ${mode === m.id 
-              ? "bg-primary/10 text-primary border border-primary/30" 
+              ? "bg-foreground text-background font-medium" 
               : "text-muted-foreground hover:text-foreground hover:bg-muted"
             }
           `}

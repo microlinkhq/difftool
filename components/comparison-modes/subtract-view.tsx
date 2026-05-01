@@ -5,11 +5,14 @@ import { useEffect, useRef, useState } from "react"
 interface SubtractViewProps {
   image1: string
   image2: string
+  zoom: number
 }
 
-export function SubtractView({ image1, image2 }: SubtractViewProps) {
+export function SubtractView({ image1, image2, zoom }: SubtractViewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isProcessing, setIsProcessing] = useState(true)
+
+  const scale = zoom / 100
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -74,16 +77,19 @@ export function SubtractView({ image1, image2 }: SubtractViewProps) {
   }, [image1, image2])
 
   return (
-    <div className="h-full w-full flex items-center justify-center p-4 bg-neutral-900">
+    <div className="h-full w-full overflow-auto p-4 bg-neutral-900">
       {isProcessing && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
           <div className="text-muted-foreground">Processing differences...</div>
         </div>
       )}
-      <canvas
-        ref={canvasRef}
-        className="max-w-full max-h-[calc(100vh-150px)] object-contain rounded-lg shadow-lg"
-      />
+      <div className="min-h-full flex items-start justify-center">
+        <canvas
+          ref={canvasRef}
+          className="rounded-lg shadow-lg"
+          style={{ transform: `scale(${scale})`, transformOrigin: 'top center' }}
+        />
+      </div>
     </div>
   )
 }
