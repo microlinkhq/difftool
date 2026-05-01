@@ -18,7 +18,7 @@ interface ComparisonViewProps {
 export function ComparisonView({ image1, image2, mode }: ComparisonViewProps) {
   const [fadeValue, setFadeValue] = useState(50)
   const [sliderPosition, setSliderPosition] = useState(50)
-  const [zoom, setZoom] = useState(100)
+  const [zoom, setZoom] = useState(50)
 
   return (
     <div className="h-full w-full bg-muted/30 relative flex flex-col">

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
+import { Footer } from '@/components/footer'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -37,9 +38,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="bg-background">
-      <body className="font-sans antialiased">
+      <body className="font-sans antialiased flex flex-col min-h-screen">
         <NuqsAdapter>
-          {children}
+          <div className="flex-1">
+            {children}
+          </div>
+          <Footer />
         </NuqsAdapter>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

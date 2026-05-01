@@ -26,7 +26,7 @@ export function ZoomControls({
   }
 
   const handleReset = () => {
-    onZoomChange(100)
+    onZoomChange(50)
   }
 
   return (
