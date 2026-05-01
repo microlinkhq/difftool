@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useState } from "react"
-import { ImageIcon, Link2 } from "lucide-react"
+import { ImageIcon, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
@@ -14,7 +14,6 @@ interface ImageUploaderProps {
 
 export function ImageUploader({ label, image, onImageChange, isLoading }: ImageUploaderProps) {
   const [isDragging, setIsDragging] = useState(false)
-  const [showUrlInput, setShowUrlInput] = useState(false)
   const [urlValue, setUrlValue] = useState("")
   const [isLoadingUrl, setIsLoadingUrl] = useState(false)
 
@@ -76,7 +75,6 @@ export function ImageUploader({ label, image, onImageChange, isLoading }: ImageU
       
       // Pass the original URL so it can be stored in query params
       onImageChange(dataUrl, fileName, urlValue)
-      setShowUrlInput(false)
       setUrlValue("")
     } catch {
       alert("Failed to load image from URL. Please check the URL and try again.")
@@ -151,38 +149,29 @@ export function ImageUploader({ label, image, onImageChange, isLoading }: ImageU
         <ImageIcon className="w-10 h-10 text-muted-foreground mb-3" />
         <p className="text-sm font-medium text-foreground mb-1">Drop image here</p>
         <p className="text-xs text-muted-foreground mb-4">jpg, png, webp, gif, heic, pdf, etc.</p>
-        <Button variant="outline" size="sm" className="pointer-events-none">
-          <ImageIcon className="w-4 h-4 mr-2" />
-          Browse
-        </Button>
-      </div>
-      
-      {showUrlInput ? (
-        <div className="flex gap-2">
+        
+        <div 
+          className="flex gap-2 w-full max-w-md px-6 relative z-10"
+          onClick={(e) => e.stopPropagation()}
+        >
           <Input
             type="url"
-            placeholder="Enter image URL..."
+            placeholder="Or paste image URL..."
             value={urlValue}
             onChange={(e) => setUrlValue(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleUrlSubmit()}
-            autoFocus
+            className="bg-background pointer-events-auto"
           />
-          <Button onClick={handleUrlSubmit} disabled={isLoadingUrl} size="sm">
-            {isLoadingUrl ? "Loading..." : "Load"}
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setShowUrlInput(false)}>
-            Cancel
+          <Button 
+            onClick={handleUrlSubmit} 
+            disabled={isLoadingUrl || !urlValue.trim()} 
+            size="sm"
+            className="pointer-events-auto"
+          >
+            {isLoadingUrl ? <Loader2 className="w-4 h-4 animate-spin" /> : "Load"}
           </Button>
         </div>
-      ) : (
-        <button
-          onClick={() => setShowUrlInput(true)}
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <Link2 className="w-4 h-4" />
-          Or paste image URL
-        </button>
-      )}
+      </div>
     </div>
   )
 }
