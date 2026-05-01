@@ -1,9 +1,7 @@
 "use client"
 
 import { useCallback, useState } from "react"
-import { ImageIcon, Loader2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { ImageIcon, Loader2, X } from "lucide-react"
 
 interface ImageUploaderProps {
   label: string
@@ -55,7 +53,6 @@ export function ImageUploader({ label, image, onImageChange, isLoading }: ImageU
     if (!urlValue.trim()) return
     setIsLoadingUrl(true)
     try {
-      // Fetch image directly and convert to data URL for reliable canvas access
       const response = await fetch(urlValue)
       if (!response.ok) {
         throw new Error("Failed to fetch image")
@@ -69,11 +66,9 @@ export function ImageUploader({ label, image, onImageChange, isLoading }: ImageU
         reader.readAsDataURL(blob)
       })
       
-      // Extract filename from URL path (before query params)
       const urlPath = urlValue.split("?")[0]
       const fileName = urlPath.split("/").pop() || "URL Image"
       
-      // Pass the original URL so it can be stored in query params
       onImageChange(dataUrl, fileName, urlValue)
       setUrlValue("")
     } catch {
@@ -85,14 +80,11 @@ export function ImageUploader({ label, image, onImageChange, isLoading }: ImageU
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
+      <div className="flex flex-col gap-2">
         <div className="text-sm font-medium text-foreground">{label}</div>
-        <div className="rounded-lg border-2 border-dashed border-border bg-muted/30 aspect-video flex items-center justify-center">
-          <div className="flex flex-col items-center gap-2 text-muted-foreground">
-            <svg className="animate-spin h-8 w-8" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-            </svg>
+        <div className="rounded-lg border border-border bg-background min-h-[280px] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3 text-muted-foreground">
+            <Loader2 className="w-6 h-6 animate-spin" />
             <span className="text-sm">Loading image...</span>
           </div>
         </div>
@@ -102,21 +94,19 @@ export function ImageUploader({ label, image, onImageChange, isLoading }: ImageU
 
   if (image) {
     return (
-      <div className="space-y-3">
+      <div className="flex flex-col gap-2">
         <div className="text-sm font-medium text-foreground">{label}</div>
-        <div className="relative rounded-lg border-2 border-dashed border-border bg-muted/30 overflow-hidden aspect-video">
+        <div className="relative rounded-lg border border-border bg-muted/50 overflow-hidden min-h-[280px] flex items-center justify-center">
           <img
             src={image}
             alt={label}
-            className="w-full h-full object-contain"
+            className="max-w-full max-h-[400px] object-contain"
           />
           <button
             onClick={() => onImageChange(null)}
-            className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm rounded-full p-2 text-muted-foreground hover:text-foreground transition-colors"
+            className="absolute top-3 right-3 bg-background border border-border rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
+            <X className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -124,19 +114,18 @@ export function ImageUploader({ label, image, onImageChange, isLoading }: ImageU
   }
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-2">
       <div className="text-sm font-medium text-foreground">{label}</div>
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={`
-          relative rounded-lg border-2 border-dashed transition-colors
-          flex flex-col items-center justify-center
-          aspect-video cursor-pointer
+          relative rounded-lg border transition-all min-h-[280px]
+          flex flex-col items-center justify-center cursor-pointer
           ${isDragging 
-            ? "border-primary bg-primary/5" 
-            : "border-border bg-muted/30 hover:border-muted-foreground/50"
+            ? "border-foreground bg-muted" 
+            : "border-border hover:border-muted-foreground/50 bg-background"
           }
         `}
       >
@@ -146,30 +135,29 @@ export function ImageUploader({ label, image, onImageChange, isLoading }: ImageU
           onChange={handleFileSelect}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         />
-        <ImageIcon className="w-10 h-10 text-muted-foreground mb-3" />
-        <p className="text-sm font-medium text-foreground mb-1">Drop image here</p>
-        <p className="text-xs text-muted-foreground mb-4">jpg, png, webp, gif, heic, pdf, etc.</p>
+        <ImageIcon className="w-8 h-8 text-muted-foreground/50 mb-4" />
+        <p className="text-sm text-foreground mb-1">Drop image here</p>
+        <p className="text-xs text-muted-foreground mb-6">jpg, png, webp, gif, heic, pdf, etc.</p>
         
         <div 
-          className="flex gap-2 w-full max-w-md px-6 relative z-10"
+          className="flex gap-2 w-full max-w-sm px-8 relative z-10"
           onClick={(e) => e.stopPropagation()}
         >
-          <Input
+          <input
             type="url"
             placeholder="Or paste image URL..."
             value={urlValue}
             onChange={(e) => setUrlValue(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleUrlSubmit()}
-            className="bg-background pointer-events-auto"
+            className="flex-1 h-9 px-3 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 pointer-events-auto"
           />
-          <Button 
+          <button 
             onClick={handleUrlSubmit} 
             disabled={isLoadingUrl || !urlValue.trim()} 
-            size="sm"
-            className="pointer-events-auto"
+            className="h-9 px-3 text-sm font-medium bg-foreground text-background rounded-md hover:bg-foreground/90 disabled:opacity-50 disabled:cursor-not-allowed pointer-events-auto transition-colors"
           >
             {isLoadingUrl ? <Loader2 className="w-4 h-4 animate-spin" /> : "Load"}
-          </Button>
+          </button>
         </div>
       </div>
     </div>

@@ -30,10 +30,10 @@ export function ZoomControls({
   }
 
   return (
-    <div className="flex items-center gap-2 bg-muted rounded-lg p-1.5">
+    <div className="flex items-center gap-1 bg-background border border-border rounded-lg p-1 shadow-sm">
       <button
         onClick={handleZoomOut}
-        className="p-1.5 rounded hover:bg-background transition-colors text-muted-foreground hover:text-foreground"
+        className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
         aria-label="Zoom out"
       >
         <Minus className="w-4 h-4" />
@@ -45,12 +45,12 @@ export function ZoomControls({
         max={maxZoom}
         value={zoom}
         onChange={(e) => onZoomChange(Number(e.target.value))}
-        className="w-32 h-1.5 bg-border rounded-lg appearance-none cursor-pointer accent-foreground"
+        className="w-24 h-1 bg-border rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:cursor-pointer"
       />
       
       <button
         onClick={handleReset}
-        className="p-1.5 rounded hover:bg-background transition-colors text-muted-foreground hover:text-foreground"
+        className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
         aria-label="Reset zoom to 100%"
       >
         <Maximize2 className="w-4 h-4" />
@@ -58,13 +58,13 @@ export function ZoomControls({
       
       <button
         onClick={handleZoomIn}
-        className="p-1.5 rounded hover:bg-background transition-colors text-muted-foreground hover:text-foreground"
+        className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
         aria-label="Zoom in"
       >
         <Plus className="w-4 h-4" />
       </button>
       
-      <span className="text-sm font-medium text-foreground min-w-[4rem] text-right">
+      <span className="text-sm tabular-nums text-foreground min-w-[3.5rem] text-right pr-1">
         {zoom}%
       </span>
     </div>

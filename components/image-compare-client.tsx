@@ -5,13 +5,13 @@ import { useQueryState, parseAsStringLiteral } from "nuqs"
 import { ImageUploader } from "@/components/image-uploader"
 import { ComparisonView } from "@/components/comparison-view"
 import { ModeSelector } from "@/components/mode-selector"
+import { Loader2, ArrowLeftRight } from "lucide-react"
 
 export type ComparisonMode = "split" | "fade" | "slider" | "highlight" | "subtract"
 
 const comparisonModes = ["split", "fade", "slider", "highlight", "subtract"] as const
 
 export function ImageCompareClient() {
-  // URL state with nuqs
   const [mode, setMode] = useQueryState(
     "mode",
     parseAsStringLiteral(comparisonModes).withDefault("highlight")
@@ -19,15 +19,13 @@ export function ImageCompareClient() {
   const [image1Url, setImage1Url] = useQueryState("base", { defaultValue: "" })
   const [image2Url, setImage2Url] = useQueryState("head", { defaultValue: "" })
 
-  // Local state for loaded image data URLs (converted from remote URLs)
   const [image1Data, setImage1Data] = useState<string | null>(null)
   const [image2Data, setImage2Data] = useState<string | null>(null)
-  const [image1Name, setImage1Name] = useState<string>("Image 1")
-  const [image2Name, setImage2Name] = useState<string>("Image 2")
+  const [image1Name, setImage1Name] = useState<string>("Base")
+  const [image2Name, setImage2Name] = useState<string>("Head")
   const [isLoadingImage1, setIsLoadingImage1] = useState(false)
   const [isLoadingImage2, setIsLoadingImage2] = useState(false)
 
-  // Load images from URL params on mount or when URLs change
   const loadImageFromUrl = useCallback(async (
     url: string,
     setData: (data: string | null) => void,
@@ -80,11 +78,9 @@ export function ImageCompareClient() {
   const handleImage1Change = useCallback((dataUrl: string | null, name?: string, originalUrl?: string) => {
     setImage1Data(dataUrl)
     if (name) setImage1Name(name)
-    // If we have an original URL (from URL input), store it in query params
     if (originalUrl) {
       setImage1Url(originalUrl)
     } else if (!dataUrl) {
-      // Clear URL when image is removed
       setImage1Url("")
     }
   }, [setImage1Url])
@@ -102,8 +98,8 @@ export function ImageCompareClient() {
   const handleReset = useCallback(() => {
     setImage1Data(null)
     setImage2Data(null)
-    setImage1Name("Image 1")
-    setImage2Name("Image 2")
+    setImage1Name("Base")
+    setImage2Name("Head")
     setImage1Url("")
     setImage2Url("")
   }, [setImage1Url, setImage2Url])
@@ -115,12 +111,12 @@ export function ImageCompareClient() {
     <main className="min-h-screen bg-background">
       {bothImagesLoaded ? (
         <div className="flex flex-col h-screen">
-          <header className="border-b border-border bg-card">
-            <div className="flex items-center justify-between px-4 py-2">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">{image1Name}</span>
-                <span>↔</span>
-                <span className="font-medium text-foreground">{image2Name}</span>
+          <header className="border-b border-border bg-background">
+            <div className="flex items-center justify-between px-4 h-12">
+              <div className="flex items-center gap-3 text-sm">
+                <span className="font-medium text-foreground truncate max-w-[200px]">{image1Name}</span>
+                <ArrowLeftRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                <span className="font-medium text-foreground truncate max-w-[200px]">{image2Name}</span>
               </div>
               <button
                 onClick={handleReset}
@@ -140,37 +136,41 @@ export function ImageCompareClient() {
           </div>
         </div>
       ) : (
-        <div className="container mx-auto px-4 py-12">
-          <div className="text-center mb-12">
-            <h1 className="text-3xl font-bold text-foreground mb-2">Image Diff Compare</h1>
-            <p className="text-muted-foreground">
-              Compare two images using different visualization modes
-            </p>
-          </div>
-          {isLoading && (
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                Loading images from URL...
-              </div>
+        <div className="min-h-screen flex flex-col">
+          <header className="border-b border-border bg-background">
+            <div className="max-w-5xl mx-auto px-6 h-14 flex items-center">
+              <h1 className="text-sm font-semibold text-foreground">Image Diff Compare</h1>
             </div>
-          )}
-          <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-            <ImageUploader
-              label="Base Image"
-              image={image1Data}
-              onImageChange={handleImage1Change}
-              isLoading={isLoadingImage1}
-            />
-            <ImageUploader
-              label="Compare Image"
-              image={image2Data}
-              onImageChange={handleImage2Change}
-              isLoading={isLoadingImage2}
-            />
+          </header>
+          
+          <div className="flex-1 flex items-center justify-center p-6">
+            <div className="w-full max-w-4xl">
+              {isLoading && (
+                <div className="text-center mb-8">
+                  <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Loading images from URL...
+                  </div>
+                </div>
+              )}
+              <div className="grid md:grid-cols-2 gap-6">
+                <ImageUploader
+                  label="Base Image"
+                  image={image1Data}
+                  onImageChange={handleImage1Change}
+                  isLoading={isLoadingImage1}
+                />
+                <ImageUploader
+                  label="Compare Image"
+                  image={image2Data}
+                  onImageChange={handleImage2Change}
+                  isLoading={isLoadingImage2}
+                />
+              </div>
+              <p className="text-center text-sm text-muted-foreground mt-8">
+                Compare two images using different visualization modes
+              </p>
+            </div>
           </div>
         </div>
       )}
