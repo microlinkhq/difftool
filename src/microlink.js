@@ -12,7 +12,7 @@ export const screenshot = async (url, { viewport, apiKey, log = noop } = {}) => 
   log(`→ requesting screenshot for ${url}`)
   const start = Date.now()
   const { data } = await mql(url, {
-    screenshot: { fullPage: true, type: 'png' },
+    screenshot: { fullPage: true, type: 'png', waitForTimeout: 3000 },
     viewport,
     apiKey
   })
@@ -24,7 +24,8 @@ export const screenshot = async (url, { viewport, apiKey, log = noop } = {}) => 
   log(`↓ downloading PNG from ${imageUrl}`)
   const dlStart = Date.now()
   const res = await fetch(imageUrl)
-  if (!res.ok) throw new Error(`Failed to download screenshot for ${url}: ${res.status} ${res.statusText}`)
+  if (!res.ok)
+    throw new Error(`Failed to download screenshot for ${url}: ${res.status} ${res.statusText}`)
   const buffer = Buffer.from(await res.arrayBuffer())
   log(`✓ downloaded ${formatBytes(buffer.length)} for ${url} in ${Date.now() - dlStart}ms`)
 
