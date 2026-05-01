@@ -10,7 +10,7 @@ export type ComparisonMode = "split" | "fade" | "slider" | "highlight" | "subtra
 export default function Home() {
   const [image1, setImage1] = useState<string | null>(null)
   const [image2, setImage2] = useState<string | null>(null)
-  const [mode, setMode] = useState<ComparisonMode>("split")
+  const [mode, setMode] = useState<ComparisonMode>("highlight")
   const [image1Name, setImage1Name] = useState<string>("Image 1")
   const [image2Name, setImage2Name] = useState<string>("Image 2")
 
