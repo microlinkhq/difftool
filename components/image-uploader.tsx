@@ -55,11 +55,8 @@ export function ImageUploader({ label, image, onImageChange }: ImageUploaderProp
     if (!urlValue.trim()) return
     setIsLoadingUrl(true)
     try {
-      // Use proxy to bypass CORS restrictions
-      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(urlValue)}`
-      
-      // Fetch through proxy and convert to data URL for reliable cross-origin canvas access
-      const response = await fetch(proxyUrl)
+      // Fetch image directly and convert to data URL for reliable canvas access
+      const response = await fetch(urlValue)
       if (!response.ok) {
         throw new Error("Failed to fetch image")
       }
