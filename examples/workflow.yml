@@ -21,6 +21,7 @@ jobs:
         with:
           base: https://your-production-domain.com
           head: vercel
-          routes: '/'
+          routes: |
+            - '/'
           microlink-api-key: ${{ secrets.MICROLINK_API_KEY }}
           s3-config: ${{ secrets.S3_CONFIG }}

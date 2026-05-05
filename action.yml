@@ -25,8 +25,12 @@ inputs:
     description: Commit SHA used for the per-PR object key prefix. Defaults to the current pull_request event's head SHA.
     required: false
   routes:
-    description: Comma-separated paths to diff (e.g. "/,/kikobeats")
-    default: '/'
+    description: |
+      Array of paths to diff.
+      Supported formats:
+      - JSON array string: "[\"/\",\"/kikobeats\"]"
+      - YAML list string (with `|`): "- '/'\n- '/kikobeats'"
+    default: '["/"]'
   threshold:
     description: Max acceptable diff ratio (0..1) before the action fails
     default: '0.001'

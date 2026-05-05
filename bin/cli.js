@@ -12,12 +12,37 @@ const cli = cac('microlink-difftool')
 
 const parseRoutes = value => {
   if (value === undefined || value === null) return ['/']
-  const list = Array.isArray(value) ? value : [value]
-  const flat = list
-    .flatMap(v => String(v).split(','))
-    .map(v => v.trim())
-    .filter(Boolean)
-  return flat.length > 0 ? flat : ['/']
+  if (Array.isArray(value)) {
+    const normalizedRoutes = value
+      .map(route => String(route).trim())
+      .filter(Boolean)
+    return normalizedRoutes.length > 0 ? normalizedRoutes : ['/']
+  }
+
+  const input = String(value).trim()
+  let routes
+  if (input.startsWith('[')) {
+    routes = JSON.parse(input)
+  } else {
+    const lines = input
+      .split('\n')
+      .map(line => line.trim())
+      .filter(Boolean)
+
+    const isYamlList = lines.length > 0 && lines.every(line => line.startsWith('- '))
+    if (!isYamlList) throw new Error('routes must be an array')
+
+    routes = lines.map(line =>
+      line
+        .slice(2)
+        .trim()
+        .replace(/^['"]|['"]$/g, '')
+    )
+  }
+
+  if (!Array.isArray(routes)) throw new Error('routes must be an array')
+  const normalizedRoutes = routes.map(route => String(route).trim()).filter(Boolean)
+  return normalizedRoutes.length > 0 ? normalizedRoutes : ['/']
 }
 
 cli
@@ -26,7 +51,7 @@ cli
   .option('--head <url>', 'Preview URL to compare against base')
   .option(
     '--routes <path>',
-    'Path(s) to diff. Repeatable or comma-separated. Default: /'
+    'Array of paths to diff (JSON array or YAML list string). Default: ["/"]'
   )
   .option('--out <dir>', 'Output directory', { default: './diff-output' })
   .option(

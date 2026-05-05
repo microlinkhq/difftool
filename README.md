@@ -20,7 +20,7 @@ The primary deliverable is `diff-output/review.png` — a labeled, three-column 
 
 ## Multiple routes
 
-By default `microlink-difftool` screenshots `/`. Pass `--routes` (repeatable or comma-separated) to diff several paths in one run:
+By default `microlink-difftool` screenshots `/`. Pass `--routes` as a JSON array (or repeat the flag) to diff several paths in one run:
 
 ```bash
 microlink-difftool \
@@ -29,12 +29,6 @@ microlink-difftool \
   --routes / \
   --routes /kikobeats \
   --routes /github/kikobeats
-```
-
-…or:
-
-```bash
-microlink-difftool --base … --head … --routes /,/kikobeats,/github/kikobeats
 ```
 
 Each route gets its own subdirectory under `--out` (e.g. `diff-output/root/`, `diff-output/kikobeats/`, …) with `review.png`, `base.png`, `head.png`, and `diff.png`. A top-level `diff-output/summary.json` aggregates results.
@@ -87,7 +81,8 @@ jobs:
         with:
           base: https://unavatar.io
           head: vercel
-          routes: '/'
+          routes: |
+            - '/'
           microlink-api-key: ${{ secrets.MICROLINK_API_KEY }}
           s3-config: ${{ secrets.S3_CONFIG }}
 ```
@@ -166,7 +161,7 @@ The comment is regenerated on every workflow run, so reviewers always see fresh 
 | `s3-config` | *(required)* | JSON config for an S3-compatible bucket (see above) |
 | `pr-number` | *(event)* | PR number; defaults to the current `pull_request` event |
 | `sha` | *(event)* | Commit SHA; defaults to `github.event.pull_request.head.sha` |
-| `routes` | `/` | Comma-separated paths to diff |
+| `routes` | `["/"]` | Array of paths to diff (JSON array string or YAML list string with `|`) |
 | `threshold` | `0.001` | Max acceptable diff ratio (0..1) |
 | `pixel-threshold` | `0.1` | Per-pixel sensitivity (0..1) |
 | `viewport-width` | `1280` | |
