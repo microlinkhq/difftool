@@ -245,12 +245,39 @@ runs:
       env:
         MICROLINK_API_KEY: ${{ inputs.microlink-api-key }}
         OUT_DIR: ${{ runner.temp }}/microlink-difftool
+        ROUTES_INPUT: ${{ inputs.routes }}
       run: |
+        ROUTES_JSON="$(node -e "
+          const raw = String(process.env.ROUTES_INPUT ?? '').trim()
+          const fallback = ['/']
+          if (!raw) {
+            process.stdout.write(JSON.stringify(fallback))
+            process.exit(0)
+          }
+          if (raw.startsWith('[')) {
+            const parsed = JSON.parse(raw)
+            if (!Array.isArray(parsed)) {
+              throw new Error('routes must be an array')
+            }
+            process.stdout.write(JSON.stringify(parsed))
+            process.exit(0)
+          }
+          const lines = raw.split('\\n').map(line => line.trim()).filter(Boolean)
+          const isYamlList = lines.length > 0 && lines.every(line => line.startsWith('- '))
+          if (!isYamlList) {
+            throw new Error('routes must be an array (JSON array or YAML list)')
+          }
+          const routes = lines
+            .map(line => line.slice(2).trim().replace(/^['\\\"]|['\\\"]$/g, ''))
+            .filter(Boolean)
+          process.stdout.write(JSON.stringify(routes.length > 0 ? routes : fallback))
+        ")"
+
         set +e
         node "${{ github.action_path }}/bin/cli.js" \
           --base "${{ inputs.base }}" \
           --head "${{ steps.resolve-head.outputs.url }}" \
-          --routes "${{ inputs.routes }}" \
+          --routes "$ROUTES_JSON" \
           --threshold "${{ inputs.threshold }}" \
           --pixel-threshold "${{ inputs.pixel-threshold }}" \
           --viewport-width "${{ inputs.viewport-width }}" \
