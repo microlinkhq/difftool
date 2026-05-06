@@ -12,6 +12,7 @@ export const screenshot = async (url, { viewport, apiKey, log = noop } = {}) => 
   log(`→ requesting screenshot for ${url}`)
   const start = Date.now()
   const { data } = await mql(url, {
+    meta: false,
     screenshot: { fullPage: true, type: 'png', waitForTimeout: 3000 },
     viewport,
     apiKey
