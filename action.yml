@@ -197,7 +197,17 @@ runs:
           const { owner, repo } = context.repo
           const intervalMs = Number(process.env.INTERVAL_SECONDS) * 1000
           const maxAttempts = Math.ceil(Number(process.env.MAX_SECONDS) / Number(process.env.INTERVAL_SECONDS))
+          const previewFallbackGraceMs = Math.max(120000, intervalMs * 6)
+          let firstUnmatchedPreviewAt = null
           const sleep = ms => new Promise(r => setTimeout(r, ms))
+          const normalizeEnv = value =>
+            String(value || '')
+              .toLowerCase()
+              .replace(/[\u2010-\u2015]/g, '-')
+          const toTimestamp = value => {
+            const parsed = Date.parse(String(value || ''))
+            return Number.isNaN(parsed) ? 0 : parsed
+          }
 
           core.info(`polling for vercel preview · sha=${sha} · up to ${maxAttempts} attempts · ${intervalMs / 1000}s interval`)
 
@@ -205,15 +215,47 @@ runs:
             const { data: deployments } = await github.rest.repos.listDeployments({
               owner, repo, sha, per_page: 100
             })
-            const vercelDeployments = deployments.filter(d => d.creator && d.creator.login === 'vercel[bot]')
+            const vercelDeployments = deployments
+              .filter(d => d.creator && d.creator.login === 'vercel[bot]')
+              .sort((a, b) => toTimestamp(b.created_at) - toTimestamp(a.created_at))
             const previewDeployments = vercelDeployments.filter(d =>
-              String(d.environment || '').toLowerCase().startsWith('preview')
+              normalizeEnv(d.environment).startsWith('preview')
+            )
+            const preferredPreviewDeployments = previewDeployments.filter(d =>
+              normalizeEnv(d.environment).includes(repo.toLowerCase())
+            )
+            const genericPreviewDeployments = previewDeployments.filter(d =>
+              normalizeEnv(d.environment) === 'preview'
             )
 
+            const shouldHoldForPreferredPreview =
+              preferredPreviewDeployments.length === 0 &&
+              previewDeployments.length > 0 &&
+              genericPreviewDeployments.length === 0
+
+            if (shouldHoldForPreferredPreview) {
+              firstUnmatchedPreviewAt = firstUnmatchedPreviewAt || Date.now()
+              const unmatchedElapsedMs = Date.now() - firstUnmatchedPreviewAt
+              const remainingGraceSeconds = Math.max(0, Math.ceil((previewFallbackGraceMs - unmatchedElapsedMs) / 1000))
+              if (unmatchedElapsedMs >= previewFallbackGraceMs) {
+                core.info(
+                  `attempt ${attempt}/${maxAttempts}: using fallback preview deployment after waiting ${Math.ceil(unmatchedElapsedMs / 1000)}s for repo "${repo}" deployment`
+                )
+              } else {
+                core.info(
+                  `attempt ${attempt}/${maxAttempts}: found preview deployment(s) but none matched repo "${repo}" yet; waiting (${remainingGraceSeconds}s grace left)`
+                )
+                if (attempt === maxAttempts) break
+                await sleep(intervalMs)
+                continue
+              }
+            } else {
+              firstUnmatchedPreviewAt = null
+            }
+
             const vercel =
-              previewDeployments.find(d =>
-                String(d.environment || '').toLowerCase().includes(repo.toLowerCase())
-              ) ||
+              preferredPreviewDeployments[0] ||
+              genericPreviewDeployments[0] ||
               previewDeployments[0] ||
               vercelDeployments[0]
 
