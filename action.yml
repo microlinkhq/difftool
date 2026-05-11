@@ -136,10 +136,10 @@ runs:
         printf '%s' "$S3_CONFIG" > "$CONFIG_PATH"
         echo "config-path=$CONFIG_PATH" >> "$GITHUB_OUTPUT"
 
-    - name: Setup Node
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
+    - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
 
     - name: Install canvas native dependencies
       if: steps.pr.outputs.mode == 'diff'
@@ -153,6 +153,7 @@ runs:
       shell: bash
       run: |
         corepack enable
+        corepack prepare pnpm@10.33.0 --activate
         cd "${{ github.action_path }}"
         pnpm install --no-frozen-lockfile
 
