@@ -11,10 +11,12 @@ const formatBytes = bytes => {
 export const screenshot = async (url, { log = noop, ...opts } = {}) => {
   log(`→ requesting screenshot for ${url}`)
   const start = Date.now()
+  const { screenshot: screenshotOpts, ...rest } = opts
   const { data } = await mql(url, {
+    waitForTimeout: 3000,
     meta: false,
-    screenshot: { fullPage: true, type: 'png', waitForTimeout: 3000 },
-    ...opts
+    screenshot: { fullPage: true, type: 'png', ...screenshotOpts },
+    ...rest
   })
   log(`← microlink responded for ${url} in ${Date.now() - start}ms`)
 
