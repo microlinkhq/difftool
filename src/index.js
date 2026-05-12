@@ -7,6 +7,7 @@ import { screenshot } from './microlink.js'
 
 const DEFAULT_THRESHOLD = 0.001
 const DEFAULT_PIXEL_THRESHOLD = 0.1
+const DEFAULT_VIEWPORT = { width: 1280, height: 800 }
 const DEFAULT_ROUTES = ['/']
 
 const noop = () => {}
@@ -145,7 +146,7 @@ export const run = async ({
   if (!Array.isArray(routes) || routes.length === 0)
     throw new Error('routes must be a non-empty array')
 
-  const mql = { apiKey, ...mqlOpts }
+  const mql = { viewport: DEFAULT_VIEWPORT, apiKey, ...mqlOpts }
   const resolvedThreshold = await resolveThreshold({ flag: threshold, cwd })
   log(
     `threshold resolved: ${resolvedThreshold} (pixel-threshold: ${pixelThreshold})`
