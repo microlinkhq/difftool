@@ -61,8 +61,7 @@ cli
   .option('--pixel-threshold <ratio>', 'Per-pixel sensitivity (0..1)', {
     default: 0.1
   })
-  .option('--viewport-width <px>', 'Viewport width', { default: 1280 })
-  .option('--viewport-height <px>', 'Viewport height', { default: 800 })
+  .option('--mql <json>', 'JSON object with Microlink API options (viewport, styles, etc.)')
   .action(async opts => {
     if (!opts.base || !opts.head) {
       cli.outputHelp()
@@ -71,6 +70,7 @@ cli
 
     const log = msg => console.error(`[microlink-difftool] ${msg}`)
     const routes = parseRoutes(opts.routes)
+    const mql = opts.mql ? JSON.parse(opts.mql) : undefined
 
     try {
       const result = await run({
@@ -81,10 +81,7 @@ cli
         threshold:
           opts.threshold !== undefined ? Number(opts.threshold) : undefined,
         pixelThreshold: Number(opts.pixelThreshold),
-        viewport: {
-          width: Number(opts.viewportWidth),
-          height: Number(opts.viewportHeight)
-        },
+        mql,
         log
       })
 
