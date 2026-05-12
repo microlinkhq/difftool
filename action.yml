@@ -37,10 +37,12 @@ inputs:
   pixel-threshold:
     description: Per-pixel sensitivity (0..1)
     default: '0.1'
-  viewport-width:
-    default: '1280'
-  viewport-height:
-    default: '800'
+  mql:
+    description: |
+      JSON object with Microlink API options passed to the screenshot call.
+      Common keys: viewport ({ width, height }), styles (array of CSS strings).
+      When head=vercel, a CSS rule hiding the Vercel toolbar is automatically added to styles.
+    required: false
   microlink-api-key:
     description: Optional Microlink paid-tier key (recommended for CI)
     required: false
@@ -300,31 +302,43 @@ runs:
         MICROLINK_API_KEY: ${{ inputs.microlink-api-key }}
         OUT_DIR: ${{ runner.temp }}/microlink-difftool
         ROUTES_INPUT: ${{ inputs.routes }}
+        HEAD_INPUT: ${{ inputs.head }}
+        MQL_INPUT: ${{ inputs.mql }}
       run: |
-        ROUTES_JSON="$(node -e "
-          const raw = String(process.env.ROUTES_INPUT ?? '').trim()
+        eval "$(node -e "
           const fallback = ['/']
-          if (!raw) {
-            process.stdout.write(JSON.stringify(fallback))
-            process.exit(0)
-          }
-          if (raw.startsWith('[')) {
-            const parsed = JSON.parse(raw)
+          const rawRoutes = String(process.env.ROUTES_INPUT ?? '').trim()
+          let routes
+          if (!rawRoutes) {
+            routes = fallback
+          } else if (rawRoutes.startsWith('[')) {
+            const parsed = JSON.parse(rawRoutes)
             if (!Array.isArray(parsed)) {
               throw new Error('routes must be an array')
             }
-            process.stdout.write(JSON.stringify(parsed))
-            process.exit(0)
+            routes = parsed
+          } else {
+            const lines = rawRoutes.split('\\n').map(line => line.trim()).filter(Boolean)
+            const isYamlList = lines.length > 0 && lines.every(line => line.startsWith('- '))
+            if (!isYamlList) {
+              throw new Error('routes must be an array (JSON array or YAML list)')
+            }
+            routes = lines
+              .map(line => line.slice(2).trim().replace(/^['\\\"]|['\\\"]$/g, ''))
+              .filter(Boolean)
+            if (routes.length === 0) routes = fallback
           }
-          const lines = raw.split('\\n').map(line => line.trim()).filter(Boolean)
-          const isYamlList = lines.length > 0 && lines.every(line => line.startsWith('- '))
-          if (!isYamlList) {
-            throw new Error('routes must be an array (JSON array or YAML list)')
+
+          const rawMql = String(process.env.MQL_INPUT ?? '').trim()
+          const mql = rawMql ? JSON.parse(rawMql) : {}
+          if (process.env.HEAD_INPUT === 'vercel') {
+            mql.styles = [...(mql.styles || []), 'button[aria-label=\"Vercel Toolbar\"] { display: none !important; }']
           }
-          const routes = lines
-            .map(line => line.slice(2).trim().replace(/^['\\\"]|['\\\"]$/g, ''))
-            .filter(Boolean)
-          process.stdout.write(JSON.stringify(routes.length > 0 ? routes : fallback))
+
+          console.log('ROUTES_JSON=' + JSON.stringify(JSON.stringify(routes)))
+          if (Object.keys(mql).length > 0) {
+            console.log('MQL_JSON=' + JSON.stringify(JSON.stringify(mql)))
+          }
         ")"
 
         set +e
@@ -334,8 +348,7 @@ runs:
           --routes "$ROUTES_JSON" \
           --threshold "${{ inputs.threshold }}" \
           --pixel-threshold "${{ inputs.pixel-threshold }}" \
-          --viewport-width "${{ inputs.viewport-width }}" \
-          --viewport-height "${{ inputs.viewport-height }}" \
+          ${MQL_JSON:+--mql "$MQL_JSON"} \
           --out "$OUT_DIR"
         DIFF_EXIT=$?
         set -e

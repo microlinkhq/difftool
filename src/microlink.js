@@ -8,14 +8,13 @@ const formatBytes = bytes => {
   return `${(bytes / (1024 * 1024)).toFixed(2)}MB`
 }
 
-export const screenshot = async (url, { viewport, apiKey, log = noop } = {}) => {
+export const screenshot = async (url, { log = noop, ...opts } = {}) => {
   log(`→ requesting screenshot for ${url}`)
   const start = Date.now()
   const { data } = await mql(url, {
     meta: false,
     screenshot: { fullPage: true, type: 'png', waitForTimeout: 3000 },
-    viewport,
-    apiKey
+    ...opts
   })
   log(`← microlink responded for ${url} in ${Date.now() - start}ms`)
 

@@ -7,7 +7,6 @@ import { screenshot } from './microlink.js'
 
 const DEFAULT_THRESHOLD = 0.001
 const DEFAULT_PIXEL_THRESHOLD = 0.1
-const DEFAULT_VIEWPORT = { width: 1280, height: 800 }
 const DEFAULT_ROUTES = ['/']
 
 const noop = () => {}
@@ -50,12 +49,11 @@ const runRoute = async ({
   route,
   base,
   head,
-  viewport,
-  apiKey,
   threshold,
   pixelThreshold,
   outDir,
-  log
+  log,
+  ...screenshotOpts
 }) => {
   const baseUrl = joinUrl(base, route)
   const headUrl = joinUrl(head, route)
@@ -66,13 +64,11 @@ const runRoute = async ({
   const fetchStart = Date.now()
   const [baseBuffer, headBuffer] = await Promise.all([
     screenshot(baseUrl, {
-      viewport,
-      apiKey,
+      ...screenshotOpts,
       log: msg => log(`[${route}] ${msg}`)
     }),
     screenshot(headUrl, {
-      viewport,
-      apiKey,
+      ...screenshotOpts,
       log: msg => log(`[${route}] ${msg}`)
     })
   ])
@@ -138,7 +134,7 @@ export const run = async ({
   routes = DEFAULT_ROUTES,
   threshold,
   pixelThreshold = DEFAULT_PIXEL_THRESHOLD,
-  viewport = DEFAULT_VIEWPORT,
+  mql: mqlOpts = {},
   apiKey = process.env.MICROLINK_API_KEY,
   cwd = process.cwd(),
   log = noop
@@ -149,11 +145,11 @@ export const run = async ({
   if (!Array.isArray(routes) || routes.length === 0)
     throw new Error('routes must be a non-empty array')
 
+  const mql = { apiKey, ...mqlOpts }
   const resolvedThreshold = await resolveThreshold({ flag: threshold, cwd })
   log(
     `threshold resolved: ${resolvedThreshold} (pixel-threshold: ${pixelThreshold})`
   )
-  log(`viewport: ${viewport.width}x${viewport.height}`)
   log(`routes: ${routes.join(', ')}`)
 
   const outDir = path.resolve(cwd, out)
@@ -169,8 +165,7 @@ export const run = async ({
       route,
       base,
       head,
-      viewport,
-      apiKey,
+      ...mql,
       threshold: resolvedThreshold,
       pixelThreshold,
       outDir: routeDir,
@@ -190,7 +185,6 @@ export const run = async ({
     head,
     threshold: resolvedThreshold,
     pixelThreshold,
-    viewport,
     passed,
     routes: results.map(({ outDir: routeOutDir, ...rest }) => ({
       ...rest,
