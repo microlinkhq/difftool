@@ -8,16 +8,28 @@ const formatBytes = bytes => {
   return `${(bytes / (1024 * 1024)).toFixed(2)}MB`
 }
 
+const toApiHeaders = headers => {
+  const result = {}
+  for (const [key, value] of Object.entries(headers)) {
+    result[`x-api-header-${key}`] = String(value)
+  }
+  return result
+}
+
 export const screenshot = async (url, { log = noop, ...opts } = {}) => {
   log(`→ requesting screenshot for ${url}`)
   const start = Date.now()
-  const { screenshot: screenshotOpts, ...rest } = opts
-  const { data } = await mql(url, {
-    waitForTimeout: 3000,
-    meta: false,
-    screenshot: { fullPage: true, type: 'png', ...screenshotOpts },
-    ...rest
-  })
+  const { screenshot: screenshotOpts, headers, ...rest } = opts
+  const { data } = await mql(
+    url,
+    {
+      waitForTimeout: 3000,
+      meta: false,
+      screenshot: { fullPage: true, type: 'png', ...screenshotOpts },
+      ...rest
+    },
+    headers ? { headers: toApiHeaders(headers) } : undefined
+  )
   log(`← microlink responded for ${url} in ${Date.now() - start}ms`)
 
   const imageUrl = data?.screenshot?.url
