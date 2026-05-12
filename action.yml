@@ -40,8 +40,8 @@ inputs:
   mql:
     description: |
       JSON object with Microlink API options passed to the screenshot call.
-      Common keys: viewport ({ width, height }), styles (array of CSS strings).
-      When head=vercel, a CSS rule hiding the Vercel toolbar is automatically added to styles.
+      Common keys: viewport ({ width, height }), styles (array of CSS strings), headers (object).
+      When head=vercel, the x-vercel-skip-toolbar header is automatically set.
     required: false
   microlink-api-key:
     description: Optional Microlink paid-tier key (recommended for CI)
@@ -332,7 +332,7 @@ runs:
           const rawMql = String(process.env.MQL_INPUT ?? '').trim()
           const mql = rawMql ? JSON.parse(rawMql) : {}
           if (process.env.HEAD_INPUT === 'vercel') {
-            mql.styles = [...(mql.styles || []), 'button[aria-label=\"Vercel Toolbar\"] { display: none !important; }']
+            mql.headers = { ...mql.headers, 'x-vercel-skip-toolbar': '1' }
           }
 
           console.log('ROUTES_JSON=' + JSON.stringify(JSON.stringify(routes)))
