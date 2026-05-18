@@ -138,7 +138,19 @@ runs:
         printf '%s' "$S3_CONFIG" > "$CONFIG_PATH"
         echo "config-path=$CONFIG_PATH" >> "$GITHUB_OUTPUT"
 
+    - name: Detect cleanup tooling
+      id: cleanup-tooling
+      if: steps.pr.outputs.mode == 'cleanup'
+      shell: bash
+      run: |
+        if command -v aws >/dev/null 2>&1; then
+          echo "use-aws-cli=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "use-aws-cli=false" >> "$GITHUB_OUTPUT"
+        fi
+
     - name: Setup Node.js
+      if: steps.pr.outputs.mode == 'diff' || steps.cleanup-tooling.outputs.use-aws-cli != 'true'
       uses: actions/setup-node@v6
       with:
         node-version: lts/*
@@ -152,6 +164,7 @@ runs:
           libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
 
     - name: Install CLI dependencies
+      if: steps.pr.outputs.mode == 'diff' || steps.cleanup-tooling.outputs.use-aws-cli != 'true'
       shell: bash
       run: |
         corepack enable
@@ -159,8 +172,61 @@ runs:
         cd "${{ github.action_path }}"
         pnpm install --no-frozen-lockfile
 
+    - name: Cleanup on PR close via AWS CLI
+      if: steps.pr.outputs.mode == 'cleanup' && steps.cleanup-tooling.outputs.use-aws-cli == 'true'
+      shell: bash
+      env:
+        CONFIG_PATH: ${{ steps.s3.outputs.config-path }}
+        OWNER: ${{ github.repository_owner }}
+        NAME: ${{ github.event.repository.name }}
+        PR_NUMBER: ${{ steps.pr.outputs.number }}
+      run: |
+        eval "$({
+          CONFIG_PATH="$CONFIG_PATH" node <<'NODE'
+          const fs = require('node:fs')
+
+          const quote = value => `'${String(value).replace(/'/g, `'"'"'`)}'`
+          const cfg = JSON.parse(fs.readFileSync(process.env.CONFIG_PATH, 'utf8'))
+
+          const env = {
+            AWS_ACCESS_KEY_ID: cfg.accessKeyId,
+            AWS_SECRET_ACCESS_KEY: cfg.secretAccessKey,
+            AWS_SESSION_TOKEN: cfg.sessionToken || '',
+            AWS_REGION: cfg.region || 'auto',
+            S3_BUCKET: cfg.bucket,
+            S3_ENDPOINT: cfg.endpoint || ''
+          }
+
+          for (const [key, value] of Object.entries(env)) {
+            if (value === undefined || value === null || value === '') continue
+            console.log(`export ${key}=${quote(value)}`)
+          }
+
+          if (cfg.forcePathStyle === true) {
+            console.log("export AWS_S3_ADDRESSING_STYLE='path'")
+          }
+        NODE
+        })"
+
+        export AWS_DEFAULT_REGION="${AWS_REGION:-auto}"
+        export AWS_PAGER=''
+
+        PREFIX="$OWNER/$NAME/pr-$PR_NUMBER/"
+        AWS_ARGS=()
+        if [ -n "${S3_ENDPOINT:-}" ]; then
+          AWS_ARGS+=(--endpoint-url "$S3_ENDPOINT")
+        fi
+
+        DELETE_LOG="$(mktemp)"
+        aws s3 rm "s3://$S3_BUCKET/$PREFIX" --recursive "${AWS_ARGS[@]}" | tee "$DELETE_LOG"
+
+        DELETED_COUNT="$(grep -c '^delete:' "$DELETE_LOG" || true)"
+        rm -f "$DELETE_LOG"
+
+        echo "cleanup-s3: deleted ${DELETED_COUNT:-0} object(s) under $PREFIX"
+
     - name: Cleanup on PR close
-      if: steps.pr.outputs.mode == 'cleanup'
+      if: steps.pr.outputs.mode == 'cleanup' && steps.cleanup-tooling.outputs.use-aws-cli != 'true'
       shell: bash
       env:
         CONFIG_PATH: ${{ steps.s3.outputs.config-path }}
