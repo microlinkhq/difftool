@@ -175,7 +175,7 @@ runs:
     - name: Resolve head URL
       id: resolve-head
       if: steps.pr.outputs.mode == 'diff'
-      uses: actions/github-script@v7
+      uses: actions/github-script@v9
       env:
         HEAD_INPUT: ${{ inputs.head }}
         PR_SHA: ${{ steps.pr.outputs.sha }}
@@ -413,7 +413,7 @@ runs:
 
     - name: Post or update sticky PR comment
       if: steps.pr.outputs.mode == 'diff'
-      uses: actions/github-script@v7
+      uses: actions/github-script@v9
       with:
         github-token: ${{ inputs.token || inputs.github-token }}
         script: |
