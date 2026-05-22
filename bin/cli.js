@@ -58,6 +58,10 @@ cli
     '--threshold <ratio>',
     'Max acceptable diff ratio (0..1). Falls back to MICROLINK_DIFF_THRESHOLD env or microlink-difftool.json'
   )
+  .option(
+    '--warning-threshold <ratio>',
+    'Max diff ratio for warning verdict (0..1). Changes between threshold and this are warnings, above are failures. Falls back to MICROLINK_DIFF_WARNING_THRESHOLD env or microlink-difftool.json'
+  )
   .option('--pixel-threshold <ratio>', 'Per-pixel sensitivity (0..1)', {
     default: 0.1
   })
@@ -80,34 +84,38 @@ cli
         routes,
         threshold:
           opts.threshold !== undefined ? Number(opts.threshold) : undefined,
+        warningThreshold:
+          opts.warningThreshold !== undefined ? Number(opts.warningThreshold) : undefined,
         pixelThreshold: Number(opts.pixelThreshold),
         mql,
         log
       })
 
-      const thresholdPct = (result.threshold * 100).toFixed(2)
+      const verdictMarks = { pass: '✓', warning: '⚠', fail: '✗' }
       for (const r of result.results) {
-        const mark = r.passed ? '✓' : '✗'
+        const mark = verdictMarks[r.verdict]
         const ratioPct = (r.diffRatio * 100).toFixed(2)
-        const tail = r.passed
-          ? 'looks fine'
-          : `review ${path.join(
+        const tail = r.verdict === 'fail'
+          ? `review ${path.join(
               result.outDir,
               r.outDir === '.' ? '' : r.outDir,
               'review.png'
             )}`
+          : r.verdict === 'warning'
+            ? 'minor changes detected'
+            : 'looks fine'
         console.log(
-          `${mark} ${r.route} · ${ratioPct}% changed (threshold ${thresholdPct}%) — ${tail}`
+          `${mark} ${r.route} · ${ratioPct}% changed — ${tail}`
         )
       }
 
-      const overallMark = result.passed ? '✓' : '✗'
-      const failed = result.results.filter(r => !r.passed).length
-      console.log(
-        `${overallMark} overall: ${result.results.length - failed}/${
-          result.results.length
-        } routes pass`
-      )
+      const overallMark = verdictMarks[result.verdict]
+      const failed = result.results.filter(r => r.verdict === 'fail').length
+      const warned = result.results.filter(r => r.verdict === 'warning').length
+      const parts = [`${result.results.length - failed - warned}/${result.results.length} routes pass`]
+      if (warned) parts.push(`${warned} warning(s)`)
+      if (failed) parts.push(`${failed} failed`)
+      console.log(`${overallMark} overall: ${parts.join(', ')}`)
 
       process.exit(result.passed ? 0 : 1)
     } catch (err) {

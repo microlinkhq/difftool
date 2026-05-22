@@ -28,7 +28,8 @@ const routeRow = (route, assetUrls) => {
   const baseUrl = lookup(assetUrls, slug, 'base.png')
   const headUrl = lookup(assetUrls, slug, 'head.png')
   const diffUrl = lookup(assetUrls, slug, 'diff.png')
-  const verdict = route.passed ? '✅' : '❌'
+  const verdictEmoji = { pass: '✅', warning: '⚠️', fail: '❌' }
+  const verdict = verdictEmoji[route.verdict] || (route.passed ? '✅' : '❌')
 
   return [
     '    <tr>',
@@ -52,12 +53,15 @@ export const renderComment = (
   }
 
   const total = summary.routes.length
-  const failed = summary.routes.filter(r => !r.passed).length
-  const passed = total - failed
+  const failed = summary.routes.filter(r => r.verdict === 'fail').length
+  const warned = summary.routes.filter(r => r.verdict === 'warning').length
+  const passed = total - failed - warned
 
-  const verdictHeading = summary.passed
-    ? `### ✅ ${passed}/${total} routes pass`
-    : `### ❌ ${failed}/${total} routes failed`
+  const verdictHeading = summary.verdict === 'fail'
+    ? `### ❌ ${failed}/${total} routes failed`
+    : summary.verdict === 'warning'
+      ? `### ⚠️ ${warned}/${total} routes with warnings`
+      : `### ✅ ${passed}/${total} routes pass`
 
   const metaBits = []
   if (runUrl) metaBits.push(`<a href="${runUrl}">workflow run</a>`)
@@ -70,8 +74,9 @@ export const renderComment = (
   ].join('\n')
 
   const ordered = [
-    ...summary.routes.filter(r => !r.passed),
-    ...summary.routes.filter(r => r.passed)
+    ...summary.routes.filter(r => r.verdict === 'fail'),
+    ...summary.routes.filter(r => r.verdict === 'warning'),
+    ...summary.routes.filter(r => r.verdict === 'pass')
   ]
 
   const routesTable = [

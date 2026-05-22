@@ -16,6 +16,8 @@ export const composite = async ({
   diffPixels,
   totalPixels,
   threshold,
+  warningThreshold,
+  verdict,
   passed
 }) => {
   const [baseImg, headImg, diffImg] = await Promise.all([
@@ -66,18 +68,21 @@ export const composite = async ({
   ctx.fillRect(colWidth * 2 + SEPARATOR_WIDTH, 0, SEPARATOR_WIDTH, HEADER_HEIGHT + colHeight)
 
   const footerY = HEADER_HEIGHT + colHeight
-  ctx.fillStyle = passed ? '#064e3b' : '#7f1d1d'
+  const footerColors = { pass: '#064e3b', warning: '#78350f', fail: '#7f1d1d' }
+  ctx.fillStyle = footerColors[verdict]
   ctx.fillRect(0, footerY, totalWidth, FOOTER_HEIGHT)
 
   const ratio = diffPixels / totalPixels
-  const verdict = passed
-    ? `PASS · ${(ratio * 100).toFixed(2)}% changed (threshold ${(threshold * 100).toFixed(2)}%)`
-    : `FAIL · ${(ratio * 100).toFixed(2)}% changed (threshold ${(threshold * 100).toFixed(2)}%) — review the diff column`
+  const footerLabels = {
+    pass: `PASS · ${(ratio * 100).toFixed(2)}% changed (threshold ${(threshold * 100).toFixed(2)}%)`,
+    warning: `WARNING · ${(ratio * 100).toFixed(2)}% changed (threshold ${(threshold * 100).toFixed(2)}%, warning ${(warningThreshold * 100).toFixed(2)}%)`,
+    fail: `FAIL · ${(ratio * 100).toFixed(2)}% changed (warning ${(warningThreshold * 100).toFixed(2)}%) — review the diff column`
+  }
 
   ctx.fillStyle = '#f9fafb'
   ctx.font = 'bold 16px sans-serif'
   ctx.textBaseline = 'middle'
-  ctx.fillText(verdict, PADDING_X, footerY + FOOTER_HEIGHT / 2)
+  ctx.fillText(footerLabels[verdict], PADDING_X, footerY + FOOTER_HEIGHT / 2)
 
   return canvas.toBuffer('image/png')
 }
