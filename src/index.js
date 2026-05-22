@@ -6,6 +6,7 @@ import { diff as runDiff } from './diff.js'
 import { screenshot } from './microlink.js'
 
 const DEFAULT_THRESHOLD = 0.001
+const DEFAULT_WARNING_THRESHOLD = 0.02
 const DEFAULT_PIXEL_THRESHOLD = 0.1
 const DEFAULT_VIEWPORT = { width: 1280, height: 800 }
 const DEFAULT_ROUTES = ['/']
@@ -30,6 +31,21 @@ export const resolveThreshold = async ({ flag, cwd = process.cwd() } = {}) => {
   return DEFAULT_THRESHOLD
 }
 
+export const resolveWarningThreshold = async ({ flag, cwd = process.cwd() } = {}) => {
+  if (flag !== undefined && flag !== null) return Number(flag)
+  if (process.env.MICROLINK_DIFF_WARNING_THRESHOLD)
+    return Number(process.env.MICROLINK_DIFF_WARNING_THRESHOLD)
+  const config = await readJson(path.join(cwd, 'microlink-difftool.json'))
+  if (config && typeof config.warningThreshold === 'number') return config.warningThreshold
+  return DEFAULT_WARNING_THRESHOLD
+}
+
+const computeVerdict = (ratio, threshold, warningThreshold) => {
+  if (ratio <= threshold) return 'pass'
+  if (ratio <= warningThreshold) return 'warning'
+  return 'fail'
+}
+
 const joinUrl = (origin, route) => {
   const base = origin.replace(/\/+$/, '')
   const suffix = route.startsWith('/') ? route : `/${route}`
@@ -51,6 +67,7 @@ const runRoute = async ({
   base,
   head,
   threshold,
+  warningThreshold,
   pixelThreshold,
   outDir,
   log,
@@ -92,7 +109,8 @@ const runRoute = async ({
   )
 
   const ratio = diffPixels / totalPixels
-  const passed = ratio <= threshold
+  const verdict = computeVerdict(ratio, threshold, warningThreshold)
+  const passed = verdict !== 'fail'
 
   const compStart = Date.now()
   const reviewBuffer = await composite({
@@ -104,6 +122,8 @@ const runRoute = async ({
     diffPixels,
     totalPixels,
     threshold,
+    warningThreshold,
+    verdict,
     passed
   })
   log(`[${route}] composite rendered in ${Date.now() - compStart}ms`)
@@ -123,6 +143,7 @@ const runRoute = async ({
     diffPixels,
     totalPixels,
     diffRatio: ratio,
+    verdict,
     passed,
     outDir
   }
@@ -134,6 +155,7 @@ export const run = async ({
   out,
   routes = DEFAULT_ROUTES,
   threshold,
+  warningThreshold,
   pixelThreshold = DEFAULT_PIXEL_THRESHOLD,
   mql: mqlOpts = {},
   apiKey = process.env.MICROLINK_API_KEY,
@@ -148,8 +170,9 @@ export const run = async ({
 
   const mql = { viewport: DEFAULT_VIEWPORT, apiKey, ...mqlOpts }
   const resolvedThreshold = await resolveThreshold({ flag: threshold, cwd })
+  const resolvedWarningThreshold = await resolveWarningThreshold({ flag: warningThreshold, cwd })
   log(
-    `threshold resolved: ${resolvedThreshold} (pixel-threshold: ${pixelThreshold})`
+    `threshold resolved: ${resolvedThreshold} (warning: ${resolvedWarningThreshold}, pixel-threshold: ${pixelThreshold})`
   )
   log(`routes: ${routes.join(', ')}`)
 
@@ -168,24 +191,30 @@ export const run = async ({
       head,
       ...mql,
       threshold: resolvedThreshold,
+      warningThreshold: resolvedWarningThreshold,
       pixelThreshold,
       outDir: routeDir,
       log
     })
     log(
-      `◀ route ${route} ${result.passed ? 'PASS' : 'FAIL'} · ${(
+      `◀ route ${route} ${result.verdict.toUpperCase()} · ${(
         result.diffRatio * 100
       ).toFixed(2)}% changed`
     )
     results.push(result)
   }
 
-  const passed = results.every(r => r.passed)
+  const hasFailures = results.some(r => r.verdict === 'fail')
+  const hasWarnings = results.some(r => r.verdict === 'warning')
+  const passed = !hasFailures
+  const verdict = hasFailures ? 'fail' : hasWarnings ? 'warning' : 'pass'
   const summary = {
     base,
     head,
     threshold: resolvedThreshold,
+    warningThreshold: resolvedWarningThreshold,
     pixelThreshold,
+    verdict,
     passed,
     routes: results.map(({ outDir: routeOutDir, ...rest }) => ({
       ...rest,

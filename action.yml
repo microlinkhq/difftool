@@ -32,8 +32,11 @@ inputs:
       - YAML list string (with `|`): "- '/'\n- '/kikobeats'"
     default: '["/"]'
   threshold:
-    description: Max acceptable diff ratio (0..1) before the action fails
+    description: Max acceptable diff ratio (0..1) below which routes pass with no changes flagged
     default: '0.001'
+  warning-threshold:
+    description: Max diff ratio (0..1) for a warning verdict. Changes between threshold and this value are warnings; above this value routes fail.
+    default: '0.05'
   pixel-threshold:
     description: Per-pixel sensitivity (0..1)
     default: '0.1'
@@ -67,8 +70,11 @@ inputs:
 
 outputs:
   passed:
-    description: '"true" if all routes are within threshold, else "false"'
+    description: '"true" if no routes exceed the warning threshold (warnings are not failures), else "false"'
     value: ${{ steps.diff.outputs.passed }}
+  verdict:
+    description: '"pass", "warning", or "fail" — overall verdict across all routes'
+    value: ${{ steps.diff.outputs.verdict }}
   summary-json:
     description: Path to summary.json on the runner
     value: ${{ steps.diff.outputs.summary-json }}
@@ -413,6 +419,7 @@ runs:
           --head "${{ steps.resolve-head.outputs.url }}" \
           --routes "$ROUTES_JSON" \
           --threshold "${{ inputs.threshold }}" \
+          --warning-threshold "${{ inputs.warning-threshold }}" \
           --pixel-threshold "${{ inputs.pixel-threshold }}" \
           ${MQL_JSON:+--mql "$MQL_JSON"} \
           --out "$OUT_DIR"
@@ -429,6 +436,8 @@ runs:
         else
           echo "passed=false" >> "$GITHUB_OUTPUT"
         fi
+        VERDICT="$(node -e "const s=require('$OUT_DIR/summary.json'); console.log(s.verdict || (s.passed ? 'pass' : 'fail'))")"
+        echo "verdict=$VERDICT" >> "$GITHUB_OUTPUT"
         echo "summary-json=$OUT_DIR/summary.json" >> "$GITHUB_OUTPUT"
         echo "diff-exit=$DIFF_EXIT" >> "$GITHUB_OUTPUT"
 
