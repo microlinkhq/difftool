@@ -1,6 +1,8 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
+import { PNG } from 'pngjs'
+
 import { composite } from './composite.js'
 import { diff as runDiff } from './diff.js'
 import { screenshot } from './microlink.js'
@@ -8,7 +10,7 @@ import { screenshot } from './microlink.js'
 const DEFAULT_THRESHOLD = 0.001
 const DEFAULT_WARNING_THRESHOLD = 0.02
 const DEFAULT_PIXEL_THRESHOLD = 0.1
-const DEFAULT_VIEWPORT = { width: 1280, height: 800, deviceScaleFactor: 2 }
+const DEFAULT_SCREENSHOT_ATTEMPTS = 3
 const DEFAULT_ROUTES = ['/']
 
 const noop = () => {}
@@ -62,6 +64,53 @@ const slugifyRoute = route => {
   )
 }
 
+const imageSize = buffer => {
+  const { width, height } = PNG.sync.read(buffer)
+  return { width, height }
+}
+
+const sameSize = (base, head) =>
+  base.width === head.width && base.height === head.height
+
+const capturePair = async ({ baseUrl, headUrl, route, log, attempts, opts }) => {
+  let lastBaseSize
+  let lastHeadSize
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    const fetchStart = Date.now()
+    const [baseBuffer, headBuffer] = await Promise.all([
+      screenshot(baseUrl, {
+        ...opts,
+        log: msg => log(`[${route}] ${msg}`)
+      }),
+      screenshot(headUrl, {
+        ...opts,
+        log: msg => log(`[${route}] ${msg}`)
+      })
+    ])
+
+    lastBaseSize = imageSize(baseBuffer)
+    lastHeadSize = imageSize(headBuffer)
+    log(
+      `[${route}] both screenshots ready in ${
+        Date.now() - fetchStart
+      }ms · base ${lastBaseSize.width}x${lastBaseSize.height} · head ${
+        lastHeadSize.width
+      }x${lastHeadSize.height}`
+    )
+
+    if (sameSize(lastBaseSize, lastHeadSize)) return { baseBuffer, headBuffer }
+    if (attempt < attempts)
+      log(
+        `[${route}] screenshot dimensions mismatch, retrying (${attempt}/${attempts})`
+      )
+  }
+
+  throw new Error(
+    `Screenshot dimensions mismatch for ${route}: base ${lastBaseSize.width}x${lastBaseSize.height}, head ${lastHeadSize.width}x${lastHeadSize.height}`
+  )
+}
+
 const runRoute = async ({
   route,
   base,
@@ -71,6 +120,7 @@ const runRoute = async ({
   pixelThreshold,
   outDir,
   log,
+  screenshotAttempts = DEFAULT_SCREENSHOT_ATTEMPTS,
   ...screenshotOpts
 }) => {
   const baseUrl = joinUrl(base, route)
@@ -79,18 +129,14 @@ const runRoute = async ({
   log(`[${route}] base: ${baseUrl}`)
   log(`[${route}] head: ${headUrl}`)
 
-  const fetchStart = Date.now()
-  const [baseBuffer, headBuffer] = await Promise.all([
-    screenshot(baseUrl, {
-      ...screenshotOpts,
-      log: msg => log(`[${route}] ${msg}`)
-    }),
-    screenshot(headUrl, {
-      ...screenshotOpts,
-      log: msg => log(`[${route}] ${msg}`)
-    })
-  ])
-  log(`[${route}] both screenshots ready in ${Date.now() - fetchStart}ms`)
+  const { baseBuffer, headBuffer } = await capturePair({
+    baseUrl,
+    headUrl,
+    route,
+    log,
+    attempts: screenshotAttempts,
+    opts: screenshotOpts
+  })
 
   const diffStart = Date.now()
   const {
@@ -168,11 +214,7 @@ export const run = async ({
   if (!Array.isArray(routes) || routes.length === 0)
     throw new Error('routes must be a non-empty array')
 
-  const mql = {
-    apiKey,
-    ...mqlOpts,
-    viewport: { ...DEFAULT_VIEWPORT, ...mqlOpts.viewport }
-  }
+  const mql = { apiKey, force: true, ...mqlOpts }
   const resolvedThreshold = await resolveThreshold({ flag: threshold, cwd })
   const resolvedWarningThreshold = await resolveWarningThreshold({ flag: warningThreshold, cwd })
   log(
