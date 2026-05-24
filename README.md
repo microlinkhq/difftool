@@ -164,8 +164,7 @@ The comment is regenerated on every workflow run, so reviewers always see fresh 
 | `routes` | `["/"]` | Array of paths to diff (JSON array string or YAML list string with `|`) |
 | `threshold` | `0.001` | Max acceptable diff ratio (0..1) |
 | `pixel-threshold` | `0.1` | Per-pixel sensitivity (0..1) |
-| `viewport-width` | `1280` | |
-| `viewport-height` | `800` | |
+| `mql` | *(empty)* | JSON object with Microlink API options; default viewport is `{ "width": 1280, "height": 800, "deviceScaleFactor": 2 }` |
 | `microlink-api-key` | *(empty)* | Optional paid-tier key |
 | `presigned-ttl-seconds` | `86400` | Pre-signed URL TTL (overrides `s3-config.presignedTtlSeconds`) |
 | `provider-timeout` | `600` | Max seconds to wait for `head: vercel` discovery |
