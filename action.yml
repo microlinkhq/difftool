@@ -284,6 +284,7 @@ runs:
 
           core.info(`polling for vercel preview · sha=${sha} · up to ${maxAttempts} attempts · ${intervalMs / 1000}s interval`)
 
+          let sawFailure = false
           for (let attempt = 1; attempt <= maxAttempts; attempt++) {
             const { data: deployments } = await github.rest.repos.listDeployments({
               owner, repo, sha, per_page: 100
@@ -318,13 +319,10 @@ runs:
             const { data: statuses } = await github.rest.repos.listDeploymentStatuses({
               owner, repo, deployment_id: vercel.id, per_page: 100
             })
+            // Vercel can post a transient `failure` and later supersede it with a
+            // `success` on the same deployment (e.g. an automatic retry), so a
+            // success is authoritative and takes precedence over an earlier failure.
             const success = statuses.find(s => s.state === 'success')
-            const failed = statuses.find(s => s.state === 'failure' || s.state === 'error')
-
-            if (failed) {
-              core.setFailed(`vercel deployment ${vercel.id} reported state=${failed.state}`)
-              return
-            }
             if (success && (success.environment_url || success.target_url)) {
               const resolvedUrl = success.environment_url || success.target_url
               core.info(`vercel preview ready: ${resolvedUrl}`)
@@ -332,13 +330,19 @@ runs:
               return
             }
 
+            // A failure is not terminal: keep polling in case a retry succeeds.
+            const failed = statuses.find(s => s.state === 'failure' || s.state === 'error')
+            if (failed) sawFailure = true
             const lastState = statuses[0] ? statuses[0].state : 'pending'
-            core.info(`attempt ${attempt}/${maxAttempts}: deployment ${vercel.id} state=${lastState}`)
+            const note = failed ? `${lastState} (saw failure, awaiting possible retry)` : lastState
+            core.info(`attempt ${attempt}/${maxAttempts}: deployment ${vercel.id} state=${note}`)
             if (attempt === maxAttempts) break
             await sleep(intervalMs)
           }
 
-          core.setFailed(`timed out after ${maxAttempts} attempts waiting for vercel preview for ${sha}`)
+          core.setFailed(sawFailure
+            ? `timed out after ${maxAttempts} attempts; vercel preview for ${sha} reported a failure that was not superseded by a success`
+            : `timed out after ${maxAttempts} attempts waiting for vercel preview for ${sha}`)
 
     - name: Run microlink-difftool
       id: diff
