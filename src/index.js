@@ -75,6 +75,7 @@ const sameSize = (base, head) =>
 const capturePair = async ({ baseUrl, headUrl, route, log, attempts, opts }) => {
   let lastBaseSize
   let lastHeadSize
+  let lastPair
 
   for (let attempt = 1; attempt <= attempts; attempt++) {
     const fetchStart = Date.now()
@@ -100,15 +101,21 @@ const capturePair = async ({ baseUrl, headUrl, route, log, attempts, opts }) => 
     )
 
     if (sameSize(lastBaseSize, lastHeadSize)) return { baseBuffer, headBuffer }
+    lastPair = { baseBuffer, headBuffer }
     if (attempt < attempts)
       log(
         `[${route}] screenshot dimensions mismatch, retrying (${attempt}/${attempts})`
       )
   }
 
-  throw new Error(
-    `Screenshot dimensions mismatch for ${route}: base ${lastBaseSize.width}x${lastBaseSize.height}, head ${lastHeadSize.width}x${lastHeadSize.height}`
+  // A stable mismatch is expected when the head genuinely changed the page
+  // height (e.g. the PR adds content). The diff pads both images to a common
+  // canvas, so the extra region surfaces as a visual difference instead of a
+  // hard error.
+  log(
+    `[${route}] dimensions still differ after ${attempts} attempts (base ${lastBaseSize.width}x${lastBaseSize.height}, head ${lastHeadSize.width}x${lastHeadSize.height}), diffing with padding`
   )
+  return lastPair
 }
 
 const runRoute = async ({
