@@ -29,7 +29,7 @@
     "@microlink/mql": "~0.17.0",
     "cac": "~7.0.0",
     "canvas": "~3.2.3",
-    "pixelmatch": "~7.2.0",
+    "pixelmatch": "~8.0.0",
     "pngjs": "~7.0.0"
   },
   "scripts": {
