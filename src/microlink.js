@@ -1,4 +1,6 @@
-import mql from '@microlink/mql'
+import createMicrolink from 'microlink.io'
+
+const microlink = createMicrolink()
 
 const noop = () => {}
 
@@ -20,19 +22,17 @@ export const screenshot = async (url, { log = noop, ...opts } = {}) => {
   log(`→ requesting screenshot for ${url}`)
   const start = Date.now()
   const { screenshot: screenshotOpts, headers, ...rest } = opts
-  const { data } = await mql(
-    url,
-    {
-      waitForTimeout: 3000,
-      meta: false,
-      screenshot: { fullPage: true, type: 'png', ...screenshotOpts },
-      ...rest
-    },
-    headers ? { headers: toApiHeaders(headers) } : undefined
-  )
+  const data = await microlink.screenshot(url, {
+    waitForTimeout: 3000,
+    fullPage: true,
+    type: 'png',
+    ...screenshotOpts,
+    ...rest,
+    ...(headers && { headers: toApiHeaders(headers) })
+  })
   log(`← microlink responded for ${url} in ${Date.now() - start}ms`)
 
-  const imageUrl = data?.screenshot?.url
+  const imageUrl = data?.url
   if (!imageUrl) throw new Error(`Microlink returned no screenshot URL for ${url}`)
 
   log(`↓ downloading PNG from ${imageUrl}`)
