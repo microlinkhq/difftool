@@ -176,7 +176,7 @@ runs:
         corepack enable
         corepack prepare pnpm@10.33.0 --activate
         cd "${{ github.action_path }}"
-        pnpm install --no-frozen-lockfile
+        pnpm install --no-frozen-lockfile --no-optional
 
     - name: Cleanup on PR close via AWS CLI
       if: steps.pr.outputs.mode == 'cleanup' && steps.cleanup-tooling.outputs.use-aws-cli == 'true'

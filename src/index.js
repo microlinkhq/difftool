@@ -6,12 +6,16 @@ import { PNG } from 'pngjs'
 import { composite } from './composite.js'
 import { diff as runDiff } from './diff.js'
 import { screenshot } from './microlink.js'
+import {
+  DEFAULT_PIXEL_THRESHOLD,
+  DEFAULT_ROUTES,
+  DEFAULT_THRESHOLD,
+  DEFAULT_WARNING_THRESHOLD,
+  computeVerdict,
+  joinUrl
+} from '../web/lib.js'
 
-const DEFAULT_THRESHOLD = 0.001
-const DEFAULT_WARNING_THRESHOLD = 0.02
-const DEFAULT_PIXEL_THRESHOLD = 0.1
 const DEFAULT_SCREENSHOT_ATTEMPTS = 3
-const DEFAULT_ROUTES = ['/']
 
 const noop = () => {}
 
@@ -40,18 +44,6 @@ export const resolveWarningThreshold = async ({ flag, cwd = process.cwd() } = {}
   const config = await readJson(path.join(cwd, 'microlink-difftool.json'))
   if (config && typeof config.warningThreshold === 'number') return config.warningThreshold
   return DEFAULT_WARNING_THRESHOLD
-}
-
-const computeVerdict = (ratio, threshold, warningThreshold) => {
-  if (ratio <= threshold) return 'pass'
-  if (ratio <= warningThreshold) return 'warning'
-  return 'fail'
-}
-
-const joinUrl = (origin, route) => {
-  const base = origin.replace(/\/+$/, '')
-  const suffix = route.startsWith('/') ? route : `/${route}`
-  return `${base}${suffix}`
 }
 
 const slugifyRoute = route => {

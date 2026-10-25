@@ -1,6 +1,8 @@
 import pixelmatch from 'pixelmatch'
 import { PNG } from 'pngjs'
 
+import { PIXELMATCH_OPTIONS } from '../web/lib.js'
+
 const decode = buffer => PNG.sync.read(buffer)
 
 const padToHeight = (png, height) => {
@@ -33,10 +35,8 @@ export const diff = (baseBuffer, headBuffer, { pixelThreshold = 0.1 } = {}) => {
 
   const diffPng = new PNG({ width, height })
   const diffPixels = pixelmatch(base.data, head.data, diffPng.data, width, height, {
-    threshold: pixelThreshold,
-    includeAA: false,
-    alpha: 0.3,
-    diffColor: [255, 0, 0]
+    ...PIXELMATCH_OPTIONS,
+    threshold: pixelThreshold
   })
 
   return {

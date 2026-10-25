@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Microlink difftool</title>
+<meta name="description" content="Visual diff between two sites. Full-page screenshots, pixel diff, and side by side, slider, fade, highlight and subtract views." />
+<meta name="theme-color" content="#0b0d10" />
+<link rel="modulepreload" href="./lib.js" />
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0b0d10;
+    --panel: #11141a;
+    --field: #0e1116;
+    --line: #1f2937;
+    --text: #e5e7eb;
+    --muted: #9ca3af;
+    --pass: #10b981;
+    --warning: #f59e0b;
+    --fail: #ef4444;
+    --accent: #60a5fa;
+    --gutter: 24px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
+  a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  header { padding: 16px var(--gutter); border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; }
+  header h1 { margin: 0; font-size: 16px; letter-spacing: .02em; }
+  header h1 span { color: var(--muted); font-weight: 400; }
+  .engine { font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; }
+  .engine[data-engine="local"] { color: var(--pass); border-color: color-mix(in srgb, var(--pass) 40%, transparent); }
+  main { padding: var(--gutter); display: grid; gap: var(--gutter); }
+  form { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 20px; }
+  .field { display: grid; gap: 6px; min-width: 0; }
+  .field.wide { grid-column: 1 / -1; }
+  label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .hint { font-size: 12px; color: var(--muted); }
+  input, textarea { width: 100%; background: var(--field); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font: 16px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  textarea { resize: vertical; min-height: 64px; }
+  input:focus, textarea:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent); }
+  .actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  button { font: inherit; cursor: pointer; touch-action: manipulation; }
+  .primary { background: var(--accent); color: #0b0d10; font-weight: 700; border: 0; border-radius: 6px; padding: 10px 18px; min-height: 44px; display: inline-flex; gap: 8px; align-items: center; }
+  .primary:hover { background: color-mix(in srgb, var(--accent) 85%, white); }
+  .primary[aria-busy="true"]::before { content: ""; width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .primary[aria-busy="true"]::before { animation: none; } }
+  .error { color: var(--fail); }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+  table { width: 100%; border-collapse: collapse; background: var(--panel); }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  tr:last-child td { border-bottom: 0; }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  td.num { font-variant-numeric: tabular-nums; }
+  td.status { white-space: normal; min-width: 200px; }
+  tr[aria-current="true"] td { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+  .verdict { font-weight: 700; text-transform: uppercase; font-size: 12px; }
+  .verdict.pass { color: var(--pass); } .verdict.warning { color: var(--warning); } .verdict.fail { color: var(--fail); }
+  .link-button { background: none; border: 0; padding: 4px 0; color: var(--accent); text-decoration: underline; min-height: 24px; }
+  .toolbar { position: sticky; top: 0; z-index: 2; background: var(--bg); display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .group { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .group button { background: var(--panel); color: var(--text); border: 0; padding: 6px 12px; min-height: 32px; }
+  .group button + button { border-left: 1px solid var(--line); }
+  .group button[aria-pressed="true"] { background: var(--accent); color: #0b0d10; font-weight: 600; }
+  label.range { display: inline-flex; gap: 8px; align-items: center; text-transform: none; letter-spacing: 0; font-weight: 400; font-size: 14px; }
+  .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; background: var(--line); margin-top: 16px; }
+  .col { background: var(--bg); min-width: 0; }
+  .col h3 { margin: 0; padding: 10px 12px; background: var(--panel); font-size: 13px; letter-spacing: .04em; position: sticky; top: 57px; z-index: 1; }
+  .col h3 small { display: block; color: var(--muted); font-weight: 400; letter-spacing: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  img { display: block; width: 100%; height: auto; }
+  .stack { position: relative; margin: 16px auto 0; background: #fff; }
+  .stack img.layer { position: absolute; inset: 0 auto auto 0; height: auto; }
+  .stack.difference img.top { mix-blend-mode: difference; }
+  .handle { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--fail); pointer-events: none; }
+  .empty { color: var(--muted); }
+  [hidden] { display: none !important; }
+  @media (max-width: 720px) {
+    :root { --gutter: 16px; }
+    form { grid-template-columns: 1fr; }
+    .cols { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Microlink difftool <span>· visual diff between two sites</span></h1>
+  <span class="engine" id="engine" aria-live="polite">Detecting engine…</span>
+</header>
+<main>
+  <form id="form" novalidate>
+    <div class="field">
+      <label for="base">Base URL</label>
+      <input id="base" name="base" type="url" inputmode="url" autocomplete="url" spellcheck="false" placeholder="https://microlink.io…" required />
+      <span class="hint">Production, or the baseline you trust.</span>
+    </div>
+    <div class="field">
+      <label for="head">Head URL</label>
+      <input id="head" name="head" type="url" inputmode="url" autocomplete="url" spellcheck="false" placeholder="http://localhost:8000…" required />
+      <span class="hint">Preview, branch deploy, or local server.</span>
+    </div>
+    <div class="field">
+      <label for="routes">Routes</label>
+      <textarea id="routes" name="routes" spellcheck="false" placeholder="/&#10;/pricing…"></textarea>
+      <span class="hint">One per line, or comma separated. Defaults to <code>/</code>.</span>
+    </div>
+    <div class="field">
+      <label for="width">Viewport width</label>
+      <input id="width" name="width" type="number" inputmode="numeric" min="320" max="3840" step="1" />
+      <span class="hint">Pixels. Both sites render at the same width.</span>
+    </div>
+    <div class="field wide" id="api-key-field" hidden>
+      <label for="api-key">Microlink API key</label>
+      <input id="api-key" name="api-key" type="password" autocomplete="off" spellcheck="false" placeholder="Optional, for higher limits…" />
+      <span class="hint">Stays in this browser. Never added to the URL. To compare localhost, <a href="https://github.com/microlinkhq/difftool#running-it-locally">run difftool locally</a>.</span>
+    </div>
+    <div class="actions">
+      <button class="primary" type="submit" id="submit">Compare</button>
+      <span class="error" id="form-error" role="alert"></span>
+    </div>
+  </form>
+  <section id="results" aria-label="Results" hidden>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Route</th><th>Status</th><th>Changes</th><th>Verdict</th><th>Base</th><th>Head</th><th>Diff</th><th>View</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+  <section id="viewer" aria-label="Comparison" hidden></section>
+</main>
+<script type="module" src="./app.js"></script>
+</body>
+</html>

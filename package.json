@@ -12,7 +12,8 @@
   },
   "files": [
     "bin",
-    "src"
+    "src",
+    "web"
   ],
   "engines": {
     "node": ">=24"
@@ -32,12 +33,19 @@
     "pixelmatch": "~8.0.0",
     "pngjs": "~7.0.0"
   },
+  "optionalDependencies": {
+    "browserless": "~14.0.31",
+    "puppeteer": "~25.16.0"
+  },
   "scripts": {
-    "start": "./bin/cli.js"
+    "start": "./bin/cli.js",
+    "serve": "./bin/cli.js serve",
+    "test": "node --test"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
-      "canvas"
+      "canvas",
+      "puppeteer"
     ]
   }
 }

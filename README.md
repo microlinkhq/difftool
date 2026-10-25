@@ -6,6 +6,65 @@ Two surfaces:
 
 - **GitHub Action** — `microlinkhq/difftool@master`. Posts a sticky PR comment with a diff table + screenshots. See [GitHub Action](#github-action) below.
 - **Local CLI** — clone this repo and run `./bin/cli.js`. Useful for ad-hoc checks and for debugging the action.
+- **Homepage** — [difftool.microlink.io](https://difftool.microlink.io). Fill in two sites, or pass them as query parameters, and compare them in the browser. See [Homepage](#homepage) below.
+
+## Homepage
+
+The homepage compares two sites route by route: full-page screenshots, a pixel diff, and five views (side by side, slider, fade, highlight, subtract).
+
+Everything the form holds can come from the URL, so a comparison is a link:
+
+```
+https://difftool.microlink.io/?base=https://microlink.io&head=https://www-git-my-branch.vercel.app&routes=/,/pricing&width=1440
+```
+
+| Parameter | Default | Description |
+| --- | --- | --- |
+| `base` | *(required)* | Baseline site |
+| `head` | *(required)* | Site to compare against `base` |
+| `routes` | `/` | Comma-separated paths, each compared on both sites |
+| `width` | `1440` | Viewport width in pixels (320 to 3840) |
+| `view` | first route | Route to open in the comparison viewer |
+| `mode` | `split` | `split`, `slider`, `fade`, `highlight` or `subtract` |
+
+When `base` and `head` both point at images (`.png`, `.jpg`, `.webp`, …), the homepage skips capturing and compares the two images directly.
+
+### Running it locally
+
+The hosted homepage captures through the Microlink API, which cannot reach `localhost`. To compare against a local dev server, run the homepage on your machine:
+
+```bash
+git clone https://github.com/microlinkhq/difftool && cd difftool
+pnpm install
+./bin/cli.js serve                # http://localhost:4321
+./bin/cli.js serve --port 5000
+```
+
+The same page then captures with a local headless Chromium through [browserless](https://browserless.js.org), the engine behind the Microlink API. Both engines capture with the same settings: full page, the chosen width at a 900px tall viewport, device scale 1, a 3 second wait, and ads and cookie banners blocked.
+
+```
+http://localhost:4321/?base=https://microlink.io&head=http://localhost:8000
+```
+
+The page asks `/api/health` on load: when the local server answers, it captures through `/api/screenshot`; otherwise it calls the Microlink API from the browser. The header shows which engine is active.
+
+The local server binds to `127.0.0.1`. Its API only answers requests whose `Host` is `localhost` or `127.0.0.1` and that come from the difftool page itself, so other sites you have open cannot use it to screenshot your network.
+
+The pixel diff runs in the browser (pixelmatch in a Web Worker) with the same pixelmatch options and thresholds as the CLI (`0.1` per pixel, pass up to 0.1%, warning up to 2%). Screenshot settings differ: the CLI uses the Microlink API's default device (1280x800 at 2x) unless `--mql` overrides it, so a percentage from the homepage is not directly comparable to one from the CLI. The GitHub Action defaults its warning threshold to 5%.
+
+Known limits:
+
+- Image mode loads the two images from your browser, so the image host must send `Access-Control-Allow-Origin`.
+- Routes are comma separated in the URL, so a route containing a comma is split in two.
+- Pages that load content as you scroll can come out incomplete on either engine, because the capture scrolls faster than some lazy sections load.
+
+### Microlink API key
+
+Without a key, the hosted homepage uses the Microlink free tier. Paste a key in the form for higher limits. It is kept in `localStorage` and never added to the URL.
+
+### Deploying
+
+`vercel.json` serves `web/` as a static site with no install or build step.
 
 ## Local usage
 

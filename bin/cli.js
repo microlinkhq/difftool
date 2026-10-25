@@ -4,7 +4,6 @@ import path from 'node:path'
 
 import { cac } from 'cac'
 
-import { run } from '../src/index.js'
 import { renderComment } from '../src/render-comment.js'
 import { uploadAssets, cleanupPrefix } from '../src/s3.js'
 
@@ -77,6 +76,7 @@ cli
     const mql = opts.mql ? JSON.parse(opts.mql) : undefined
 
     try {
+      const { run } = await import('../src/index.js')
       const result = await run({
         base: opts.base,
         head: opts.head,
@@ -159,6 +159,25 @@ cli
       process.stdout.write(markdown)
     } catch (err) {
       console.error(`render-comment: ${err.message}`)
+      process.exit(2)
+    }
+  })
+
+cli
+  .command('serve', 'Run the difftool homepage locally, capturing with a local Chromium')
+  .option('--port <port>', 'Port to listen on', { default: 4321 })
+  .option('--host <host>', 'Interface to bind', { default: '127.0.0.1' })
+  .action(async opts => {
+    const { startServer } = await import('../src/serve.js')
+    try {
+      const server = await startServer({ port: Number(opts.port), host: opts.host })
+      const { address, port } = server.address()
+      console.error(`microlink-difftool: homepage on http://${address === '127.0.0.1' ? 'localhost' : address}:${port}`)
+      const shutdown = () => server.close(() => process.exit(0))
+      process.once('SIGINT', shutdown)
+      process.once('SIGTERM', shutdown)
+    } catch (err) {
+      console.error(`serve: ${err.message}`)
       process.exit(2)
     }
   })
