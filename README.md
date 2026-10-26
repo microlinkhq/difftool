@@ -6,7 +6,7 @@ Two surfaces:
 
 - **GitHub Action** — `microlinkhq/difftool@master`. Posts a sticky PR comment with a diff table + screenshots. See [GitHub Action](#github-action) below.
 - **Local CLI** — clone this repo and run `./bin/cli.js`. Useful for ad-hoc checks and for debugging the action.
-- **Homepage** — [difftool.microlink.io](https://difftool.microlink.io). Fill in two sites, or pass them as query parameters, and compare them in the browser. See [Homepage](#homepage) below.
+- **Homepage** — [difftool.microlink.io](https://difftool.microlink.io). Fill in two sites or two images, or pass them as query parameters, and compare them in the browser. The PR comment's **compare** links open here. See [Homepage](#homepage) below.
 
 ## Homepage
 
@@ -26,8 +26,11 @@ https://difftool.microlink.io/?base=https://microlink.io&head=https://www-git-my
 | `width` | `1440` | Viewport width in pixels (320 to 3840) |
 | `view` | first route | Route to open in the comparison viewer |
 | `mode` | `split` | `split`, `slider`, `fade`, `highlight` or `subtract` |
+| `zoom` | fit to width | Image zoom in percent (10 to 500) |
 
-When `base` and `head` both point at images (`.png`, `.jpg`, `.webp`, …), the homepage skips capturing and compares the two images directly.
+When `base` and `head` both point at images (`.png`, `.jpg`, `.webp`, …), the homepage skips capturing and compares the two images directly. That is how the PR comment's **compare** links work: they pass the uploaded screenshots as `base` and `head`. The image host must allow cross-origin requests (CORS), since the browser reads the pixels.
+
+To compare two images from your machine, drop them on the **Base image** and **Head image** fields, or choose them with the file picker. The files never leave the browser, so these comparisons have no shareable link.
 
 ### Running it locally
 

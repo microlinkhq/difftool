@@ -8,14 +8,19 @@ import {
   DEFAULT_VIEWPORT,
   VIEWPORT_LIMITS,
   VIEWPORT_HEIGHT_LIMITS,
+  ZOOM_LIMITS,
   clampHeight,
   clampWidth,
   computeVerdict,
+  fileLabel,
   isHttpUrl,
   isImageUrl,
   joinUrl,
   parseRoutes,
+  parseZoom,
+  pointerPercent,
   readQuery,
+  stepZoom,
   writeQuery
 } from '../web/lib.js'
 
@@ -111,5 +116,57 @@ describe('vendored pixelmatch', () => {
       readFile(require.resolve('pixelmatch'), 'utf8')
     ])
     assert.equal(vendored, installed)
+  })
+})
+
+describe('zoom', () => {
+  test('parseZoom treats a missing or invalid value as fit', () => {
+    for (const value of [null, undefined, '', 'big']) assert.equal(parseZoom(value), null, String(value))
+  })
+
+  test('parseZoom clamps to the supported range', () => {
+    assert.equal(parseZoom('75'), 75)
+    assert.equal(parseZoom('1'), ZOOM_LIMITS.min)
+    assert.equal(parseZoom('9000'), ZOOM_LIMITS.max)
+  })
+
+  test('stepZoom snaps to the step grid in the direction of travel', () => {
+    assert.equal(stepZoom(100, 1), 125)
+    assert.equal(stepZoom(100, -1), 75)
+    assert.equal(stepZoom(37.4, 1), 50)
+    assert.equal(stepZoom(37.4, -1), 25)
+  })
+
+  test('stepZoom never leaves the supported range', () => {
+    assert.equal(stepZoom(ZOOM_LIMITS.min, -1), ZOOM_LIMITS.min)
+    assert.equal(stepZoom(ZOOM_LIMITS.max, 1), ZOOM_LIMITS.max)
+  })
+})
+
+describe('pointerPercent', () => {
+  const rect = { left: 100, width: 400 }
+
+  test('maps a pointer x position to a percentage of the element', () => {
+    assert.equal(pointerPercent(100, rect), 0)
+    assert.equal(pointerPercent(300, rect), 50)
+    assert.equal(pointerPercent(500, rect), 100)
+  })
+
+  test('clamps outside the element and survives a zero width', () => {
+    assert.equal(pointerPercent(0, rect), 0)
+    assert.equal(pointerPercent(900, rect), 100)
+    assert.equal(pointerPercent(10, { left: 0, width: 0 }), 0)
+  })
+})
+
+describe('fileLabel', () => {
+  test('names an image by the last path segment, without the signature', () => {
+    assert.equal(fileLabel('https://bucket.r2.cloudflarestorage.com/a/pr-1/sha/root-base.png?X-Amz-Signature=abc'), 'root-base.png')
+    assert.equal(fileLabel('https://cdn.example.com/my%20shot.png'), 'my shot.png')
+  })
+
+  test('falls back to the input when it is not a url with a file name', () => {
+    assert.equal(fileLabel('https://example.com/'), 'https://example.com/')
+    assert.equal(fileLabel('not a url'), 'not a url')
   })
 })

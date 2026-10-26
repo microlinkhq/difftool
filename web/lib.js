@@ -7,6 +7,7 @@ export const VIEWPORT_LIMITS = { min: 320, max: 3840 }
 export const VIEWPORT_HEIGHT_LIMITS = { min: 200, max: 2160, default: DEFAULT_VIEWPORT.height }
 export const PIXELMATCH_OPTIONS = { includeAA: false, alpha: 0.3, diffColor: [255, 0, 0] }
 export const WAIT_FOR_TIMEOUT = 3000
+export const ZOOM_LIMITS = { min: 10, max: 500, step: 25 }
 
 const IMAGE_EXTENSION = /\.(png|jpe?g|webp|gif|avif)$/i
 
@@ -73,3 +74,29 @@ export const writeQuery = ({ base, head, routes, width }) => {
 }
 
 export const toPercent = ratio => `${(ratio * 100).toFixed(2)}%`
+
+const clampPercent = (value, min, max) => Math.min(max, Math.max(min, value))
+
+export const parseZoom = value => {
+  if (value === null || value === undefined || value === '') return null
+  const zoom = Math.round(Number(value))
+  if (!Number.isFinite(zoom)) return null
+  return clampPercent(zoom, ZOOM_LIMITS.min, ZOOM_LIMITS.max)
+}
+
+export const stepZoom = (current, direction) => {
+  const { min, max, step } = ZOOM_LIMITS
+  const snapped = direction > 0 ? Math.floor(current / step) * step : Math.ceil(current / step) * step
+  return clampPercent(snapped + direction * step, min, max)
+}
+
+export const pointerPercent = (clientX, { left, width }) =>
+  width > 0 ? clampPercent(((clientX - left) / width) * 100, 0, 100) : 0
+
+export const fileLabel = value => {
+  try {
+    return decodeURIComponent(new URL(value).pathname.split('/').pop()) || value
+  } catch {
+    return value
+  }
+}
