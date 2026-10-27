@@ -1,9 +1,7 @@
 version: 2
 updates:
   - package-ecosystem: npm
-    directories:
-      - '/packages/cli'
-      - '/packages/web'
+    directory: '/'
     schedule:
       interval: daily
   - package-ecosystem: 'github-actions'
