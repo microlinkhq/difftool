@@ -53,24 +53,25 @@ export function SliderView({ image1, image2, position, onPositionChange, zoom }:
   return (
     <div 
       ref={containerRef}
-      className="h-full w-full overflow-auto p-4 select-none"
+      className="h-full w-full overflow-auto p-4 pb-16 select-none"
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleMouseUp}
     >
-      <div className="min-h-full flex items-start justify-center">
+      <div className="min-h-full flex items-start justify-center-safe">
         <div 
           ref={imageContainerRef}
-          className="relative overflow-hidden rounded-lg shadow-lg"
-          style={{ transform: `scale(${scale})`, transformOrigin: 'top center' }}
+          className="relative shrink-0 overflow-hidden rounded-lg shadow-lg cursor-ew-resize"
+          style={{ zoom: scale }}
+          onMouseDown={handleMouseDown}
         >
           {/* Base layer - Image 2 (right side, full) */}
           <img
             src={image2}
             alt="Compare image"
-            className="block"
+            className="block max-w-none"
             draggable={false}
           />
           
@@ -82,16 +83,15 @@ export function SliderView({ image1, image2, position, onPositionChange, zoom }:
             <img
               src={image1}
               alt="Base image"
-              className="block"
+              className="block max-w-none"
               draggable={false}
             />
           </div>
 
           {/* Slider handle */}
           <div
-            className="absolute top-0 bottom-0 w-1 bg-white shadow-lg cursor-ew-resize"
+            className="absolute top-0 bottom-0 w-1 bg-white shadow-lg cursor-ew-resize touch-none"
             style={{ left: `${position}%`, transform: "translateX(-50%)" }}
-            onMouseDown={handleMouseDown}
             onTouchStart={handleTouchStart}
           >
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center">

@@ -11,23 +11,23 @@ export function SplitView({ image1, image2, zoom }: SplitViewProps) {
 
   return (
     <div className="h-full w-full flex">
-      <div className="flex-1 p-4 overflow-auto border-r border-border">
-        <div className="min-h-full flex items-start justify-center">
+      <div className="flex-1 p-4 pb-16 overflow-auto border-r border-border">
+        <div className="min-h-full flex items-start justify-center-safe">
           <img
             src={image1}
             alt="Base image"
-            className="object-contain rounded-lg shadow-lg origin-top"
-            style={{ transform: `scale(${scale})`, transformOrigin: 'top center' }}
+            className="max-w-none rounded-lg shadow-lg"
+            style={{ zoom: scale }}
           />
         </div>
       </div>
-      <div className="flex-1 p-4 overflow-auto">
-        <div className="min-h-full flex items-start justify-center">
+      <div className="flex-1 p-4 pb-16 overflow-auto">
+        <div className="min-h-full flex items-start justify-center-safe">
           <img
             src={image2}
             alt="Compare image"
-            className="object-contain rounded-lg shadow-lg origin-top"
-            style={{ transform: `scale(${scale})`, transformOrigin: 'top center' }}
+            className="max-w-none rounded-lg shadow-lg"
+            style={{ zoom: scale }}
           />
         </div>
       </div>

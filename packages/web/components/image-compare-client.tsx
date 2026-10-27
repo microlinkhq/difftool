@@ -1,11 +1,12 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useRef, useState, useCallback } from "react"
 import { useQueryState, parseAsStringLiteral } from "nuqs"
 import { ImageUploader } from "@/components/image-uploader"
 import { ComparisonView } from "@/components/comparison-view"
 import { ModeSelector } from "@/components/mode-selector"
 import { Loader2, ArrowLeftRight } from "lucide-react"
+import { fetchDisplayableImage, fileNameFromUrl } from "@/lib/load-image"
 
 export type ComparisonMode = "split" | "fade" | "slider" | "highlight" | "subtract"
 
@@ -25,13 +26,21 @@ export function ImageCompareClient() {
   const [image2Name, setImage2Name] = useState<string>("Head")
   const [isLoadingImage1, setIsLoadingImage1] = useState(false)
   const [isLoadingImage2, setIsLoadingImage2] = useState(false)
+  const [image1Error, setImage1Error] = useState<string | null>(null)
+  const [image2Error, setImage2Error] = useState<string | null>(null)
+
+  const latestLoad = useRef({ base: 0, head: 0 })
 
   const loadImageFromUrl = useCallback(async (
+    slot: "base" | "head",
     url: string,
     setData: (data: string | null) => void,
     setName: (name: string) => void,
-    setLoading: (loading: boolean) => void
+    setLoading: (loading: boolean) => void,
+    setError: (error: string | null) => void
   ) => {
+    const request = ++latestLoad.current[slot]
+    const isLatest = () => request === latestLoad.current[slot]
     if (!url) {
       setData(null)
       return
@@ -39,43 +48,43 @@ export function ImageCompareClient() {
 
     setLoading(true)
     try {
-      const response = await fetch(url)
-      if (!response.ok) throw new Error("Failed to fetch image")
-
-      const blob = await response.blob()
-      const reader = new FileReader()
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve(reader.result as string)
-        reader.onerror = () => reject(new Error("Failed to read image"))
-        reader.readAsDataURL(blob)
-      })
-
-      const urlPath = url.split("?")[0]
-      const fileName = urlPath.split("/").pop() || "URL Image"
-
+      const dataUrl = await fetchDisplayableImage(url)
+      if (!isLatest()) return
       setData(dataUrl)
-      setName(fileName)
+      setName(fileNameFromUrl(url))
+      setError(null)
     } catch (error) {
+      if (!isLatest()) return
       console.error("Failed to load image:", error)
       setData(null)
+      setError(`Could not load ${fileNameFromUrl(url)} as an image.`)
     } finally {
-      setLoading(false)
+      if (isLatest()) setLoading(false)
     }
   }, [])
 
   useEffect(() => {
     if (image1Url && !image1Data) {
-      loadImageFromUrl(image1Url, setImage1Data, setImage1Name, setIsLoadingImage1)
+      loadImageFromUrl("base", image1Url, setImage1Data, setImage1Name, setIsLoadingImage1, setImage1Error)
+    } else {
+      latestLoad.current.base++
+      setIsLoadingImage1(false)
     }
   }, [image1Url, image1Data, loadImageFromUrl])
 
   useEffect(() => {
     if (image2Url && !image2Data) {
-      loadImageFromUrl(image2Url, setImage2Data, setImage2Name, setIsLoadingImage2)
+      loadImageFromUrl("head", image2Url, setImage2Data, setImage2Name, setIsLoadingImage2, setImage2Error)
+    } else {
+      latestLoad.current.head++
+      setIsLoadingImage2(false)
     }
   }, [image2Url, image2Data, loadImageFromUrl])
 
   const handleImage1Change = useCallback((dataUrl: string | null, name?: string, originalUrl?: string) => {
+    latestLoad.current.base++
+    setIsLoadingImage1(false)
+    setImage1Error(null)
     setImage1Data(dataUrl)
     if (name) setImage1Name(name)
     if (originalUrl) {
@@ -86,6 +95,9 @@ export function ImageCompareClient() {
   }, [setImage1Url])
 
   const handleImage2Change = useCallback((dataUrl: string | null, name?: string, originalUrl?: string) => {
+    latestLoad.current.head++
+    setIsLoadingImage2(false)
+    setImage2Error(null)
     setImage2Data(dataUrl)
     if (name) setImage2Name(name)
     if (originalUrl) {
@@ -102,6 +114,8 @@ export function ImageCompareClient() {
     setImage2Name("Head")
     setImage1Url("")
     setImage2Url("")
+    setImage1Error(null)
+    setImage2Error(null)
   }, [setImage1Url, setImage2Url])
 
   const bothImagesLoaded = image1Data && image2Data
@@ -151,6 +165,7 @@ export function ImageCompareClient() {
               image={image1Data}
               onImageChange={handleImage1Change}
               isLoading={isLoadingImage1}
+              loadError={image1Error}
             />
           </div>
           <div className="flex-1 h-full">
@@ -159,6 +174,7 @@ export function ImageCompareClient() {
               image={image2Data}
               onImageChange={handleImage2Change}
               isLoading={isLoadingImage2}
+              loadError={image2Error}
             />
           </div>
         </div>

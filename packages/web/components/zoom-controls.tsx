@@ -2,6 +2,8 @@
 
 import { Minus, Plus, Maximize2 } from "lucide-react"
 
+export const DEFAULT_ZOOM = 50
+
 interface ZoomControlsProps {
   zoom: number
   onZoomChange: (zoom: number) => void
@@ -26,7 +28,7 @@ export function ZoomControls({
   }
 
   const handleReset = () => {
-    onZoomChange(50)
+    onZoomChange(DEFAULT_ZOOM)
   }
 
   return (
@@ -41,6 +43,7 @@ export function ZoomControls({
       
       <input
         type="range"
+        aria-label="Zoom level"
         min={minZoom}
         max={maxZoom}
         value={zoom}
@@ -51,7 +54,7 @@ export function ZoomControls({
       <button
         onClick={handleReset}
         className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-        aria-label="Reset zoom to 100%"
+        aria-label={`Reset zoom to ${DEFAULT_ZOOM}%`}
       >
         <Maximize2 className="w-4 h-4" />
       </button>

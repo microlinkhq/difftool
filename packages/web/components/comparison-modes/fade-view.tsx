@@ -18,17 +18,17 @@ export function FadeView({ image1, image2, fadeValue, onFadeChange, zoom }: Fade
   return (
     <div className="h-full w-full flex flex-col">
       <div className="flex-1 overflow-auto p-4">
-        <div className="min-h-full flex items-start justify-center">
-          <div className="relative" style={{ transform: `scale(${scale})`, transformOrigin: 'top center' }}>
+        <div className="min-h-full flex items-start justify-center-safe">
+          <div className="relative" style={{ zoom: scale }}>
             <img
               src={image1}
               alt="Base image"
-              className="block rounded-lg shadow-lg"
+              className="block max-w-none rounded-lg shadow-lg"
             />
             <img
               src={image2}
               alt="Compare image"
-              className="absolute inset-0 rounded-lg shadow-lg transition-opacity"
+              className="absolute inset-0 max-w-none rounded-lg shadow-lg transition-opacity"
               style={{ opacity: fadeValue / 100 }}
             />
           </div>
@@ -50,6 +50,7 @@ export function FadeView({ image1, image2, fadeValue, onFadeChange, zoom }: Fade
             variant="outline"
             size="sm"
             onClick={() => onFadeChange(50)}
+            aria-label="Reset fade to 50%"
             className="ml-2"
           >
             <RotateCcw className="w-4 h-4" />

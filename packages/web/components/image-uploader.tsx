@@ -1,19 +1,25 @@
 "use client"
 
-import { useCallback, useState } from "react"
+import { useCallback, useRef, useState } from "react"
 import { ImageIcon, Loader2, X } from "lucide-react"
+import { canDisplay, fetchDisplayableImage, fileNameFromUrl, readDataUrl } from "@/lib/load-image"
 
 interface ImageUploaderProps {
   label: string
   image: string | null
   onImageChange: (dataUrl: string | null, name?: string, originalUrl?: string) => void
   isLoading?: boolean
+  loadError?: string | null
 }
 
-export function ImageUploader({ label, image, onImageChange, isLoading }: ImageUploaderProps) {
+export function ImageUploader({ label, image, onImageChange, isLoading, loadError }: ImageUploaderProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [urlValue, setUrlValue] = useState("")
   const [isLoadingUrl, setIsLoadingUrl] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const latestRequest = useRef(0)
+  const [dismissedLoadError, setDismissedLoadError] = useState<string | null>(null)
+  const visibleError = error ?? (loadError === dismissedLoadError ? null : loadError)
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -25,56 +31,45 @@ export function ImageUploader({ label, image, onImageChange, isLoading }: ImageU
     setIsDragging(false)
   }, [])
 
+  const readFile = useCallback(async (file: File | undefined) => {
+    if (!file) return
+    const request = ++latestRequest.current
+    setIsLoadingUrl(false)
+    const dataUrl = await readDataUrl(file).catch(() => null)
+    const displayable = dataUrl !== null && (await canDisplay(dataUrl))
+    if (request !== latestRequest.current) return
+    if (!displayable) {
+      setError(`${file.name} is not an image this browser can display.`)
+      return
+    }
+    setError(null)
+    onImageChange(dataUrl, file.name)
+  }, [onImageChange])
+
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
-    const file = e.dataTransfer.files[0]
-    if (file && file.type.startsWith("image/")) {
-      const reader = new FileReader()
-      reader.onload = (event) => {
-        onImageChange(event.target?.result as string, file.name)
-      }
-      reader.readAsDataURL(file)
-    }
-  }, [onImageChange])
+    readFile(e.dataTransfer.files[0])
+  }, [readFile])
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file && file.type.startsWith("image/")) {
-      const reader = new FileReader()
-      reader.onload = (event) => {
-        onImageChange(event.target?.result as string, file.name)
-      }
-      reader.readAsDataURL(file)
-    }
-  }, [onImageChange])
+    readFile(e.target.files?.[0])
+  }, [readFile])
 
   const handleUrlSubmit = useCallback(async () => {
     if (!urlValue.trim()) return
+    const request = ++latestRequest.current
     setIsLoadingUrl(true)
     try {
-      const response = await fetch(urlValue)
-      if (!response.ok) {
-        throw new Error("Failed to fetch image")
-      }
-      
-      const blob = await response.blob()
-      const reader = new FileReader()
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve(reader.result as string)
-        reader.onerror = () => reject(new Error("Failed to read image"))
-        reader.readAsDataURL(blob)
-      })
-      
-      const urlPath = urlValue.split("?")[0]
-      const fileName = urlPath.split("/").pop() || "URL Image"
-      
-      onImageChange(dataUrl, fileName, urlValue)
+      const dataUrl = await fetchDisplayableImage(urlValue)
+      if (request !== latestRequest.current) return
+      setError(null)
+      onImageChange(dataUrl, fileNameFromUrl(urlValue), urlValue)
       setUrlValue("")
     } catch {
-      alert("Failed to load image from URL. Please check the URL and try again.")
+      if (request === latestRequest.current) setError("Could not load an image from that URL.")
     } finally {
-      setIsLoadingUrl(false)
+      if (request === latestRequest.current) setIsLoadingUrl(false)
     }
   }, [urlValue, onImageChange])
 
@@ -129,7 +124,7 @@ export function ImageUploader({ label, image, onImageChange, isLoading }: ImageU
       />
       <ImageIcon className="w-8 h-8 text-muted-foreground/50 mb-4" />
       <p className="text-sm font-medium text-foreground mb-1">Drop image here</p>
-      <p className="text-xs text-muted-foreground mb-6">jpg, png, webp, gif, heic, pdf, etc.</p>
+      <p className="text-xs text-muted-foreground mb-6">jpg, png, webp, gif, avif</p>
       
       <div 
         className="flex gap-2 w-full max-w-sm px-8 relative z-10"
@@ -139,7 +134,7 @@ export function ImageUploader({ label, image, onImageChange, isLoading }: ImageU
           type="url"
           placeholder="Or paste image URL..."
           value={urlValue}
-          onChange={(e) => setUrlValue(e.target.value)}
+          onChange={(e) => { setUrlValue(e.target.value); setError(null); setDismissedLoadError(loadError ?? null) }}
           onKeyDown={(e) => e.key === "Enter" && handleUrlSubmit()}
           className="flex-1 h-9 px-3 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 pointer-events-auto"
         />
@@ -151,6 +146,7 @@ export function ImageUploader({ label, image, onImageChange, isLoading }: ImageU
           {isLoadingUrl ? <Loader2 className="w-4 h-4 animate-spin" /> : "Load"}
         </button>
       </div>
+      <p role="alert" className="text-xs text-destructive mt-3 min-h-4">{visibleError}</p>
     </div>
   )
 }
