@@ -1,7 +1,9 @@
 version: 2
 updates:
   - package-ecosystem: npm
-    directory: '/'
+    directories:
+      - '/packages/cli'
+      - '/packages/web'
     schedule:
       interval: daily
   - package-ecosystem: 'github-actions'
@@ -14,4 +16,3 @@ updates:
         update-types:
           - version-update:semver-minor
           - version-update:semver-patch
-

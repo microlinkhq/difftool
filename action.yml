@@ -176,7 +176,7 @@ runs:
         corepack enable
         corepack prepare pnpm@10.33.0 --activate
         cd "${{ github.action_path }}"
-        pnpm install --no-frozen-lockfile
+        pnpm install --no-frozen-lockfile --filter @microlink/difftool
 
     - name: Cleanup on PR close via AWS CLI
       if: steps.pr.outputs.mode == 'cleanup' && steps.cleanup-tooling.outputs.use-aws-cli == 'true'
@@ -240,7 +240,7 @@ runs:
         NAME: ${{ github.event.repository.name }}
         PR_NUMBER: ${{ steps.pr.outputs.number }}
       run: |
-        node "${{ github.action_path }}/bin/cli.js" cleanup-s3 \
+        node "${{ github.action_path }}/packages/cli/bin/cli.js" cleanup-s3 \
           --s3-config "$CONFIG_PATH" \
           --key-prefix "$OWNER/$NAME/pr-$PR_NUMBER"
 
@@ -392,7 +392,7 @@ runs:
         ")"
 
         set +e
-        node "${{ github.action_path }}/bin/cli.js" \
+        node "${{ github.action_path }}/packages/cli/bin/cli.js" \
           --base "${{ inputs.base }}" \
           --head "${{ steps.resolve-head.outputs.url }}" \
           --routes "$ROUTES_JSON" \
@@ -438,7 +438,7 @@ runs:
         if [ -n "$TTL_INPUT" ]; then
           TTL_FLAG="--ttl-seconds $TTL_INPUT"
         fi
-        node "${{ github.action_path }}/bin/cli.js" upload-s3 \
+        node "${{ github.action_path }}/packages/cli/bin/cli.js" upload-s3 \
           --summary "$SUMMARY_PATH" \
           --out-dir "$OUT_DIR" \
           --s3-config "$CONFIG_PATH" \
@@ -458,7 +458,7 @@ runs:
         MARKER: ${{ inputs.comment-marker }}
         BODY_PATH: ${{ runner.temp }}/microlink-difftool-comment.md
       run: |
-        node "${{ github.action_path }}/bin/cli.js" render-comment "$SUMMARY" \
+        node "${{ github.action_path }}/packages/cli/bin/cli.js" render-comment "$SUMMARY" \
           --asset-urls "$URLS_PATH" \
           --run-url "$RUN_URL" \
           --marker "$MARKER" > "$BODY_PATH"
