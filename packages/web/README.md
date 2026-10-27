@@ -1,35 +1,19 @@
-# v0-image-comparison-tool
+# @microlink/difftool-web
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [v0](https://v0.app).
+The comparison app at [microlink-difftool.vercel.app](https://microlink-difftool.vercel.app). It compares two images side by side, as a slider, or as a pixel diff. The GitHub Action's PR comment links here with the two screenshots as query parameters.
 
-## Built with v0
+Built with Next.js. Originally generated with [v0](https://v0.app); its history was imported from `Kikobeats/v0-image-comparison-tool`.
 
-This repository is linked to a [v0](https://v0.app) project. You can continue developing by visiting the link below -- start new chats to make changes, and v0 will push commits directly to this repo. Every merge to `main` will automatically deploy.
+## Development
 
-[Continue working on v0 →](https://v0.app/chat/projects/prj_K5xnpF7vCrj47hYVl0gKXGpnpUZo)
-
-## Getting Started
-
-First, run the development server:
+From the repository root:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
+pnpm install
+pnpm dev     # http://localhost:3000
+pnpm build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Deploying
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-## Learn More
-
-To learn more, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [v0 Documentation](https://v0.app/docs) - learn about v0 and how to use it.
-
-<a href="https://v0.app/chat/api/kiro/clone/Kikobeats/v0-image-comparison-tool" alt="Open in Kiro"><img src="https://pdgvvgmkdvyeydso.public.blob.vercel-storage.com/open%20in%20kiro.svg?sanitize=true" /></a>
+The Vercel project builds this directory: set **Root Directory** to `packages/web`.

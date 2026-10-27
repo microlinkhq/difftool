@@ -1,6 +1,5 @@
 {
-  "name": "my-project",
-  "version": "0.1.0",
+  "name": "@microlink/difftool-web",
   "private": true,
   "scripts": {
     "dev": "next dev",
