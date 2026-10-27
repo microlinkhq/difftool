@@ -1,43 +1,12 @@
 {
-  "name": "@microlink/difftool",
-  "description": "Visual diff between two URLs using Microlink full-page screenshots.",
-  "version": "0.0.0",
-  "type": "module",
-  "bin": {
-    "microlink-difftool": "./bin/cli.js"
-  },
-  "main": "./src/index.js",
-  "exports": {
-    ".": "./src/index.js"
-  },
-  "files": [
-    "bin",
-    "src"
-  ],
+  "name": "difftool",
+  "private": true,
   "engines": {
     "node": ">=24"
   },
-  "license": "MIT",
-  "author": {
-    "name": "Kiko Beats",
-    "email": "josefrancisco.verdu@gmail.com",
-    "url": "https://kikobeats.com"
-  },
-  "dependencies": {
-    "@aws-sdk/client-s3": "3",
-    "@aws-sdk/s3-request-presigner": "3",
-    "cac": "~7.1.0",
-    "canvas": "~3.2.3",
-    "microlink.io": "~1.0.2",
-    "pixelmatch": "~8.0.0",
-    "pngjs": "~7.0.0"
-  },
   "scripts": {
-    "start": "./bin/cli.js"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "canvas"
-    ]
+    "cli": "pnpm --filter @microlink/difftool start",
+    "dev": "pnpm --filter @microlink/difftool-web dev",
+    "build": "pnpm --filter @microlink/difftool-web build"
   }
 }

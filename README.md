@@ -2,10 +2,29 @@
 
 Visual diff between two URLs using Microlink full-page screenshots. Built so PR previews can be eyeballed against production at a glance.
 
-Two surfaces:
+Three surfaces:
 
 - **GitHub Action** — `microlinkhq/difftool@master`. Posts a sticky PR comment with a diff table + screenshots. See [GitHub Action](#github-action) below.
-- **Local CLI** — clone this repo and run `./bin/cli.js`. Useful for ad-hoc checks and for debugging the action.
+- **Local CLI** — [`packages/cli`](packages/cli). Useful for ad-hoc checks and for debugging the action.
+- **Web** — [`packages/web`](packages/web), deployed at [microlink-difftool.vercel.app](https://microlink-difftool.vercel.app). Compares two images side by side, as a slider, or as a diff. The PR comment's **compare** links open here.
+
+## Repository layout
+
+A pnpm workspace:
+
+```
+action.yml        the GitHub Action (stays at the root so `uses: microlinkhq/difftool@master` resolves)
+packages/cli      @microlink/difftool: CLI and the code the action runs
+packages/web      @microlink/difftool-web: Next.js comparison app
+```
+
+```bash
+pnpm install
+pnpm cli --help   # run the CLI
+pnpm dev          # run the web app on http://localhost:3000
+```
+
+The action installs only `packages/cli` (`pnpm install --filter @microlink/difftool`), so the web app's dependencies never reach CI runners.
 
 ## Local usage
 
