@@ -33,7 +33,8 @@
     "pngjs": "~7.0.0"
   },
   "scripts": {
-    "start": "./bin/cli.js"
+    "start": "./bin/cli.js",
+    "test": "node --test"
   },
   "repository": {
     "type": "git",

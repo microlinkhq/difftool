@@ -6,7 +6,7 @@ Three surfaces:
 
 - **GitHub Action** — `microlinkhq/difftool@master`. Posts a sticky PR comment with a diff table + screenshots. See [GitHub Action](#github-action) below.
 - **Local CLI** — [`packages/cli`](packages/cli). Useful for ad-hoc checks and for debugging the action.
-- **Web** — [`packages/web`](packages/web), deployed at [microlink-difftool.vercel.app](https://microlink-difftool.vercel.app). Compares two images side by side, as a slider, or as a diff. The PR comment's **compare** links open here.
+- **Web** — [`packages/web`](packages/web), deployed at [difftool.microlink.io](https://difftool.microlink.io). Compares two images side by side, as a slider, or as a diff. The PR comment's **compare** links open here.
 
 ## Repository layout
 

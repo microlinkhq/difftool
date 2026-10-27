@@ -12,7 +12,7 @@ const lookup = (assetUrls, slug, basename) => {
   return url || null
 }
 
-const COMPARE_URL = 'https://microlink-difftool.vercel.app'
+const COMPARE_URL = 'https://difftool.microlink.io'
 
 const openCell = url =>
   url ? `<a href="${url}">open</a>` : '<em>n/a</em>'
