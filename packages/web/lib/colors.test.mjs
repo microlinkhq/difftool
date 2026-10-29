@@ -5,6 +5,12 @@ import { describe, test } from 'node:test'
 const BODY_TEXT_RATIO = 4.5
 const DISTINCT_HUE_DEGREES = 15
 
+const MICROLINK_COLORS = new Set([
+  '#000', '#fff', '#0473e4', '#015cba', '#d92d6e', '#f76698', '#c03fa2', '#8c1bab',
+  '#f8f9fa', '#f1f3f5', '#e9ecef', '#dee2e6', '#ced4da', '#adb5bd', '#868e96', '#495057', '#343a40', '#212529',
+  '#c92a2a', '#087f5b', '#74c0fc', '#5c7cfa'
+])
+
 const css = readFileSync(new URL('../app/globals.css', import.meta.url), 'utf8')
 const rootBlock = css.slice(css.indexOf(':root {'), css.indexOf('}', css.indexOf(':root {')))
 const declared = Object.fromEntries([...rootBlock.matchAll(/--([\w-]+):\s*([^;]+);/g)].map(([, name, value]) => [name, value.trim()]))
@@ -74,16 +80,16 @@ describe('color tokens', () => {
     })
   }
 
-  test('the changed-pixel pink keeps one meaning: status colors sit at least 15° away', () => {
+  test('the brand accent keeps one meaning: status colors sit at least 15° away', () => {
     for (const status of ['destructive', 'success', 'link', 'code-value']) {
-      const gap = hueGap(resolve('changed'), resolve(status))
-      assert.ok(gap >= DISTINCT_HUE_DEGREES, `--${status} is ${gap.toFixed(1)}° from --changed`)
+      const gap = hueGap(resolve('brand'), resolve(status))
+      assert.ok(gap >= DISTINCT_HUE_DEGREES, `--${status} is ${gap.toFixed(1)}° from --brand`)
     }
   })
 
-  test('the changed pink matches the pixel-diff highlight color', async () => {
-    const { HIGHLIGHT_COLOR } = await import('./pixel-diff.ts')
-    const hex = `#${HIGHLIGHT_COLOR.slice(0, 3).map(c => c.toString(16).padStart(2, '0')).join('')}`
-    assert.equal(resolve('changed').toLowerCase(), hex)
+  test('every color primitive is a microlink.io theme color', () => {
+    const primitives = Object.values(declared).filter(value => /^#[0-9a-f]{3,6}$/i.test(value))
+    assert.ok(primitives.length > 0)
+    for (const hex of primitives) assert.ok(MICROLINK_COLORS.has(hex.toLowerCase()), `${hex} is not in microlink.io's theme`)
   })
 })

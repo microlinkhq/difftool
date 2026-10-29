@@ -37,7 +37,7 @@ export function TopBar({ children, sticky = true }: TopBarProps) {
   return (
     <header
       className={`${sticky ? "sticky top-0" : ""} z-40 transition-colors duration-200 ${
-        scrolled && sticky ? "bg-card shadow-[0_1px_0_var(--border)]" : "bg-card"
+        scrolled && sticky ? "bg-card shadow-[0_1px_0_rgba(var(--shadow-ink),0.1)]" : "bg-card"
       }`}
     >
       <div className="flex h-14 items-center justify-between gap-4 px-page">
@@ -78,7 +78,7 @@ function PhoneMenu() {
       {open && (
         <div
           id={MENU_ID}
-          className="absolute inset-x-0 top-14 flex flex-col gap-1 bg-card px-page pb-5 pt-2 shadow-[0_12px_24px_-12px_rgba(0,0,0,0.18)] animate-in fade-in slide-in-from-top-2 duration-200"
+          className="absolute inset-x-0 top-14 flex flex-col gap-1 bg-card px-page pb-5 pt-2 shadow-[var(--shadow-lifted)] animate-in fade-in slide-in-from-top-2 duration-200"
         >
           {[...SECTIONS.map((section) => ({ href: `#${section.id}`, label: section.label })), { href: GITHUB_URL, label: "GitHub" }].map(
             (link) => (

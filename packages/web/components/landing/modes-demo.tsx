@@ -55,7 +55,7 @@ export function ModesDemo() {
         </Reveal>
 
         <Reveal className="mt-12">
-          <div data-ui className="overflow-hidden rounded-[28px] bg-card shadow-[0_0_0_1px_var(--border)]">
+          <div data-ui className="overflow-hidden rounded-[28px] bg-card shadow-[var(--shadow-ring)]">
             <div className="flex flex-col gap-3 px-3 pb-3 pt-3 md:flex-row md:items-center md:justify-between md:px-4">
               <ModeSelector mode={mode} onModeChange={setMode} />
               <p aria-live="polite" className="px-2 text-[16px] text-muted-foreground md:text-right">

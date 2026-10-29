@@ -13,7 +13,7 @@ const DESCRIPTION =
   'difftool screenshots production and your preview deploy, compares them pixel by pixel, and comments on the pull request with what changed. Or drop two images and compare them in the browser.'
 
 export const viewport: Viewport = {
-  themeColor: '#fafaf9',
+  themeColor: '#ffffff',
 }
 
 export const metadata: Metadata = {

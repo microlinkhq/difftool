@@ -34,7 +34,7 @@ export function Hero({ slots, onTryExample }: HeroProps) {
       >
         <div
           data-ui
-          className="w-full max-w-[1040px] rounded-[26px] bg-card p-2 text-left shadow-[0_1px_2px_rgba(28,25,23,0.06),0_24px_64px_-24px_rgba(28,25,23,0.35)] md:p-2.5"
+          className="w-full max-w-[1040px] rounded-[26px] bg-card p-2 text-left shadow-[var(--shadow-lifted)] md:p-2.5"
         >
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-2.5">{slots}</div>
           <div className="flex flex-col items-start justify-between gap-3 px-3 pb-2 pt-4 sm:flex-row sm:items-center">

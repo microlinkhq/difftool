@@ -188,7 +188,7 @@ export function SetupWizard() {
 
   return (
     <section id="setup" aria-labelledby="setup-title" className="px-page">
-      <div className="mx-auto max-w-[1280px] rounded-[32px] bg-card px-5 py-16 sm:px-10 md:py-24">
+      <div className="mx-auto max-w-[1280px] rounded-[32px] bg-card px-5 py-16 shadow-[var(--shadow-ring)] sm:px-10 md:py-24">
         <Reveal className="mx-auto max-w-[760px] text-center">
           <h2 id="setup-title" className="text-[clamp(2.25rem,4.4vw,4rem)] font-semibold leading-[1] tracking-[-0.04em]">
             Add it to your repo
