@@ -4,33 +4,74 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #fff;
-  --foreground: #0a0a0a;
-  --card: #fff;
-  --card-foreground: #0a0a0a;
-  --popover: #fff;
-  --popover-foreground: #0a0a0a;
-  --primary: #0a0a0a;
-  --primary-foreground: #fafafa;
-  --secondary: #fafafa;
-  --secondary-foreground: #0a0a0a;
-  --muted: #f5f5f5;
-  --muted-foreground: #666;
-  --accent: #fafafa;
-  --accent-foreground: #0a0a0a;
-  --destructive: #ef4444;
-  --destructive-foreground: #fafafa;
-  --border: #e5e5e5;
-  --input: #e5e5e5;
-  --ring: #0a0a0a;
-  --radius: 0.375rem;
+  --black: #000;
+  --white: #fff;
+  --gray1: #f1f3f5;
+  --gray2: #e9ecef;
+  --gray3: #dee2e6;
+  --gray4: #ced4da;
+  --gray5: #adb5bd;
+  --gray7: #495057;
+  --gray8: #343a40;
+  --gray9: #212529;
+  --rust: #9d4612;
+  --rust-light: #b05829;
+  --clay: #c48472;
+  --red9: #c92a2a;
+  --teal9: #087f5b;
+  --link-brand: #0473e4;
+  --hover-link-brand: #015cba;
+  --shadow-ink: 16, 24, 40;
+
+  --background: var(--white);
+  --foreground: var(--black);
+  --card: var(--white);
+  --card-foreground: var(--black);
+  --popover: var(--white);
+  --popover-foreground: var(--black);
+  --primary: var(--rust);
+  --primary-hover: var(--rust-light);
+  --primary-foreground: var(--white);
+  --cta: var(--gray9);
+  --cta-hover: var(--gray8);
+  --cta-foreground: var(--white);
+  --active: var(--gray9);
+  --active-foreground: var(--white);
+  --secondary: var(--gray1);
+  --secondary-foreground: var(--black);
+  --muted: var(--gray1);
+  --muted-foreground: var(--gray7);
+  --accent: var(--gray1);
+  --accent-foreground: var(--black);
+  --surface-hover: var(--gray2);
+  --destructive: var(--red9);
+  --destructive-foreground: var(--white);
+  --success: var(--teal9);
+  --border: var(--gray2);
+  --panel-border: var(--gray3);
+  --brush-stroke: var(--clay);
+  --input: var(--gray4);
+  --ring: var(--black);
+  --brand: var(--rust);
+  --ink-panel: var(--background);
+  --ink-panel-raised: var(--background);
+  --ink-panel-foreground: var(--foreground);
+  --ink-panel-muted: var(--gray7);
+  --code-plain: var(--gray9);
+  --code-punctuation: var(--gray7);
+  --code-value: var(--gray7);
+  --link: var(--link-brand);
+  --link-hover: var(--hover-link-brand);
+  --shadow-lifted: 0 8px 16px rgba(var(--shadow-ink), 0.06), 0 24px 56px rgba(var(--shadow-ink), 0.12);
+  --shadow-ring: 0 0 0 1px rgba(var(--shadow-ink), 0.1);
+  --radius: 0.75rem;
+  --page-margin: clamp(16px, 3vw, 32px);
 }
 
-
-
 @theme inline {
-  --font-sans: 'Geist', 'Geist Fallback';
-  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+  --font-sans: var(--font-inter), 'Inter', system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-serif: Georgia, 'Times New Roman', Times, serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -39,6 +80,12 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-cta: var(--cta);
+  --color-cta-hover: var(--cta-hover);
+  --color-cta-foreground: var(--cta-foreground);
+  --color-active: var(--active);
+  --color-active-foreground: var(--active-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -47,20 +94,116 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-surface-hover: var(--surface-hover);
+  --color-success: var(--success);
+  --color-code-plain: var(--code-plain);
+  --color-code-punctuation: var(--code-punctuation);
+  --color-code-value: var(--code-value);
+  --color-link-hover: var(--link-hover);
   --color-border: var(--border);
+  --color-panel-border: var(--panel-border);
+  --color-brush-stroke: var(--brush-stroke);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) - 2px);
-  --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 2px);
+  --color-brand: var(--brand);
+  --color-ink-panel: var(--ink-panel);
+  --color-ink-panel-raised: var(--ink-panel-raised);
+  --color-ink-panel-foreground: var(--ink-panel-foreground);
+  --color-ink-panel-muted: var(--ink-panel-muted);
+  --color-link: var(--link);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --spacing-page: var(--page-margin);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    scroll-padding-top: 4.5rem;
+  }
   body {
     @apply bg-background text-foreground;
   }
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+  ::selection {
+    background: var(--brand);
+    color: var(--white);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  [data-reveal] > * {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+      opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: calc(var(--reveal-index, 0) * 80ms);
+  }
+
+  [data-reveal='shown'] > * {
+    opacity: 1;
+    transform: none;
+  }
+
+  .hero-enter > * {
+    animation: hero-enter 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(var(--reveal-index, 0) * 90ms);
+  }
+
+  .changed-pulse {
+    animation: changed-pulse 2.4s ease-in-out infinite;
+  }
+}
+
+@keyframes hero-enter {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+}
+
+@keyframes changed-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.hero-painting {
+  mask-image:
+    linear-gradient(to bottom, transparent, #000 24%),
+    linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+  mask-composite: intersect;
+}
+
+.painted-text {
+  color: var(--foreground);
+}
+
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .painted-text {
+    color: transparent;
+    background: url('/hero/painting-texture.webp') center / cover;
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+}
+
+.press {
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), background-color 160ms, color 160ms;
+}
+
+.press:active:not(:disabled) {
+  transform: scale(0.97);
 }

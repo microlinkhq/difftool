@@ -1,8 +1,7 @@
 "use client"
 
 import { Minus, Plus, Maximize2 } from "lucide-react"
-
-export const DEFAULT_ZOOM = 50
+import { DEFAULT_ZOOM, MIN_ZOOM } from "@/lib/zoom"
 
 interface ZoomControlsProps {
   zoom: number
@@ -14,7 +13,7 @@ interface ZoomControlsProps {
 export function ZoomControls({ 
   zoom, 
   onZoomChange, 
-  minZoom = 10, 
+  minZoom = MIN_ZOOM, 
   maxZoom = 500 
 }: ZoomControlsProps) {
   const handleZoomIn = () => {
@@ -48,7 +47,7 @@ export function ZoomControls({
         max={maxZoom}
         value={zoom}
         onChange={(e) => onZoomChange(Number(e.target.value))}
-        className="w-24 h-1 bg-border rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:cursor-pointer"
+        className="w-24 h-1 bg-border rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-active [&::-webkit-slider-thumb]:cursor-pointer"
       />
       
       <button

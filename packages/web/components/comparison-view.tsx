@@ -1,24 +1,26 @@
 "use client"
 
 import { useState } from "react"
-import type { ComparisonMode } from "@/app/page"
+import type { ComparisonMode } from "@/lib/modes"
 import { SplitView } from "./comparison-modes/split-view"
 import { FadeView } from "./comparison-modes/fade-view"
 import { SliderView } from "./comparison-modes/slider-view"
 import { HighlightView } from "./comparison-modes/highlight-view"
 import { SubtractView } from "./comparison-modes/subtract-view"
-import { DEFAULT_ZOOM, ZoomControls } from "./zoom-controls"
+import { ZoomControls } from "./zoom-controls"
+import { resolveInitialZoom } from "@/lib/zoom"
 
 interface ComparisonViewProps {
   image1: string
   image2: string
   mode: ComparisonMode
+  initialZoom?: number
 }
 
-export function ComparisonView({ image1, image2, mode }: ComparisonViewProps) {
+export function ComparisonView({ image1, image2, mode, initialZoom }: ComparisonViewProps) {
   const [fadeValue, setFadeValue] = useState(50)
   const [sliderPosition, setSliderPosition] = useState(50)
-  const [zoom, setZoom] = useState(DEFAULT_ZOOM)
+  const [zoom, setZoom] = useState(resolveInitialZoom(initialZoom))
 
   return (
     <div className="h-full w-full bg-muted/30 relative flex flex-col">

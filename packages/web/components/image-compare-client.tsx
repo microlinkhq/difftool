@@ -5,17 +5,17 @@ import { useQueryState, parseAsStringLiteral } from "nuqs"
 import { ImageUploader } from "@/components/image-uploader"
 import { ComparisonView } from "@/components/comparison-view"
 import { ModeSelector } from "@/components/mode-selector"
-import { Loader2, ArrowLeftRight } from "lucide-react"
+import { TopBar } from "@/components/top-bar"
+import { Landing } from "@/components/landing/landing"
+import { ArrowLeftRight } from "lucide-react"
 import { fetchDisplayableImage, fileNameFromUrl } from "@/lib/load-image"
-
-export type ComparisonMode = "split" | "fade" | "slider" | "highlight" | "subtract"
-
-const comparisonModes = ["split", "fade", "slider", "highlight", "subtract"] as const
+import { COMPARISON_MODES } from "@/lib/modes"
+import { EXAMPLE_IMAGES } from "@/lib/site"
 
 export function ImageCompareClient() {
   const [mode, setMode] = useQueryState(
     "mode",
-    parseAsStringLiteral(comparisonModes).withDefault("highlight")
+    parseAsStringLiteral(COMPARISON_MODES).withDefault("highlight")
   )
   const [image1Url, setImage1Url] = useQueryState("base", { defaultValue: "" })
   const [image2Url, setImage2Url] = useQueryState("head", { defaultValue: "" })
@@ -118,67 +118,61 @@ export function ImageCompareClient() {
     setImage2Error(null)
   }, [setImage1Url, setImage2Url])
 
-  const bothImagesLoaded = image1Data && image2Data
-  const isLoading = isLoadingImage1 || isLoadingImage2
+  const handleTryExample = useCallback(() => {
+    setImage1Url(EXAMPLE_IMAGES.base)
+    setImage2Url(EXAMPLE_IMAGES.head)
+  }, [setImage1Url, setImage2Url])
+
+  if (image1Data && image2Data) {
+    return (
+      <main className="flex h-dvh flex-col bg-background">
+        <TopBar sticky={false}>
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="hidden min-w-0 items-center gap-2 text-sm sm:flex">
+              <span className="truncate font-medium max-w-[200px]">{image1Name}</span>
+              <ArrowLeftRight className="w-4 h-4 shrink-0 text-muted-foreground" aria-label="compared with" />
+              <span className="truncate font-medium max-w-[200px]">{image2Name}</span>
+            </div>
+            <button
+              type="button"
+              onClick={handleReset}
+              className="press h-9 shrink-0 rounded-full px-4 text-[16px] font-medium border border-primary text-primary hover:bg-muted"
+            >
+              New comparison
+            </button>
+          </div>
+        </TopBar>
+        <ModeSelector mode={mode} onModeChange={setMode} className="justify-start px-page pb-3 sm:justify-center" />
+        <div className="flex-1 overflow-hidden">
+          <ComparisonView image1={image1Data} image2={image2Data} mode={mode} />
+        </div>
+      </main>
+    )
+  }
 
   return (
-    <main className="min-h-screen bg-background">
-      {bothImagesLoaded ? (
-        <div className="flex flex-col h-screen">
-          <header className="border-b border-border bg-background">
-            <div className="flex items-center justify-between px-4 h-12">
-              <div className="flex items-center gap-3 text-sm">
-                <span className="font-medium text-foreground truncate max-w-[200px]">{image1Name}</span>
-                <ArrowLeftRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                <span className="font-medium text-foreground truncate max-w-[200px]">{image2Name}</span>
-              </div>
-              <button
-                onClick={handleReset}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Reset
-              </button>
-            </div>
-            <ModeSelector mode={mode} onModeChange={setMode} />
-          </header>
-          <div className="flex-1 overflow-hidden">
-            <ComparisonView
-              image1={image1Data}
-              image2={image2Data}
-              mode={mode}
-            />
-          </div>
-        </div>
-      ) : (
-        <div className="h-screen flex p-2 gap-2">
-          {isLoading && (
-            <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
-              <div className="inline-flex items-center gap-2 text-sm text-muted-foreground bg-background border border-border rounded-md px-3 py-2 shadow-sm">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Loading images from URL...
-              </div>
-            </div>
-          )}
-          <div className="flex-1 h-full">
-            <ImageUploader
-              label="Base Image"
-              image={image1Data}
-              onImageChange={handleImage1Change}
-              isLoading={isLoadingImage1}
-              loadError={image1Error}
-            />
-          </div>
-          <div className="flex-1 h-full">
-            <ImageUploader
-              label="Compare Image"
-              image={image2Data}
-              onImageChange={handleImage2Change}
-              isLoading={isLoadingImage2}
-              loadError={image2Error}
-            />
-          </div>
-        </div>
-      )}
-    </main>
+    <Landing
+      onTryExample={handleTryExample}
+      slots={
+        <>
+          <ImageUploader
+            label="Production"
+            hint="The page as it is today"
+            image={image1Data}
+            onImageChange={handleImage1Change}
+            isLoading={isLoadingImage1}
+            loadError={image1Error}
+          />
+          <ImageUploader
+            label="Preview"
+            hint="The page as this change ships it"
+            image={image2Data}
+            onImageChange={handleImage2Change}
+            isLoading={isLoadingImage2}
+            loadError={image2Error}
+          />
+        </>
+      }
+    />
   )
 }
