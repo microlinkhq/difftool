@@ -27,7 +27,7 @@ export function ModesDemo() {
         <Reveal className="grid gap-6 lg:grid-cols-12 lg:items-end">
           <h2
             id="modes-title"
-            className="max-w-[12ch] text-[clamp(2.25rem,4.4vw,4rem)] font-semibold leading-[1] tracking-[-0.04em] lg:col-span-6"
+            className="max-w-[12ch] font-serif text-[clamp(2.25rem,4.4vw,4rem)] font-normal leading-[1] tracking-[-0.03em] lg:col-span-6"
           >
             Five ways to read a change
           </h2>

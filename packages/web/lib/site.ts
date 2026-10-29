@@ -2,6 +2,7 @@ export const GITHUB_URL = "https://github.com/microlinkhq/difftool"
 export const DOCS_URL = `${GITHUB_URL}#github-action`
 export const MICROLINK_URL = "https://microlink.io"
 export const MICROLINK_DASHBOARD_URL = "https://dashboard.microlink.io"
+export const HERO_PAINTING_URL = "https://www.metmuseum.org/art/collection/search/459968"
 
 export const EXAMPLE_IMAGES = {
   base: "/examples/production.webp",

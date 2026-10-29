@@ -39,7 +39,7 @@ export function Faq() {
     <section id="faq" aria-labelledby="faq-title" className="px-page">
       <div className="mx-auto grid max-w-[1280px] gap-10 lg:grid-cols-12">
         <Reveal className="lg:col-span-4">
-          <h2 id="faq-title" className="text-[clamp(2.25rem,4.4vw,4rem)] font-semibold leading-[1] tracking-[-0.04em]">
+          <h2 id="faq-title" className="font-serif text-[clamp(2.25rem,4.4vw,4rem)] font-normal leading-[1] tracking-[-0.03em]">
             Questions
           </h2>
           <p className="mt-5 max-w-[34ch] text-[18px] leading-[1.6] text-muted-foreground">

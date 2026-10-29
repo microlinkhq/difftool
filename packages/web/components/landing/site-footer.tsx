@@ -1,4 +1,4 @@
-import { DOCS_URL, GITHUB_URL, MICROLINK_URL } from "@/lib/site"
+import { DOCS_URL, GITHUB_URL, HERO_PAINTING_URL, MICROLINK_URL } from "@/lib/site"
 
 const LINKS = [
   { href: GITHUB_URL, label: "GitHub" },
@@ -32,7 +32,16 @@ export function SiteFooter() {
         >
           difftool
         </p>
-        <p className="mt-8 text-[14px] text-ink-panel-muted">© {new Date().getFullYear()} Microlink</p>
+        <div className="mt-8 flex flex-col gap-2 text-[14px] text-ink-panel-muted sm:flex-row sm:justify-between">
+          <p>© {new Date().getFullYear()} Microlink</p>
+          <p>
+            Hero painting:{" "}
+            <a href={HERO_PAINTING_URL} className="underline-offset-4 hover:text-ink-panel-foreground hover:underline">
+              Landscape
+            </a>{" "}
+            by Auguste Renoir, 1889, The Met, public domain.
+          </p>
+        </div>
       </div>
     </footer>
   )

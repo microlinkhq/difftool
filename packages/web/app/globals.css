@@ -17,12 +17,8 @@
   --red9: #c92a2a;
   --teal9: #087f5b;
   --blue3: #74c0fc;
-  --indigo5: #5c7cfa;
   --link-brand: #0473e4;
   --hover-link-brand: #015cba;
-  --gradient-pink: #f76698;
-  --gradient-magenta: #c03fa2;
-  --gradient-purple: #8c1bab;
   --shadow-ink: 16, 24, 40;
 
   --background: var(--white);
@@ -54,11 +50,6 @@
   --code-plain: var(--gray3);
   --code-punctuation: var(--gray5);
   --code-value: var(--blue3);
-  --glow-top: var(--link-brand);
-  --glow-top-soft: var(--indigo5);
-  --glow-middle: var(--gradient-purple);
-  --glow-low: var(--gradient-magenta);
-  --glow-base: var(--gradient-pink);
   --link: var(--link-brand);
   --link-hover: var(--hover-link-brand);
   --shadow-lifted: 0 8px 16px rgba(var(--shadow-ink), 0.06), 0 24px 56px rgba(var(--shadow-ink), 0.12);
@@ -70,6 +61,7 @@
 @theme inline {
   --font-sans: var(--font-inter), 'Inter', system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-serif: Georgia, 'Times New Roman', Times, serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -170,32 +162,11 @@
   }
 }
 
-.hero-glow {
-  position: absolute;
-  inset: 34% -10% -14%;
-  z-index: -1;
-  background:
-    radial-gradient(58% 48% at 50% 100%, var(--glow-base) 0%, var(--glow-base) 25%, transparent 78%),
-    radial-gradient(44% 58% at 10% 92%, var(--glow-low) 0%, var(--glow-low) 20%, transparent 76%),
-    radial-gradient(44% 58% at 90% 92%, var(--glow-low) 0%, var(--glow-low) 20%, transparent 76%),
-    radial-gradient(90% 38% at 50% 104%, var(--glow-base) 0%, transparent 80%),
-    radial-gradient(34% 42% at 50% 58%, var(--glow-middle) 0%, transparent 76%),
-    radial-gradient(60% 46% at 22% 32%, var(--glow-top) 0%, transparent 72%),
-    radial-gradient(60% 46% at 78% 32%, var(--glow-top-soft) 0%, transparent 72%);
-  filter: blur(40px) saturate(1.2);
-  mask-image: linear-gradient(to bottom, transparent 0%, #000 34%);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .hero-glow {
-    animation: hero-glow-drift 18s ease-in-out infinite alternate;
-  }
-}
-
-@keyframes hero-glow-drift {
-  to {
-    transform: translate3d(0, -2%, 0) scale(1.04);
-  }
+.hero-painting {
+  mask-image:
+    linear-gradient(to bottom, transparent, #000 24%),
+    linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+  mask-composite: intersect;
 }
 
 .press {
