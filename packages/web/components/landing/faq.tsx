@@ -1,5 +1,6 @@
 import { Plus } from "lucide-react"
 import { BrushStroke } from "./brush-stroke"
+import { MicrolinkLink } from "./microlink-link"
 import { Reveal } from "./reveal"
 
 const QUESTIONS: { question: string; answer: React.ReactNode }[] = [
@@ -25,8 +26,12 @@ const QUESTIONS: { question: string; answer: React.ReactNode }[] = [
   },
   {
     question: "What does it cost?",
-    answer:
-      "The action is free and MIT licensed. Screenshots are Microlink API requests: without a key they use the free endpoint, 5 a day, which is enough to try it. A plan raises the limit for real CI traffic.",
+    answer: (
+      <>
+        The action is free and MIT licensed. Screenshots are <MicrolinkLink /> API requests: without a key they use the
+        free endpoint, 5 a day, which is enough to try it. A plan raises the limit for real CI traffic.
+      </>
+    ),
   },
   {
     question: "Are images I drop on this page uploaded?",

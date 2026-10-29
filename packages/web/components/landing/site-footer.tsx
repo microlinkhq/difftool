@@ -1,3 +1,4 @@
+import { MicrolinkLink } from "./microlink-link"
 import { DOCS_URL, GITHUB_URL, HERO_PAINTING_URL, MICROLINK_URL } from "@/lib/site"
 
 const LINKS = [
@@ -33,7 +34,9 @@ export function SiteFooter() {
         </p>
       </div>
       <div className="mt-6 flex flex-col gap-2 text-[14px] text-muted-foreground sm:flex-row sm:justify-between">
-        <p>© {new Date().getFullYear()} Microlink</p>
+        <p>
+          © {new Date().getFullYear()} <MicrolinkLink />
+        </p>
         <p>
           Painting:{" "}
           <a href={HERO_PAINTING_URL} className={linkClass}>

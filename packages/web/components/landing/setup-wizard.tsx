@@ -4,6 +4,7 @@ import { useId, useMemo, useState } from "react"
 import { ArrowUpRight, Database, Gauge, GitPullRequest, Globe, Plus, X } from "lucide-react"
 import { BrushStroke } from "./brush-stroke"
 import { CodeBlock } from "./code-block"
+import { MicrolinkLink } from "./microlink-link"
 import { Reveal } from "./reveal"
 import { optionSelected, segmentButtonClass, segmentLayout } from "@/lib/segment-layout"
 import { CTA_CLASS } from "@/lib/cta"
@@ -305,7 +306,7 @@ export function SetupWizard() {
                   className="mt-1 h-[18px] w-[18px] shrink-0 accent-primary"
                 />
                 <span>
-                  Use a Microlink API key, saved as <code className="font-mono text-[14px]">{MICROLINK_SECRET}</code>.{" "}
+                  Use a <MicrolinkLink /> API key, saved as <code className="font-mono text-[14px]">{MICROLINK_SECRET}</code>.{" "}
                   <span className="text-muted-foreground">
                     Without one, screenshots run on the free endpoint, 5 requests a day.{" "}
                     <a href={MICROLINK_DASHBOARD_URL} className="text-link hover:text-link-hover hover:underline">

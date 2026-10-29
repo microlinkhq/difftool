@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { Menu, X } from "lucide-react"
 import { CTA_OUTLINE_CLASS } from "@/lib/cta"
-import { GITHUB_URL, SECTIONS } from "@/lib/site"
+import { GITHUB_URL, MICROLINK_URL, SECTIONS } from "@/lib/site"
 import {
   barChildren,
   isBarScrolled,
@@ -29,12 +29,16 @@ function useScrolled() {
 
 export function Wordmark() {
   return (
-    <a href="/" className="flex shrink-0 items-center gap-2.5" aria-label="microlink/difftool home">
-      <img src="https://cdn.microlink.io/logo/logo.svg" alt="" width={32} height={32} className="h-8 w-8" />
-      <span className="text-[18px] tracking-[-0.02em]">
-        microlink/<span className="font-semibold">difftool</span>
-      </span>
-    </a>
+    <div className="flex shrink-0 items-center text-[18px] tracking-[-0.02em]">
+      <a href={MICROLINK_URL} className="flex items-center gap-2.5 hover:underline underline-offset-4">
+        <img src="https://cdn.microlink.io/logo/logo.svg" alt="" width={32} height={32} className="h-8 w-8" />
+        microlink
+      </a>
+      <span aria-hidden>/</span>
+      <a href="/" aria-label="difftool home" className="font-semibold hover:underline underline-offset-4">
+        difftool
+      </a>
+    </div>
   )
 }
 

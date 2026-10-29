@@ -1,16 +1,22 @@
 import { BrushStroke } from "./brush-stroke"
+import { MicrolinkLink } from "./microlink-link"
 import { Reveal } from "./reveal"
 import { columnClass, verdictClass, verdictLabel } from "@/lib/comment-table"
 import { EXAMPLE_COMPARE_URL, EXAMPLE_IMAGES } from "@/lib/site"
 
-const STAGES = [
+const STAGES: { title: string; body: React.ReactNode }[] = [
   {
     title: "Waits for your preview",
     body: "With head set to vercel, the action polls the deployment for the PR's head commit and starts the moment it is ready. Any other host works with a plain URL.",
   },
   {
     title: "Screenshots both deploys",
-    body: "Microlink renders every route you list as a full-page screenshot, once on production and once on the preview, with the same browser and viewport.",
+    body: (
+      <>
+        <MicrolinkLink /> renders every route you list as a full-page screenshot, once on production and once on the
+        preview, with the same browser and viewport.
+      </>
+    ),
   },
   {
     title: "Compares them pixel by pixel",
