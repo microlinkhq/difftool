@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
+import { ColorDebug } from '@/components/color-debug'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
@@ -53,6 +54,7 @@ export default function RootLayout({
       <body className="font-sans antialiased min-h-dvh">
         <NuqsAdapter>{children}</NuqsAdapter>
         {process.env.NODE_ENV === 'production' && <Analytics />}
+        {process.env.NODE_ENV === 'development' && <ColorDebug />}
       </body>
     </html>
   )
