@@ -28,9 +28,11 @@ function useScrolled() {
 
 export function Wordmark() {
   return (
-    <a href="/" className="flex shrink-0 items-center gap-2.5" aria-label="difftool home">
+    <a href="/" className="flex shrink-0 items-center gap-2.5" aria-label="microlink/difftool home">
       <img src="https://cdn.microlink.io/logo/logo.svg" alt="" width={32} height={32} className="h-8 w-8" />
-      <span className="text-[18px] font-semibold tracking-[-0.02em]">difftool</span>
+      <span className="text-[18px] tracking-[-0.02em]">
+        microlink/<span className="font-semibold">difftool</span>
+      </span>
     </a>
   )
 }
@@ -68,7 +70,7 @@ function PhoneMenu() {
   }, [])
 
   return (
-    <div className="md:hidden">
+    <div className="lg:hidden">
       <button
         type="button"
         aria-expanded={open}
@@ -111,7 +113,7 @@ function LandingNav() {
   return (
     <nav aria-label="Main" className="flex items-center gap-1">
       <PhoneMenu />
-      <div className="hidden items-center gap-1 md:flex">
+      <div className="hidden items-center gap-1 lg:flex">
         {SECTIONS.map((section) => (
           <a key={section.id} href={`#${section.id}`} className={navLinkClass}>
             {section.label}
@@ -123,7 +125,7 @@ function LandingNav() {
       </div>
       <a
         href="#setup"
-        className="press ml-1 inline-flex h-9 items-center rounded-full bg-foreground px-4 text-[16px] font-medium text-background hover:bg-foreground/85"
+        className="press ml-1 hidden h-9 items-center whitespace-nowrap rounded-full sm:inline-flex bg-foreground px-4 text-[16px] font-medium text-background hover:bg-foreground/85"
       >
         Add to your repo
       </a>
