@@ -29,7 +29,7 @@ export function ModesDemo() {
             id="modes-title"
             className="max-w-[12ch] font-serif text-[clamp(2.25rem,4.4vw,4rem)] font-normal leading-[1] tracking-[-0.03em] lg:col-span-6"
           >
-            Five ways to read a change
+            Five ways to <em className="italic">read</em> a change
           </h2>
           <p className="max-w-[46ch] text-[18px] leading-[1.6] text-muted-foreground lg:col-span-5 lg:col-start-8">
             Every compare link in the comment opens here. This is the pull request from above: the unavatar.io
