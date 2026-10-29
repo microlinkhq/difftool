@@ -25,17 +25,15 @@ export function ModesDemo() {
   return (
     <section id="modes" aria-labelledby="modes-title" className="px-page">
       <div className="mx-auto max-w-[1280px]">
-        <Reveal className="grid gap-6 lg:grid-cols-12 lg:items-end">
-          <div className="lg:col-span-6">
-            <h2
-              id="modes-title"
-              className="max-w-[12ch] font-serif text-[clamp(2.25rem,4.4vw,4rem)] font-normal leading-[1] tracking-[-0.03em]"
-            >
-              Five ways to <em className="italic">read</em> a change
-            </h2>
-            <BrushStroke className="mt-6 block" />
-          </div>
-          <p className="max-w-[46ch] text-[18px] leading-[1.6] text-muted-foreground lg:col-span-5 lg:col-start-8">
+        <Reveal>
+          <h2
+            id="modes-title"
+            className="max-w-[12ch] font-serif text-[clamp(2.25rem,4.4vw,4rem)] font-normal leading-[1] tracking-[-0.03em]"
+          >
+            Five ways to <em className="italic">read</em> a change
+          </h2>
+          <BrushStroke className="mt-6 block" />
+          <p className="mt-5 max-w-[46ch] text-[18px] leading-[1.6] text-muted-foreground">
             Every compare link in the comment opens here. This is the pull request from above: the unavatar.io
             headline moved by a few pixels. Switch modes and find it.
           </p>
