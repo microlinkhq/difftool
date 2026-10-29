@@ -1,0 +1,123 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { Menu, X } from "lucide-react"
+import { GITHUB_URL, SECTIONS } from "@/lib/site"
+
+const SCROLLED_AFTER_PX = 8
+
+function useScrolled() {
+  const [scrolled, setScrolled] = useState(false)
+  useEffect(() => {
+    const update = () => setScrolled(window.scrollY > SCROLLED_AFTER_PX)
+    update()
+    window.addEventListener("scroll", update, { passive: true })
+    return () => window.removeEventListener("scroll", update)
+  }, [])
+  return scrolled
+}
+
+export function Wordmark() {
+  return (
+    <a href="/" className="flex shrink-0 items-center gap-2.5" aria-label="difftool home">
+      <img src="https://cdn.microlink.io/logo/logo.svg" alt="" width={32} height={32} className="h-8 w-8" />
+      <span className="text-[18px] font-semibold tracking-[-0.02em]">difftool</span>
+    </a>
+  )
+}
+
+interface TopBarProps {
+  children?: React.ReactNode
+  sticky?: boolean
+}
+
+export function TopBar({ children, sticky = true }: TopBarProps) {
+  const scrolled = useScrolled()
+
+  return (
+    <header
+      className={`${sticky ? "sticky top-0" : ""} z-40 transition-colors duration-200 ${
+        scrolled && sticky ? "bg-card shadow-[0_1px_0_var(--border)]" : "bg-card"
+      }`}
+    >
+      <div className="flex h-14 items-center justify-between gap-4 px-page">
+        <Wordmark />
+        {children ?? <LandingNav />}
+      </div>
+    </header>
+  )
+}
+
+const navLinkClass =
+  "press rounded-lg px-3 py-2 text-[16px] text-muted-foreground hover:bg-black/[0.06] hover:text-foreground"
+
+const MENU_ID = "phone-menu"
+
+function PhoneMenu() {
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    const close = (event: KeyboardEvent) => event.key === "Escape" && setOpen(false)
+    window.addEventListener("keydown", close)
+    return () => window.removeEventListener("keydown", close)
+  }, [open])
+
+  return (
+    <div className="md:hidden">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={MENU_ID}
+        aria-label={open ? "Close menu" : "Open menu"}
+        onClick={() => setOpen(!open)}
+        className="press flex h-9 w-9 items-center justify-center rounded-full hover:bg-black/[0.06]"
+      >
+        {open ? <X className="h-5 w-5" aria-hidden /> : <Menu className="h-5 w-5" aria-hidden />}
+      </button>
+      {open && (
+        <div
+          id={MENU_ID}
+          className="absolute inset-x-0 top-14 flex flex-col gap-1 bg-card px-page pb-5 pt-2 shadow-[0_12px_24px_-12px_rgba(0,0,0,0.18)] animate-in fade-in slide-in-from-top-2 duration-200"
+        >
+          {[...SECTIONS.map((section) => ({ href: `#${section.id}`, label: section.label })), { href: GITHUB_URL, label: "GitHub" }].map(
+            (link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                onClick={() => setOpen(false)}
+                className="press rounded-xl px-3 py-3 text-[18px] font-medium hover:bg-muted"
+              >
+                {link.label}
+              </a>
+            )
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function LandingNav() {
+  return (
+    <nav aria-label="Main" className="flex items-center gap-1">
+      <PhoneMenu />
+      <div className="hidden items-center gap-1 md:flex">
+        {SECTIONS.map((section) => (
+          <a key={section.id} href={`#${section.id}`} className={navLinkClass}>
+            {section.label}
+          </a>
+        ))}
+        <a href={GITHUB_URL} className={navLinkClass}>
+          GitHub
+        </a>
+      </div>
+      <a
+        href="#setup"
+        className="press ml-1 inline-flex h-9 items-center rounded-full bg-foreground px-4 text-[16px] font-medium text-background hover:bg-foreground/85"
+      >
+        Add to your repo
+      </a>
+    </nav>
+  )
+}

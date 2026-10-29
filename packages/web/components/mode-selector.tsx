@@ -1,38 +1,40 @@
 "use client"
 
 import { Columns2, CircleDot, SlidersHorizontal, Highlighter, MinusSquare } from "lucide-react"
-import type { ComparisonMode } from "@/app/page"
+import { COMPARISON_MODES, MODE_DETAILS, type ComparisonMode } from "@/lib/modes"
 
 interface ModeSelectorProps {
   mode: ComparisonMode
   onModeChange: (mode: ComparisonMode) => void
+  className?: string
 }
 
-const modes: { id: ComparisonMode; label: string; icon: React.ReactNode }[] = [
-  { id: "split", label: "Split", icon: <Columns2 className="w-4 h-4" /> },
-  { id: "fade", label: "Fade", icon: <CircleDot className="w-4 h-4" /> },
-  { id: "slider", label: "Slider", icon: <SlidersHorizontal className="w-4 h-4" /> },
-  { id: "highlight", label: "Highlight", icon: <Highlighter className="w-4 h-4" /> },
-  { id: "subtract", label: "Subtract", icon: <MinusSquare className="w-4 h-4" /> },
-]
+const MODE_ICONS: Record<ComparisonMode, React.ReactNode> = {
+  split: <Columns2 className="hidden w-4 h-4 sm:block" aria-hidden />,
+  fade: <CircleDot className="hidden w-4 h-4 sm:block" aria-hidden />,
+  slider: <SlidersHorizontal className="hidden w-4 h-4 sm:block" aria-hidden />,
+  highlight: <Highlighter className="hidden w-4 h-4 sm:block" aria-hidden />,
+  subtract: <MinusSquare className="hidden w-4 h-4 sm:block" aria-hidden />,
+}
 
-export function ModeSelector({ mode, onModeChange }: ModeSelectorProps) {
+export function ModeSelector({ mode, onModeChange, className = "" }: ModeSelectorProps) {
   return (
-    <div className="flex items-center justify-center gap-1 py-3 bg-background">
-      {modes.map((m) => (
+    <div role="tablist" aria-label="Comparison mode" className={`flex items-center gap-1 overflow-x-auto ${className}`}>
+      {COMPARISON_MODES.map((id) => (
         <button
-          key={m.id}
-          onClick={() => onModeChange(m.id)}
-          className={`
-            flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-all
-            ${mode === m.id 
-              ? "bg-foreground text-background font-medium" 
+          key={id}
+          type="button"
+          role="tab"
+          aria-selected={mode === id}
+          onClick={() => onModeChange(id)}
+          className={`press flex shrink-0 items-center gap-2 rounded-full px-3 py-1.5 text-sm sm:px-3.5 ${
+            mode === id
+              ? "bg-foreground text-background font-medium"
               : "text-muted-foreground hover:text-foreground hover:bg-muted"
-            }
-          `}
+          }`}
         >
-          {m.icon}
-          {m.label}
+          {MODE_ICONS[id]}
+          {MODE_DETAILS[id].label}
         </button>
       ))}
     </div>

@@ -4,33 +4,38 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #fff;
-  --foreground: #0a0a0a;
+  --background: #fafaf9;
+  --foreground: #141414;
   --card: #fff;
-  --card-foreground: #0a0a0a;
+  --card-foreground: #141414;
   --popover: #fff;
-  --popover-foreground: #0a0a0a;
-  --primary: #0a0a0a;
-  --primary-foreground: #fafafa;
-  --secondary: #fafafa;
-  --secondary-foreground: #0a0a0a;
-  --muted: #f5f5f5;
-  --muted-foreground: #666;
-  --accent: #fafafa;
-  --accent-foreground: #0a0a0a;
-  --destructive: #ef4444;
-  --destructive-foreground: #fafafa;
-  --border: #e5e5e5;
-  --input: #e5e5e5;
-  --ring: #0a0a0a;
-  --radius: 0.375rem;
+  --popover-foreground: #141414;
+  --primary: #141414;
+  --primary-foreground: #fafaf9;
+  --secondary: #f0efed;
+  --secondary-foreground: #141414;
+  --muted: #f0efed;
+  --muted-foreground: #57534e;
+  --accent: #f0efed;
+  --accent-foreground: #141414;
+  --destructive: #d4183d;
+  --destructive-foreground: #fff;
+  --border: #e4e2df;
+  --input: #d6d3d1;
+  --ring: #141414;
+  --changed: #ff0080;
+  --ink-panel: #141414;
+  --ink-panel-raised: #222220;
+  --ink-panel-foreground: #f5f5f4;
+  --ink-panel-muted: #a8a29e;
+  --link: #0473e4;
+  --radius: 0.75rem;
+  --page-margin: clamp(16px, 3vw, 32px);
 }
 
-
-
 @theme inline {
-  --font-sans: 'Geist', 'Geist Fallback';
-  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+  --font-sans: var(--font-inter), 'Inter', system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -50,17 +55,85 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) - 2px);
-  --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 2px);
+  --color-changed: var(--changed);
+  --color-ink-panel: var(--ink-panel);
+  --color-ink-panel-raised: var(--ink-panel-raised);
+  --color-ink-panel-foreground: var(--ink-panel-foreground);
+  --color-ink-panel-muted: var(--ink-panel-muted);
+  --color-link: var(--link);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --spacing-page: var(--page-margin);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    scroll-padding-top: 4.5rem;
+  }
   body {
     @apply bg-background text-foreground;
   }
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+  ::selection {
+    background: var(--changed);
+    color: #fff;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  [data-reveal] > * {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+      opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: calc(var(--reveal-index, 0) * 80ms);
+  }
+
+  [data-reveal='shown'] > * {
+    opacity: 1;
+    transform: none;
+  }
+
+  .hero-enter > * {
+    animation: hero-enter 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(var(--reveal-index, 0) * 90ms);
+  }
+
+  .changed-pulse {
+    animation: changed-pulse 2.4s ease-in-out infinite;
+  }
+}
+
+@keyframes hero-enter {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+}
+
+@keyframes changed-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.press {
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), background-color 160ms, color 160ms;
+}
+
+.press:active:not(:disabled) {
+  transform: scale(0.97);
 }

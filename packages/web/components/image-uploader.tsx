@@ -1,18 +1,19 @@
 "use client"
 
 import { useCallback, useRef, useState } from "react"
-import { ImageIcon, Loader2, X } from "lucide-react"
+import { ImageUp, Loader2, X } from "lucide-react"
 import { canDisplay, fetchDisplayableImage, fileNameFromUrl, readDataUrl } from "@/lib/load-image"
 
 interface ImageUploaderProps {
   label: string
+  hint: string
   image: string | null
   onImageChange: (dataUrl: string | null, name?: string, originalUrl?: string) => void
   isLoading?: boolean
   loadError?: string | null
 }
 
-export function ImageUploader({ label, image, onImageChange, isLoading, loadError }: ImageUploaderProps) {
+export function ImageUploader({ label, hint, image, onImageChange, isLoading, loadError }: ImageUploaderProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [urlValue, setUrlValue] = useState("")
   const [isLoadingUrl, setIsLoadingUrl] = useState(false)
@@ -73,12 +74,14 @@ export function ImageUploader({ label, image, onImageChange, isLoading, loadErro
     }
   }, [urlValue, onImageChange])
 
+  const slot = "relative h-full min-h-[132px] rounded-2xl md:min-h-[208px]"
+
   if (isLoading) {
     return (
-      <div className="h-full rounded-lg border border-dashed border-border bg-background flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3 text-muted-foreground">
-          <Loader2 className="w-6 h-6 animate-spin" />
-          <span className="text-sm">Loading image...</span>
+      <div className={`${slot} bg-muted flex items-center justify-center`}>
+        <div role="status" className="flex flex-col items-center gap-3 text-muted-foreground">
+          <Loader2 className="w-6 h-6 animate-spin" aria-hidden />
+          <span className="text-sm">Loading {label.toLowerCase()}…</span>
         </div>
       </div>
     )
@@ -86,17 +89,16 @@ export function ImageUploader({ label, image, onImageChange, isLoading, loadErro
 
   if (image) {
     return (
-      <div className="h-full relative rounded-lg border border-dashed border-border bg-muted/30 overflow-hidden flex items-center justify-center">
-        <img
-          src={image}
-          alt={label}
-          className="max-w-full max-h-full object-contain"
-        />
+      <div className={`${slot} bg-muted overflow-hidden flex items-center justify-center p-3`}>
+        <img src={image} alt={label} className="max-w-full max-h-full object-contain rounded-lg" />
+        <span className="absolute left-3 top-3 rounded-full bg-background px-2.5 py-1 text-[14px] font-medium">{label}</span>
         <button
+          type="button"
           onClick={() => onImageChange(null)}
-          className="absolute top-3 right-3 bg-background border border-border rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors"
+          aria-label={`Remove ${label.toLowerCase()} image`}
+          className="press absolute top-3 right-3 rounded-full bg-background p-1.5 text-muted-foreground hover:text-foreground"
         >
-          <X className="w-4 h-4" />
+          <X className="w-4 h-4" aria-hidden />
         </button>
       </div>
     )
@@ -107,46 +109,50 @@ export function ImageUploader({ label, image, onImageChange, isLoading, loadErro
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`
-        h-full relative rounded-lg border border-dashed transition-all
-        flex flex-col items-center justify-center cursor-pointer
-        ${isDragging 
-          ? "border-foreground bg-muted" 
-          : "border-border hover:border-muted-foreground/50 bg-background"
-        }
-      `}
+      className={`${slot} group flex flex-col justify-between gap-4 p-4 md:gap-6 md:p-5 transition-colors ${
+        isDragging ? "bg-changed/10 ring-2 ring-changed" : "bg-muted hover:bg-[#e9e8e5]"
+      }`}
     >
       <input
         type="file"
         accept="image/*"
         onChange={handleFileSelect}
+        aria-label={`Choose the ${label.toLowerCase()} image`}
         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
       />
-      <ImageIcon className="w-8 h-8 text-muted-foreground/50 mb-4" />
-      <p className="text-sm font-medium text-foreground mb-1">Drop image here</p>
-      <p className="text-xs text-muted-foreground mb-6">jpg, png, webp, gif, avif</p>
-      
-      <div 
-        className="flex gap-2 w-full max-w-sm px-8 relative z-10"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <input
-          type="url"
-          placeholder="Or paste image URL..."
-          value={urlValue}
-          onChange={(e) => { setUrlValue(e.target.value); setError(null); setDismissedLoadError(loadError ?? null) }}
-          onKeyDown={(e) => e.key === "Enter" && handleUrlSubmit()}
-          className="flex-1 h-9 px-3 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 pointer-events-auto"
-        />
-        <button 
-          onClick={handleUrlSubmit} 
-          disabled={isLoadingUrl || !urlValue.trim()} 
-          className="h-9 px-3 text-sm font-medium bg-foreground text-background rounded-md hover:bg-foreground/90 disabled:opacity-50 disabled:cursor-not-allowed pointer-events-auto transition-colors"
-        >
-          {isLoadingUrl ? <Loader2 className="w-4 h-4 animate-spin" /> : "Load"}
-        </button>
+      <div className="pointer-events-none flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[18px] font-semibold tracking-[-0.01em]">{label}</p>
+          <p className="mt-1 hidden text-[16px] text-muted-foreground sm:block">{hint}</p>
+        </div>
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-background text-foreground transition-transform group-hover:-translate-y-0.5">
+          <ImageUp className="w-[18px] h-[18px]" aria-hidden />
+        </span>
       </div>
-      <p role="alert" className="text-xs text-destructive mt-3 min-h-4">{visibleError}</p>
+
+      <div className="relative z-10">
+        <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+          <input
+            type="url"
+            inputMode="url"
+            placeholder="or paste a URL"
+            aria-label={`${label} image URL`}
+            value={urlValue}
+            onChange={(e) => { setUrlValue(e.target.value); setError(null); setDismissedLoadError(loadError ?? null) }}
+            onKeyDown={(e) => e.key === "Enter" && handleUrlSubmit()}
+            className="min-w-0 flex-1 h-10 rounded-full bg-background px-4 text-[16px] placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          />
+          <button
+            type="button"
+            onClick={handleUrlSubmit}
+            disabled={isLoadingUrl || !urlValue.trim()}
+            className="press h-10 rounded-full bg-foreground px-4 text-[16px] font-medium text-background hover:bg-foreground/85 disabled:bg-background disabled:text-muted-foreground disabled:cursor-not-allowed"
+          >
+            {isLoadingUrl ? <Loader2 className="w-4 h-4 animate-spin" aria-label="Loading" /> : "Load"}
+          </button>
+        </div>
+        <p role="alert" className="mt-2 min-h-5 text-[14px] text-destructive">{visibleError}</p>
+      </div>
     </div>
   )
 }
