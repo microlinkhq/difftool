@@ -8,10 +8,10 @@ const DISTINCT_HUE_DEGREES = 15
 const MICROLINK_COLORS = new Set([
   '#000', '#fff', '#0473e4', '#015cba', '#d92d6e', '#f76698', '#c03fa2', '#8c1bab',
   '#f8f9fa', '#f1f3f5', '#e9ecef', '#dee2e6', '#ced4da', '#adb5bd', '#868e96', '#495057', '#343a40', '#212529',
-  '#c92a2a', '#087f5b', '#ffec99'
+  '#c92a2a', '#087f5b'
 ])
 
-const RENOIR_COLORS = new Set(['#9d4612', '#b05829', '#3d2012', '#4d3021'])
+const RENOIR_COLORS = new Set(['#9d4612'])
 
 const css = readFileSync(new URL('../app/globals.css', import.meta.url), 'utf8')
 const rootBlock = css.slice(css.indexOf(':root {'), css.indexOf('}', css.indexOf(':root {')))
@@ -60,12 +60,13 @@ const TEXT_PAIRS = [
   ['muted-foreground', 'muted'],
   ['muted-foreground', 'surface-hover'],
   ['primary-foreground', 'primary'],
-  ['primary-foreground', 'primary-hover'],
   ['destructive', 'card'],
   ['destructive', 'muted'],
   ['success', 'card'],
   ['link', 'card'],
   ['link-hover', 'card'],
+  ['primary', 'card'],
+  ['primary', 'muted'],
   ['ink-panel-foreground', 'ink-panel'],
   ['ink-panel-foreground', 'ink-panel-raised'],
   ['ink-panel-muted', 'ink-panel'],

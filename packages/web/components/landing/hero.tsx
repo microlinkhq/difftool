@@ -49,7 +49,7 @@ export function Hero({ slots, onTryExample }: HeroProps) {
               <a
                 href={EXAMPLE_COMPARE_URL}
                 onClick={(event) => followExample(event, onTryExample)}
-                className="press group inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-[16px] font-medium text-primary-foreground hover:bg-primary-hover"
+                className="press group inline-flex h-10 items-center gap-2 rounded-full px-5 text-[16px] font-medium text-primary hover:bg-muted"
               >
                 Try a real example
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />

@@ -21,11 +21,11 @@ export const secretsLinkProps = (href: string | undefined) => {
       href: undefined,
       tabIndex: -1,
       "aria-disabled": true,
-      className: `${secretsLinkClass} pointer-events-none bg-muted text-muted-foreground`,
+      className: `${secretsLinkClass} pointer-events-none text-muted-foreground`,
     }
   }
   return {
     href,
-    className: `${secretsLinkClass} bg-primary text-primary-foreground hover:bg-primary-hover`,
+    className: `${secretsLinkClass} text-primary hover:bg-muted`,
   }
 }

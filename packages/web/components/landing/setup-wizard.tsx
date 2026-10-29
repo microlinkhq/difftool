@@ -134,7 +134,7 @@ function RouteList({ routes, onChange }: { routes: string[]; onChange: (routes: 
           type="button"
           onClick={commit}
           disabled={addRouteDisabled(draft)}
-          className="press inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl bg-primary px-4 text-[16px] font-medium text-primary-foreground hover:bg-primary-hover disabled:bg-muted disabled:text-muted-foreground"
+          className="press inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl px-4 text-[16px] font-medium text-primary hover:bg-muted disabled:bg-transparent disabled:text-muted-foreground"
         >
           <Plus className="h-4 w-4" aria-hidden />
           Add
@@ -346,7 +346,7 @@ export function SetupWizard() {
         <div className="mx-auto mt-16 flex max-w-[760px] justify-center">
           <a
             href={DOCS_URL}
-            className="press inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 text-[16px] font-medium text-primary-foreground hover:bg-primary-hover"
+            className="press inline-flex h-12 items-center gap-2 rounded-full px-6 text-[16px] font-medium text-primary hover:bg-muted"
           >
             Read the docs
             <ArrowUpRight className="h-4 w-4" aria-hidden />
