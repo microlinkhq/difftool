@@ -134,7 +134,7 @@ function RouteList({ routes, onChange }: { routes: string[]; onChange: (routes: 
           type="button"
           onClick={commit}
           disabled={addRouteDisabled(draft)}
-          className="press inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl bg-foreground px-4 text-[16px] font-medium text-background hover:bg-foreground/85 disabled:bg-muted disabled:text-muted-foreground"
+          className="press inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl bg-primary px-4 text-[16px] font-medium text-primary-foreground hover:bg-primary-hover disabled:bg-muted disabled:text-muted-foreground"
         >
           <Plus className="h-4 w-4" aria-hidden />
           Add
@@ -299,7 +299,7 @@ export function SetupWizard() {
                   type="checkbox"
                   checked={useApiKey}
                   onChange={(event) => setUseApiKey(event.target.checked)}
-                  className="mt-1 h-[18px] w-[18px] shrink-0 accent-foreground"
+                  className="mt-1 h-[18px] w-[18px] shrink-0 accent-primary"
                 />
                 <span>
                   Use a Microlink API key, saved as <code className="font-mono text-[14px]">{MICROLINK_SECRET}</code>.{" "}
@@ -346,7 +346,7 @@ export function SetupWizard() {
         <div className="mx-auto mt-16 flex max-w-[760px] justify-center">
           <a
             href={DOCS_URL}
-            className="press inline-flex h-12 items-center gap-2 rounded-full bg-foreground px-6 text-[16px] font-medium text-background hover:bg-foreground/85"
+            className="press inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 text-[16px] font-medium text-primary-foreground hover:bg-primary-hover"
           >
             Read the docs
             <ArrowUpRight className="h-4 w-4" aria-hidden />

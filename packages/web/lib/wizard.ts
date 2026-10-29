@@ -26,6 +26,6 @@ export const secretsLinkProps = (href: string | undefined) => {
   }
   return {
     href,
-    className: `${secretsLinkClass} bg-foreground text-background hover:bg-foreground/85`,
+    className: `${secretsLinkClass} bg-primary text-primary-foreground hover:bg-primary-hover`,
   }
 }

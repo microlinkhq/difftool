@@ -13,7 +13,8 @@
   --gray5: #adb5bd;
   --gray7: #495057;
   --gray9: #212529;
-  --secondary-brand: #d92d6e;
+  --grape8: #9c36b5;
+  --grape9: #862e9c;
   --red9: #c92a2a;
   --teal9: #087f5b;
   --blue3: #74c0fc;
@@ -27,7 +28,8 @@
   --card-foreground: var(--black);
   --popover: var(--white);
   --popover-foreground: var(--black);
-  --primary: var(--black);
+  --primary: var(--grape9);
+  --primary-hover: var(--grape8);
   --primary-foreground: var(--white);
   --secondary: var(--gray1);
   --secondary-foreground: var(--black);
@@ -42,7 +44,7 @@
   --border: var(--gray2);
   --input: var(--gray4);
   --ring: var(--black);
-  --brand: var(--secondary-brand);
+  --brand: var(--grape9);
   --ink-panel: var(--black);
   --ink-panel-raised: var(--gray9);
   --ink-panel-foreground: var(--white);
@@ -70,6 +72,7 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);

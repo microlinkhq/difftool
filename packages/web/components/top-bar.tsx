@@ -125,7 +125,7 @@ function LandingNav() {
       </div>
       <a
         href="#setup"
-        className="press ml-1 hidden h-9 items-center whitespace-nowrap rounded-full sm:inline-flex bg-foreground px-4 text-[16px] font-medium text-background hover:bg-foreground/85"
+        className="press ml-1 hidden h-9 items-center whitespace-nowrap rounded-full sm:inline-flex bg-primary px-4 text-[16px] font-medium text-primary-foreground hover:bg-primary-hover"
       >
         Add to your repo
       </a>
