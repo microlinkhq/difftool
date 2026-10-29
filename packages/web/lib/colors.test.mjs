@@ -8,8 +8,10 @@ const DISTINCT_HUE_DEGREES = 15
 const MICROLINK_COLORS = new Set([
   '#000', '#fff', '#0473e4', '#015cba', '#d92d6e', '#f76698', '#c03fa2', '#8c1bab',
   '#f8f9fa', '#f1f3f5', '#e9ecef', '#dee2e6', '#ced4da', '#adb5bd', '#868e96', '#495057', '#343a40', '#212529',
-  '#c92a2a', '#087f5b', '#74c0fc', '#9c36b5', '#862e9c'
+  '#c92a2a', '#087f5b', '#ffec99'
 ])
+
+const RENOIR_COLORS = new Set(['#9d4612', '#b05829', '#3d2012', '#4d3021'])
 
 const css = readFileSync(new URL('../app/globals.css', import.meta.url), 'utf8')
 const rootBlock = css.slice(css.indexOf(':root {'), css.indexOf('}', css.indexOf(':root {')))
@@ -88,9 +90,9 @@ describe('color tokens', () => {
     }
   })
 
-  test('every color primitive is a microlink.io theme color', () => {
+  test('every color primitive comes from microlink.io\'s theme or the hero painting', () => {
     const primitives = Object.values(declared).filter(value => /^#[0-9a-f]{3,6}$/i.test(value))
     assert.ok(primitives.length > 0)
-    for (const hex of primitives) assert.ok(MICROLINK_COLORS.has(hex.toLowerCase()), `${hex} is not in microlink.io's theme`)
+    for (const hex of primitives) assert.ok(MICROLINK_COLORS.has(hex.toLowerCase()) || RENOIR_COLORS.has(hex.toLowerCase()), `${hex} is in neither microlink.io's theme nor the painting`)
   })
 })
