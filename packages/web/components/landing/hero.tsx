@@ -21,7 +21,7 @@ export function Hero({ slots, onTryExample }: HeroProps) {
           id="hero-title"
           className="max-w-[12ch] text-balance font-serif text-[clamp(2.75rem,5.4vw,4.25rem)] font-normal leading-[0.95] tracking-[-0.03em]"
         >
-          See every pixel your PR changed
+          See <em className="italic">every</em> pixel your PR changed
         </h1>
         <p className="mt-6 max-w-[40ch] text-pretty text-[17px] leading-[1.5] text-muted-foreground">
           Pixel diffs of production against your preview deploy, posted on every pull request.
