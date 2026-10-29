@@ -169,6 +169,19 @@
   mask-composite: intersect;
 }
 
+.painted-text {
+  color: var(--foreground);
+}
+
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .painted-text {
+    color: transparent;
+    background: url('/hero/painting-texture.webp') center / cover;
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+}
+
 .press {
   transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), background-color 160ms, color 160ms;
 }
