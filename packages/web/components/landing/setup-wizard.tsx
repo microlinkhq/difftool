@@ -320,7 +320,7 @@ export function SetupWizard() {
                   Use a Microlink API key, saved as <code className="font-mono text-[14px]">{MICROLINK_SECRET}</code>.{" "}
                   <span className="text-muted-foreground">
                     Without one, screenshots run on the free endpoint, 5 requests a day.{" "}
-                    <a href={MICROLINK_DASHBOARD_URL} className="text-link hover:underline">
+                    <a href={MICROLINK_DASHBOARD_URL} className="text-link hover:text-link-hover hover:underline">
                       Get a key
                     </a>
                   </span>

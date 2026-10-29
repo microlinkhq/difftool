@@ -73,19 +73,19 @@ function PullRequestComment() {
                   </td>
                   <td className="border-b border-border py-2.5 pr-3 tabular-nums">{changes}</td>
                   <td className="hidden border-b border-border py-2.5 pr-3 sm:table-cell">
-                    <a className="text-link hover:underline" href={EXAMPLE_IMAGES.base}>open</a>
+                    <a className="text-link hover:text-link-hover hover:underline" href={EXAMPLE_IMAGES.base}>open</a>
                   </td>
                   <td className="hidden border-b border-border py-2.5 pr-3 sm:table-cell">
-                    <a className="text-link hover:underline" href={EXAMPLE_IMAGES.head}>open</a>
+                    <a className="text-link hover:text-link-hover hover:underline" href={EXAMPLE_IMAGES.head}>open</a>
                   </td>
                   <td className="hidden border-b border-border py-2.5 pr-3 sm:table-cell">
-                    <a className="text-link hover:underline" href="/examples/diff.webp">open</a>
+                    <a className="text-link hover:text-link-hover hover:underline" href="/examples/diff.webp">open</a>
                   </td>
                   <td className="border-b border-border py-2.5 pr-3">
-                    <a className="text-link hover:underline" href={EXAMPLE_COMPARE_URL}>compare</a>
+                    <a className="text-link hover:text-link-hover hover:underline" href={EXAMPLE_COMPARE_URL}>compare</a>
                   </td>
                   <td className="border-b border-border py-2.5">
-                    <span className={`font-medium ${verdict === "fail" ? "text-destructive" : "text-[#1a7f37]"}`}>
+                    <span className={`font-medium ${verdict === "fail" ? "text-destructive" : "text-success"}`}>
                       {verdict === "fail" ? "Fail" : "Pass"}
                     </span>
                   </td>

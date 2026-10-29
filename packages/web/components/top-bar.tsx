@@ -49,7 +49,7 @@ export function TopBar({ children, sticky = true }: TopBarProps) {
 }
 
 const navLinkClass =
-  "press rounded-lg px-3 py-2 text-[16px] text-muted-foreground hover:bg-black/[0.06] hover:text-foreground"
+  "press rounded-lg px-3 py-2 text-[16px] text-muted-foreground hover:bg-muted hover:text-foreground"
 
 const MENU_ID = "phone-menu"
 
@@ -71,7 +71,7 @@ function PhoneMenu() {
         aria-controls={MENU_ID}
         aria-label={open ? "Close menu" : "Open menu"}
         onClick={() => setOpen(!open)}
-        className="press flex h-9 w-9 items-center justify-center rounded-full hover:bg-black/[0.06]"
+        className="press flex h-9 w-9 items-center justify-center rounded-full hover:bg-muted"
       >
         {open ? <X className="h-5 w-5" aria-hidden /> : <Menu className="h-5 w-5" aria-hidden />}
       </button>

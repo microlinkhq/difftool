@@ -10,14 +10,14 @@ const JSON_KEY = /^(\s*)("[\w-]+")(:)(.*)$/
 
 function highlightLine(line: string, language: "yaml" | "json") {
   const match = line.match(language === "yaml" ? YAML_KEY : JSON_KEY)
-  if (!match) return <span className="text-[#c9c6be]">{line}</span>
+  if (!match) return <span className="text-code-plain">{line}</span>
   const [, indent, key, colon, value] = match
   return (
     <>
       {indent}
-      <span className="text-[#f5f5f4]">{key}</span>
-      <span className="text-[#8d8a83]">{colon}</span>
-      <span className={value.includes("${{") ? "text-[#ff5aa8]" : "text-[#8fc2ff]"}>{value}</span>
+      <span className="text-ink-panel-foreground">{key}</span>
+      <span className="text-code-punctuation">{colon}</span>
+      <span className="text-code-value">{value}</span>
     </>
   )
 }
@@ -52,7 +52,7 @@ export function CodeBlock({ code, language, title }: CodeBlockProps) {
         <button
           type="button"
           onClick={copy}
-          className="press inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-[14px] font-medium text-ink-panel-foreground hover:bg-white/10"
+          className="press inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-[14px] font-medium text-ink-panel-foreground hover:bg-ink-panel"
         >
           {copied ? <Check className="h-4 w-4" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}
           <span aria-live="polite">{copied ? "Copied" : "Copy"}</span>

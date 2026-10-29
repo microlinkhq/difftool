@@ -110,7 +110,7 @@ export function ImageUploader({ label, hint, image, onImageChange, isLoading, lo
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={`${slot} group flex flex-col justify-between gap-4 p-4 md:gap-6 md:p-5 transition-colors ${
-        isDragging ? "bg-changed/10 ring-2 ring-changed" : "bg-muted hover:bg-[#e9e8e5]"
+        isDragging ? "bg-changed/10 ring-2 ring-changed" : "bg-muted hover:bg-surface-hover"
       }`}
     >
       <input
