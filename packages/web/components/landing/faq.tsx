@@ -1,4 +1,5 @@
 import { Plus } from "lucide-react"
+import { BrushStroke } from "./brush-stroke"
 import { Reveal } from "./reveal"
 
 const QUESTIONS: { question: string; answer: React.ReactNode }[] = [
@@ -42,6 +43,7 @@ export function Faq() {
           <h2 id="faq-title" className="font-serif text-[clamp(2.25rem,4.4vw,4rem)] font-normal leading-[1] tracking-[-0.03em]">
             <em className="italic">Questions</em>
           </h2>
+          <BrushStroke className="mt-6 block" />
           <p className="mt-5 max-w-[34ch] text-[18px] leading-[1.6] text-muted-foreground">
             Something else? Open an issue on GitHub and it will get an answer.
           </p>

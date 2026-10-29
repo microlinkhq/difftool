@@ -1,3 +1,4 @@
+import { BrushStroke } from "./brush-stroke"
 import { Reveal } from "./reveal"
 import { columnClass, verdictClass, verdictLabel } from "@/lib/comment-table"
 import { EXAMPLE_COMPARE_URL, EXAMPLE_IMAGES } from "@/lib/site"
@@ -108,7 +109,8 @@ export function HowItWorks() {
             <h2 id="how-title" className="max-w-[14ch] font-serif text-[clamp(2.25rem,4.4vw,4rem)] font-normal leading-[1] tracking-[-0.03em]">
               Every PR gets a <em className="italic">visual</em> diff
             </h2>
-            <p className="mt-6 max-w-[44ch] text-[18px] leading-[1.6] text-ink-panel-muted">
+            <BrushStroke className="mt-6 block" />
+            <p className="mt-5 max-w-[44ch] text-[18px] leading-[1.6] text-ink-panel-muted">
               Code review shows you the lines that changed. difftool shows you the page they changed, next to the one
               your users see today.
             </p>

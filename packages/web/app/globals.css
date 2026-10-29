@@ -16,6 +16,7 @@
   --gray9: #212529;
   --rust: #9d4612;
   --rust-light: #b05829;
+  --clay: #c48472;
   --red9: #c92a2a;
   --teal9: #087f5b;
   --link-brand: #0473e4;
@@ -48,6 +49,7 @@
   --success: var(--teal9);
   --border: var(--gray2);
   --panel-border: var(--gray3);
+  --brush-stroke: var(--clay);
   --input: var(--gray4);
   --ring: var(--black);
   --brand: var(--rust);
@@ -100,6 +102,7 @@
   --color-link-hover: var(--link-hover);
   --color-border: var(--border);
   --color-panel-border: var(--panel-border);
+  --color-brush-stroke: var(--brush-stroke);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-brand: var(--brand);

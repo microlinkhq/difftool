@@ -2,6 +2,7 @@
 
 import { useId, useMemo, useState } from "react"
 import { ArrowUpRight, Database, Gauge, GitPullRequest, Globe, Plus, X } from "lucide-react"
+import { BrushStroke } from "./brush-stroke"
 import { CodeBlock } from "./code-block"
 import { Reveal } from "./reveal"
 import { optionSelected, segmentButtonClass, segmentLayout } from "@/lib/segment-layout"
@@ -179,8 +180,9 @@ export function SetupWizard() {
       <div className="mx-auto max-w-[1280px] rounded-[32px] bg-card px-5 py-16 shadow-[var(--shadow-ring)] sm:px-10 md:py-24">
         <Reveal className="mx-auto max-w-[760px] text-center">
           <h2 id="setup-title" className="font-serif text-[clamp(2.25rem,4.4vw,4rem)] font-normal leading-[1] tracking-[-0.03em]">
-            Add it to <em className="italic">your</em> repo
+            Add it to <em className="italic">your</em> project
           </h2>
+          <BrushStroke className="mx-auto mt-6 block" />
           <p className="mx-auto mt-5 max-w-[54ch] text-[18px] leading-[1.6] text-muted-foreground">
             Answer four questions and copy one workflow file. The action finds the preview, takes the screenshots
             and cleans up after the pull request closes.

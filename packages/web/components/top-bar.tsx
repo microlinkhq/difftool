@@ -128,7 +128,7 @@ function LandingNav() {
         href="#setup"
         className={`${CTA_OUTLINE_CLASS} ml-1 hidden sm:inline-flex`}
       >
-        Add to your repo
+        Add to your project
       </a>
     </nav>
   )
