@@ -17,7 +17,6 @@
   --red9: #c92a2a;
   --teal9: #087f5b;
   --blue3: #74c0fc;
-  --indigo5: #5c7cfa;
   --link-brand: #0473e4;
   --hover-link-brand: #015cba;
   --gradient-pink: #f76698;
@@ -54,10 +53,8 @@
   --code-plain: var(--gray3);
   --code-punctuation: var(--gray5);
   --code-value: var(--blue3);
-  --glow-top: var(--link-brand);
-  --glow-top-soft: var(--indigo5);
-  --glow-middle: var(--gradient-purple);
-  --glow-low: var(--gradient-magenta);
+  --glow-top: var(--gradient-purple);
+  --glow-middle: var(--gradient-magenta);
   --glow-base: var(--gradient-pink);
   --link: var(--link-brand);
   --link-hover: var(--hover-link-brand);
@@ -176,12 +173,12 @@
   z-index: -1;
   background:
     radial-gradient(58% 48% at 50% 100%, var(--glow-base) 0%, var(--glow-base) 25%, transparent 78%),
-    radial-gradient(44% 58% at 10% 92%, var(--glow-low) 0%, var(--glow-low) 20%, transparent 76%),
-    radial-gradient(44% 58% at 90% 92%, var(--glow-low) 0%, var(--glow-low) 20%, transparent 76%),
+    radial-gradient(44% 58% at 10% 92%, var(--glow-middle) 0%, var(--glow-middle) 20%, transparent 76%),
+    radial-gradient(44% 58% at 90% 92%, var(--glow-middle) 0%, var(--glow-middle) 20%, transparent 76%),
     radial-gradient(90% 38% at 50% 104%, var(--glow-base) 0%, transparent 80%),
     radial-gradient(34% 42% at 50% 58%, var(--glow-middle) 0%, transparent 76%),
     radial-gradient(60% 46% at 22% 32%, var(--glow-top) 0%, transparent 72%),
-    radial-gradient(60% 46% at 78% 32%, var(--glow-top-soft) 0%, transparent 72%);
+    radial-gradient(60% 46% at 78% 32%, var(--glow-top) 0%, transparent 72%);
   filter: blur(40px) saturate(1.2);
   mask-image: linear-gradient(to bottom, transparent 0%, #000 34%);
 }
