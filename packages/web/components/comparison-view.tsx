@@ -7,7 +7,8 @@ import { FadeView } from "./comparison-modes/fade-view"
 import { SliderView } from "./comparison-modes/slider-view"
 import { HighlightView } from "./comparison-modes/highlight-view"
 import { SubtractView } from "./comparison-modes/subtract-view"
-import { DEFAULT_ZOOM, ZoomControls } from "./zoom-controls"
+import { ZoomControls } from "./zoom-controls"
+import { resolveInitialZoom } from "@/lib/zoom"
 
 interface ComparisonViewProps {
   image1: string
@@ -16,10 +17,10 @@ interface ComparisonViewProps {
   initialZoom?: number
 }
 
-export function ComparisonView({ image1, image2, mode, initialZoom = DEFAULT_ZOOM }: ComparisonViewProps) {
+export function ComparisonView({ image1, image2, mode, initialZoom }: ComparisonViewProps) {
   const [fadeValue, setFadeValue] = useState(50)
   const [sliderPosition, setSliderPosition] = useState(50)
-  const [zoom, setZoom] = useState(initialZoom)
+  const [zoom, setZoom] = useState(resolveInitialZoom(initialZoom))
 
   return (
     <div className="h-full w-full bg-muted/30 relative flex flex-col">

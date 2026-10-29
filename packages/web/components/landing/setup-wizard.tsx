@@ -4,7 +4,9 @@ import { useId, useMemo, useState } from "react"
 import { ArrowUpRight, Database, Gauge, GitPullRequest, Globe, Plus, X } from "lucide-react"
 import { CodeBlock } from "./code-block"
 import { Reveal } from "./reveal"
+import { optionSelected, segmentButtonClass, segmentLayout } from "@/lib/segment-layout"
 import { DOCS_URL, MICROLINK_DASHBOARD_URL } from "@/lib/site"
+import { previewUrlHidden, secretsLinkProps, stepBodyClass, stepConnectorClass, urlField } from "@/lib/wizard"
 import {
   DEFAULT_THRESHOLD,
   MICROLINK_SECRET,
@@ -12,10 +14,15 @@ import {
   STORAGE_PROVIDERS,
   WORKFLOW_PATH,
   addRoute,
+  addRouteDisabled,
   buildWorkflow,
+  commitOnEnter,
+  formatPercent,
   isHttpUrl,
-  isRepository,
-  secretsSettingsUrl,
+  isPreviewValid,
+  previewInput,
+  removeRouteDisabled,
+  secretsHref,
   storageConfig,
   type StorageProvider,
 } from "@/lib/workflow"
@@ -28,16 +35,8 @@ const THRESHOLD_PRESETS = [
 
 const WARNING_THRESHOLD_PERCENT = 5
 
-const SEGMENT_LAYOUT: Record<number, string> = {
-  2: "grid-flow-col auto-cols-fr",
-  3: "grid-cols-1 sm:grid-flow-col sm:grid-cols-none sm:auto-cols-fr",
-  4: "grid-cols-2 sm:grid-cols-4",
-}
-
 const inputClass =
   "h-11 w-full rounded-xl bg-muted px-4 text-[16px] placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-[invalid=true]:ring-2 aria-[invalid=true]:ring-destructive"
-
-const formatPercent = (ratio: number) => `${Number((ratio * 100).toFixed(2))}%`
 
 interface StepProps {
   icon: React.ReactNode
@@ -50,16 +49,11 @@ interface StepProps {
 function Step({ icon, title, description, children, last = false }: StepProps) {
   return (
     <li className="relative grid grid-cols-[44px_1fr] gap-x-5 sm:grid-cols-[52px_1fr] sm:gap-x-8">
-      {!last && (
-        <span
-          aria-hidden
-          className="absolute bottom-0 left-[21px] top-14 border-l-2 border-dotted border-input sm:left-[25px] sm:top-16"
-        />
-      )}
+      <span aria-hidden className={stepConnectorClass(last)} />
       <span className="relative flex h-11 w-11 items-center justify-center rounded-full bg-muted text-foreground sm:h-[52px] sm:w-[52px]">
         {icon}
       </span>
-      <div className={last ? "min-w-0" : "min-w-0 pb-16 sm:pb-20"}>
+      <div className={stepBodyClass(last)}>
         <h3 className="pt-2 text-[22px] font-semibold tracking-[-0.02em] sm:pt-3">{title}</h3>
         <div className="mt-2 max-w-[60ch] text-[16px] leading-[1.6] text-muted-foreground">{description}</div>
         <div className="mt-6">{children}</div>
@@ -80,19 +74,15 @@ function Segmented<T extends string | number>({
   onChange: (value: T) => void
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className={`grid gap-1 rounded-2xl bg-muted p-1 ${SEGMENT_LAYOUT[options.length] ?? SEGMENT_LAYOUT[2]}`}>
+    <div role="radiogroup" aria-label={label} className={`grid gap-1 rounded-2xl bg-muted p-1 ${segmentLayout(options.length)}`}>
       {options.map((option) => (
         <button
           key={String(option.value)}
           type="button"
           role="radio"
-          aria-checked={value === option.value}
+          aria-checked={optionSelected(value, option.value)}
           onClick={() => onChange(option.value)}
-          className={`press whitespace-nowrap rounded-xl px-3 py-2 text-[16px] sm:px-4 ${
-            value === option.value
-              ? "bg-background font-medium text-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
+          className={`press whitespace-nowrap rounded-xl px-3 py-2 text-[16px] sm:px-4 ${segmentButtonClass(optionSelected(value, option.value))}`}
         >
           {option.label}
         </button>
@@ -122,7 +112,7 @@ function RouteList({ routes, onChange }: { routes: string[]; onChange: (routes: 
             <button
               type="button"
               onClick={() => onChange(routes.filter((item) => item !== route))}
-              disabled={routes.length === 1}
+              disabled={removeRouteDisabled(routes.length)}
               aria-label={`Remove ${route}`}
               className="press flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-background hover:text-foreground disabled:opacity-30"
             >
@@ -137,17 +127,13 @@ function RouteList({ routes, onChange }: { routes: string[]; onChange: (routes: 
           value={draft}
           placeholder="/pricing"
           onChange={(event) => setDraft(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key !== "Enter") return
-            event.preventDefault()
-            commit()
-          }}
+          onKeyDown={(event) => commitOnEnter(event, commit)}
           className={inputClass}
         />
         <button
           type="button"
           onClick={commit}
-          disabled={!draft.trim()}
+          disabled={addRouteDisabled(draft)}
           className="press inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl bg-foreground px-4 text-[16px] font-medium text-background hover:bg-foreground/85 disabled:bg-muted disabled:text-muted-foreground"
         >
           <Plus className="h-4 w-4" aria-hidden />
@@ -171,19 +157,20 @@ export function SetupWizard() {
   const ids = { base: useId(), baseError: useId(), preview: useId(), previewError: useId(), repo: useId(), apiKey: useId() }
 
   const baseValid = isHttpUrl(base)
-  const previewValid = previewKind === "vercel" || isHttpUrl(previewUrl)
-  const repositoryValid = isRepository(repository)
+  const previewValid = isPreviewValid(previewKind, previewUrl)
+  const production = urlField(baseValid, "Use a full address, like https://example.com")
+  const preview = urlField(previewValid, "Use a full address, like https://staging.example.com")
 
   const workflow = useMemo(
     () =>
       buildWorkflow({
-        base: baseValid ? base : "https://example.com",
-        preview: previewKind === "vercel" ? { kind: "vercel" } : { kind: "url", url: previewValid ? previewUrl : "https://preview.example.com" },
+        base,
+        preview: previewInput(previewKind, previewUrl),
         routes,
         threshold,
         useApiKey,
       }),
-    [base, baseValid, previewKind, previewUrl, previewValid, routes, threshold, useApiKey]
+    [base, previewKind, previewUrl, routes, threshold, useApiKey]
   )
 
   return (
@@ -216,12 +203,12 @@ export function SetupWizard() {
                   inputMode="url"
                   value={base}
                   onChange={(event) => setBase(event.target.value)}
-                  aria-invalid={!baseValid}
+                  aria-invalid={production.invalid}
                   aria-describedby={ids.baseError}
                   className={`${inputClass} mt-2`}
                 />
                 <p id={ids.baseError} className="mt-1.5 min-h-5 text-[14px] text-destructive">
-                  {baseValid ? "" : "Use a full address, like https://example.com"}
+                  {production.message}
                 </p>
               </div>
 
@@ -240,24 +227,22 @@ export function SetupWizard() {
                     ]}
                   />
                 </div>
-                {previewKind === "url" && (
-                  <div className="mt-3">
-                    <input
-                      type="url"
-                      inputMode="url"
-                      value={previewUrl}
-                      placeholder="https://staging.example.com"
-                      onChange={(event) => setPreviewUrl(event.target.value)}
-                      aria-labelledby={ids.preview}
-                      aria-invalid={previewUrl !== "" && !previewValid}
-                      aria-describedby={ids.previewError}
-                      className={inputClass}
-                    />
-                    <p id={ids.previewError} className="mt-1.5 min-h-5 text-[14px] text-destructive">
-                      {previewUrl !== "" && !previewValid ? "Use a full address, like https://staging.example.com" : ""}
-                    </p>
-                  </div>
-                )}
+                <div className="mt-3" hidden={previewUrlHidden(previewKind)}>
+                  <input
+                    type="url"
+                    inputMode="url"
+                    value={previewUrl}
+                    placeholder="https://staging.example.com"
+                    onChange={(event) => setPreviewUrl(event.target.value)}
+                    aria-labelledby={ids.preview}
+                    aria-invalid={preview.invalid}
+                    aria-describedby={ids.previewError}
+                    className={inputClass}
+                  />
+                  <p id={ids.previewError} className="mt-1.5 min-h-5 text-[14px] text-destructive">
+                    {preview.message}
+                  </p>
+                </div>
               </div>
 
               <RouteList routes={routes} onChange={setRoutes} />
@@ -340,15 +325,7 @@ export function SetupWizard() {
                     className={inputClass}
                   />
                 </div>
-                <a
-                  href={repositoryValid ? secretsSettingsUrl(repository) : undefined}
-                  aria-disabled={!repositoryValid}
-                  className={`press inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl px-4 text-[16px] font-medium ${
-                    repositoryValid
-                      ? "bg-foreground text-background hover:bg-foreground/85"
-                      : "pointer-events-none bg-muted text-muted-foreground"
-                  }`}
-                >
+                <a {...secretsLinkProps(secretsHref(repository))}>
                   Open its secrets
                   <ArrowUpRight className="h-4 w-4" aria-hidden />
                 </a>

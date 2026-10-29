@@ -60,15 +60,21 @@ export const storageConfig = (provider: StorageProvider) =>
 
 export const isHttpUrl = (value: string) => {
   try {
-    const { protocol, hostname } = new URL(value)
+    const { protocol, hostname } = new URL(value.trim())
     return (protocol === "http:" || protocol === "https:") && hostname.includes(".")
   } catch {
     return false
   }
 }
 
+export const isPreviewValid = (kind: Preview["kind"], url: string) =>
+  kind === "vercel" || isHttpUrl(url)
+
+export const previewInput = (kind: Preview["kind"], url: string): Preview =>
+  kind === "vercel" ? { kind: "vercel" } : { kind: "url", url }
+
 export const normalizeRoute = (value: string) => {
-  const trimmed = value.trim().replace(/\s+/g, "")
+  const trimmed = value.replace(/\s+/g, "")
   if (!trimmed) return ""
   return trimmed.startsWith("/") ? trimmed : `/${trimmed}`
 }
@@ -79,10 +85,28 @@ export const addRoute = (routes: string[], value: string) => {
   return [...routes, route]
 }
 
+export const addRouteDisabled = (draft: string) => normalizeRoute(draft) === ""
+
+export const removeRouteDisabled = (count: number) => count <= 1
+
+export const commitOnEnter = (
+  event: { key: string; preventDefault: () => void },
+  commit: () => void
+) => {
+  if (event.key !== "Enter") return
+  event.preventDefault()
+  commit()
+}
+
 export const isRepository = (value: string) => /^[\w.-]+\/[\w.-]+$/.test(value.trim())
 
 export const secretsSettingsUrl = (repository: string) =>
   `https://github.com/${repository.trim()}/settings/secrets/actions/new`
+
+export const secretsHref = (repository: string) =>
+  isRepository(repository) ? secretsSettingsUrl(repository) : undefined
+
+export const formatPercent = (ratio: number) => `${Number((ratio * 100).toFixed(2))}%`
 
 const stripTrailingSlash = (url: string) => url.trim().replace(/\/+$/, "")
 

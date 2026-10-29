@@ -1,8 +1,7 @@
 "use client"
 
 import { Minus, Plus, Maximize2 } from "lucide-react"
-
-export const DEFAULT_ZOOM = 50
+import { DEFAULT_ZOOM, MIN_ZOOM } from "@/lib/zoom"
 
 interface ZoomControlsProps {
   zoom: number
@@ -14,7 +13,7 @@ interface ZoomControlsProps {
 export function ZoomControls({ 
   zoom, 
   onZoomChange, 
-  minZoom = 10, 
+  minZoom = MIN_ZOOM, 
   maxZoom = 500 
 }: ZoomControlsProps) {
   const handleZoomIn = () => {

@@ -1,5 +1,5 @@
 import { ArrowRight } from "lucide-react"
-import { EXAMPLE_COMPARE_URL } from "@/lib/site"
+import { EXAMPLE_COMPARE_URL, followExample } from "@/lib/site"
 
 interface HeroProps {
   slots: React.ReactNode
@@ -41,11 +41,7 @@ export function Hero({ slots, onTryExample }: HeroProps) {
             <p className="text-[16px] text-muted-foreground">Images never leave your browser.</p>
             <a
               href={EXAMPLE_COMPARE_URL}
-              onClick={(event) => {
-                if (!onTryExample) return
-                event.preventDefault()
-                onTryExample()
-              }}
+              onClick={(event) => followExample(event, onTryExample)}
               className="press group inline-flex h-10 items-center gap-2 rounded-full bg-foreground px-5 text-[16px] font-medium text-background hover:bg-foreground/85"
             >
               Try a real example

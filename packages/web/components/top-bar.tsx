@@ -3,13 +3,22 @@
 import { useEffect, useState } from "react"
 import { Menu, X } from "lucide-react"
 import { GITHUB_URL, SECTIONS } from "@/lib/site"
-
-const SCROLLED_AFTER_PX = 8
+import {
+  barChildren,
+  isBarScrolled,
+  menuButtonLabel,
+  menuIconHidden,
+  menuPanelHidden,
+  menuPanelKey,
+  onMenuKey,
+  toggleOpen,
+  topBarClass,
+} from "@/lib/top-bar"
 
 function useScrolled() {
   const [scrolled, setScrolled] = useState(false)
   useEffect(() => {
-    const update = () => setScrolled(window.scrollY > SCROLLED_AFTER_PX)
+    const update = () => setScrolled(isBarScrolled(window.scrollY))
     update()
     window.addEventListener("scroll", update, { passive: true })
     return () => window.removeEventListener("scroll", update)
@@ -35,14 +44,10 @@ export function TopBar({ children, sticky = true }: TopBarProps) {
   const scrolled = useScrolled()
 
   return (
-    <header
-      className={`${sticky ? "sticky top-0" : ""} z-40 transition-colors duration-200 ${
-        scrolled && sticky ? "bg-card shadow-[0_1px_0_rgba(var(--shadow-ink),0.1)]" : "bg-card"
-      }`}
-    >
+    <header className={topBarClass(sticky, scrolled)}>
       <div className="flex h-14 items-center justify-between gap-4 px-page">
         <Wordmark />
-        {children ?? <LandingNav />}
+        {barChildren(children, <LandingNav />)}
       </div>
     </header>
   )
@@ -57,11 +62,10 @@ function PhoneMenu() {
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
-    if (!open) return
-    const close = (event: KeyboardEvent) => event.key === "Escape" && setOpen(false)
+    const close = (event: KeyboardEvent) => onMenuKey(event, () => setOpen(false))
     window.addEventListener("keydown", close)
     return () => window.removeEventListener("keydown", close)
-  }, [open])
+  }, [])
 
   return (
     <div className="md:hidden">
@@ -69,17 +73,23 @@ function PhoneMenu() {
         type="button"
         aria-expanded={open}
         aria-controls={MENU_ID}
-        aria-label={open ? "Close menu" : "Open menu"}
-        onClick={() => setOpen(!open)}
+        aria-label={menuButtonLabel(open)}
+        onClick={() => setOpen(toggleOpen)}
         className="press flex h-9 w-9 items-center justify-center rounded-full hover:bg-muted"
       >
-        {open ? <X className="h-5 w-5" aria-hidden /> : <Menu className="h-5 w-5" aria-hidden />}
+        <span hidden={menuIconHidden(open, "menu")}>
+          <Menu className="h-5 w-5" aria-hidden />
+        </span>
+        <span hidden={menuIconHidden(open, "close")}>
+          <X className="h-5 w-5" aria-hidden />
+        </span>
       </button>
-      {open && (
-        <div
-          id={MENU_ID}
-          className="absolute inset-x-0 top-14 flex flex-col gap-1 bg-card px-page pb-5 pt-2 shadow-[var(--shadow-lifted)] animate-in fade-in slide-in-from-top-2 duration-200"
-        >
+      <div
+        key={menuPanelKey(open)}
+        id={MENU_ID}
+        hidden={menuPanelHidden(open)}
+        className="absolute inset-x-0 top-14 flex flex-col gap-1 bg-card px-page pb-5 pt-2 shadow-[var(--shadow-lifted)] animate-in fade-in slide-in-from-top-2 duration-200"
+      >
           {[...SECTIONS.map((section) => ({ href: `#${section.id}`, label: section.label })), { href: GITHUB_URL, label: "GitHub" }].map(
             (link) => (
               <a
@@ -92,8 +102,7 @@ function PhoneMenu() {
               </a>
             )
           )}
-        </div>
-      )}
+      </div>
     </div>
   )
 }

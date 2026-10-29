@@ -4,39 +4,22 @@ import { useEffect, useRef, useState } from "react"
 import { ComparisonView } from "@/components/comparison-view"
 import { ModeSelector } from "@/components/mode-selector"
 import { MODE_DETAILS, type ComparisonMode } from "@/lib/modes"
+import { observeWhenVisible, showWhenNear } from "@/lib/reveal"
 import { EXAMPLE_IMAGES } from "@/lib/site"
+import { frameWidth, zoomForFrame } from "@/lib/zoom"
 import { Reveal } from "./reveal"
-
-const EXAMPLE_WIDTH_PX = 1440
-const FRAME_PADDING_PX = 32
-const MAX_DEMO_ZOOM = 60
-
-const fitZoom = (frameWidth: number) =>
-  Math.min(MAX_DEMO_ZOOM, Math.floor(((frameWidth - FRAME_PADDING_PX) / EXAMPLE_WIDTH_PX) * 100))
-
-function useNearViewport<T extends Element>() {
-  const ref = useRef<T>(null)
-  const [near, setNear] = useState(false)
-  useEffect(() => {
-    const element = ref.current
-    if (!element) return
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return
-        setNear(true)
-        observer.disconnect()
-      },
-      { rootMargin: "400px 0px" }
-    )
-    observer.observe(element)
-    return () => observer.disconnect()
-  }, [])
-  return [ref, near] as const
-}
 
 export function ModesDemo() {
   const [mode, setMode] = useState<ComparisonMode>("slider")
-  const [frameRef, near] = useNearViewport<HTMLDivElement>()
+  const frameRef = useRef<HTMLDivElement>(null)
+  const [near, setNear] = useState(false)
+  useEffect(
+    () =>
+      observeWhenVisible(frameRef.current, globalThis.IntersectionObserver, { rootMargin: "400px 0px" }, {
+        onVisible: () => setNear(true),
+      }),
+    []
+  )
 
   return (
     <section id="modes" aria-labelledby="modes-title" className="px-page">
@@ -63,12 +46,13 @@ export function ModesDemo() {
               </p>
             </div>
             <div ref={frameRef} className="h-[300px] bg-muted sm:h-[440px] md:h-[600px]">
-              {near && (
+              {showWhenNear(
+                near,
                 <ComparisonView
                   image1={EXAMPLE_IMAGES.base}
                   image2={EXAMPLE_IMAGES.head}
                   mode={mode}
-                  initialZoom={fitZoom(frameRef.current?.clientWidth ?? EXAMPLE_WIDTH_PX)}
+                  initialZoom={zoomForFrame(frameWidth(frameRef.current))}
                 />
               )}
             </div>

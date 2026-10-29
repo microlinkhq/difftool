@@ -16,3 +16,12 @@ export const SECTIONS = [
   { id: "setup", label: "Setup" },
   { id: "faq", label: "FAQ" },
 ] as const
+
+export const followExample = (
+  event: { preventDefault: () => void },
+  onTryExample?: () => void
+) => {
+  if (!onTryExample) return
+  event.preventDefault()
+  onTryExample()
+}

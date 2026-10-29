@@ -1,4 +1,5 @@
 import { Reveal } from "./reveal"
+import { columnClass, verdictClass, verdictLabel } from "@/lib/comment-table"
 import { EXAMPLE_COMPARE_URL, EXAMPLE_IMAGES } from "@/lib/site"
 
 const STAGES = [
@@ -59,7 +60,7 @@ function PullRequestComment() {
             <thead>
               <tr className="text-muted-foreground">
                 {COLUMNS.map(({ heading, wide }) => (
-                  <th key={heading} scope="col" className={`border-b border-border py-2 pr-3 font-medium ${wide ? "hidden sm:table-cell" : ""}`}>
+                  <th key={heading} scope="col" className={`border-b border-border py-2 pr-3 font-medium ${columnClass(wide)}`}>
                     {heading}
                   </th>
                 ))}
@@ -85,9 +86,7 @@ function PullRequestComment() {
                     <a className="text-link hover:text-link-hover hover:underline" href={EXAMPLE_COMPARE_URL}>compare</a>
                   </td>
                   <td className="border-b border-border py-2.5">
-                    <span className={`font-medium ${verdict === "fail" ? "text-destructive" : "text-success"}`}>
-                      {verdict === "fail" ? "Fail" : "Pass"}
-                    </span>
+                    <span className={`font-medium ${verdictClass(verdict)}`}>{verdictLabel(verdict)}</span>
                   </td>
                 </tr>
               ))}

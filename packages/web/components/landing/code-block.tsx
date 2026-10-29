@@ -2,25 +2,14 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Check, Copy } from "lucide-react"
-
-const COPIED_FOR_MS = 1600
-
-const YAML_KEY = /^(\s*(?:- )?)([\w-]+)(:)(.*)$/
-const JSON_KEY = /^(\s*)("[\w-]+")(:)(.*)$/
-
-function highlightLine(line: string, language: "yaml" | "json") {
-  const match = line.match(language === "yaml" ? YAML_KEY : JSON_KEY)
-  if (!match) return <span className="text-code-plain">{line}</span>
-  const [, indent, key, colon, value] = match
-  return (
-    <>
-      {indent}
-      <span className="text-ink-panel-foreground">{key}</span>
-      <span className="text-code-punctuation">{colon}</span>
-      <span className="text-code-value">{value}</span>
-    </>
-  )
-}
+import {
+  copyIconHidden,
+  copyLabel,
+  highlightSpans,
+  reportCopy,
+  scheduleCopyReset,
+  TONE_CLASS,
+} from "@/lib/code-highlight"
 
 interface CodeBlockProps {
   code: string
@@ -35,14 +24,12 @@ export function CodeBlock({ code, language, title }: CodeBlockProps) {
   useEffect(() => () => clearTimeout(timer.current), [])
 
   const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(code)
-      setCopied(true)
-      clearTimeout(timer.current)
-      timer.current = setTimeout(() => setCopied(false), COPIED_FOR_MS)
-    } catch {
-      setCopied(false)
-    }
+    const copiedNow = await reportCopy(() => navigator.clipboard.writeText(code))
+    setCopied(copiedNow)
+    clearTimeout(timer.current)
+    scheduleCopyReset(copiedNow, () => setCopied(false), (delay, reset) => {
+      timer.current = setTimeout(reset, delay)
+    })
   }
 
   return (
@@ -54,15 +41,24 @@ export function CodeBlock({ code, language, title }: CodeBlockProps) {
           onClick={copy}
           className="press inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-[14px] font-medium text-ink-panel-foreground hover:bg-ink-panel"
         >
-          {copied ? <Check className="h-4 w-4" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}
-          <span aria-live="polite">{copied ? "Copied" : "Copy"}</span>
+          <span hidden={copyIconHidden(copied, "check")}>
+            <Check className="h-4 w-4" aria-hidden />
+          </span>
+          <span hidden={copyIconHidden(copied, "copy")}>
+            <Copy className="h-4 w-4" aria-hidden />
+          </span>
+          <span aria-live="polite">{copyLabel(copied)}</span>
         </button>
       </div>
       <pre className="overflow-x-auto px-4 py-4 text-[13.5px] leading-[1.65]">
         <code className="font-mono">
           {code.replace(/\n$/, "").split("\n").map((line, index) => (
             <span key={index} className="block min-h-[1lh] whitespace-pre">
-              {highlightLine(line, language)}
+              {highlightSpans(line, language).map((span, spanIndex) => (
+                <span key={spanIndex} className={TONE_CLASS[span.tone]}>
+                  {span.text}
+                </span>
+              ))}
             </span>
           ))}
         </code>
