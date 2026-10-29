@@ -3,6 +3,7 @@ import { describe, test } from 'node:test'
 
 import {
   COPIED_FOR_MS,
+  TONE_CLASS,
   copyIconHidden,
   copyLabel,
   copyResetDelay,
@@ -14,7 +15,7 @@ import {
 describe('highlightSpans', () => {
   test('yaml keys, hyphenated keys, list keys, and empty values', () => {
     assert.deepEqual(highlightSpans('name: Visual diff', 'yaml'), [
-      { text: '', tone: 'plain' },
+      { text: '', tone: 'inherit' },
       { text: 'name', tone: 'key' },
       { text: ':', tone: 'punctuation' },
       { text: ' Visual diff', tone: 'value' }
@@ -31,6 +32,8 @@ describe('highlightSpans', () => {
     assert.deepEqual(highlightSpans('on:', 'yaml').find(span => span.tone === 'value'), { text: '', tone: 'value' })
     assert.deepEqual(highlightSpans("            - '/'", 'yaml'), [{ text: "            - '/'", tone: 'plain' }])
     assert.deepEqual(highlightSpans('', 'yaml'), [{ text: '', tone: 'plain' }])
+    assert.equal(TONE_CLASS.inherit, '')
+    assert.equal(TONE_CLASS.plain, 'text-code-plain')
   })
 
   test('json keys keep their quotes, including a hyphenated key', () => {

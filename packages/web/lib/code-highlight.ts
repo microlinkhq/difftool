@@ -5,6 +5,7 @@ const JSON_KEY = /^(\s*)("[\w-]+")(:)(.*)$/
 
 export const TONE_CLASS = {
   plain: "text-code-plain",
+  inherit: "",
   key: "text-ink-panel-foreground",
   punctuation: "text-code-punctuation",
   value: "text-code-value",
@@ -19,7 +20,7 @@ export const highlightSpans = (line: string, language: "yaml" | "json"): Span[] 
   if (!match) return [{ text: line, tone: "plain" }]
   const [, indent, key, colon, value] = match
   return [
-    { text: indent, tone: "plain" },
+    { text: indent, tone: "inherit" },
     { text: key, tone: "key" },
     { text: colon, tone: "punctuation" },
     { text: value, tone: "value" },
