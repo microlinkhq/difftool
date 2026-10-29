@@ -50,6 +50,10 @@
   --code-plain: var(--stone-300);
   --code-punctuation: var(--stone-400);
   --code-value: var(--blue-300);
+  --glow-blue: #5b8cff;
+  --glow-violet: #8b5cf6;
+  --glow-pink: var(--pink-500);
+  --glow-red: #ff3b3b;
   --link: var(--blue-600);
   --link-hover: var(--blue-700);
   --radius: 0.75rem;
@@ -156,6 +160,34 @@
 @keyframes changed-pulse {
   50% {
     opacity: 0.35;
+  }
+}
+
+.hero-glow {
+  position: absolute;
+  inset: 34% -10% -14%;
+  z-index: -1;
+  background:
+    radial-gradient(58% 48% at 50% 100%, var(--glow-red) 0%, var(--glow-red) 25%, transparent 78%),
+    radial-gradient(44% 58% at 10% 92%, var(--glow-pink) 0%, var(--glow-pink) 20%, transparent 76%),
+    radial-gradient(44% 58% at 90% 92%, var(--glow-pink) 0%, var(--glow-pink) 20%, transparent 76%),
+    radial-gradient(90% 38% at 50% 104%, var(--glow-pink) 0%, transparent 80%),
+    radial-gradient(34% 42% at 50% 58%, var(--glow-violet) 0%, transparent 76%),
+    radial-gradient(60% 46% at 22% 32%, var(--glow-blue) 0%, transparent 72%),
+    radial-gradient(60% 46% at 78% 32%, var(--glow-blue) 0%, transparent 72%);
+  filter: blur(40px) saturate(1.2);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 34%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-glow {
+    animation: hero-glow-drift 18s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes hero-glow-drift {
+  to {
+    transform: translate3d(0, -2%, 0) scale(1.04);
   }
 }
 

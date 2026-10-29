@@ -12,9 +12,10 @@ export function Hero({ slots, onTryExample }: HeroProps) {
   return (
     <section
       aria-labelledby="hero-title"
-      className="hero-enter flex min-h-[calc(100svh-3.5rem)] flex-col px-page pb-page"
+      className="hero-enter relative isolate flex min-h-[calc(100svh-3.5rem)] flex-col overflow-hidden"
     >
-      <div style={revealIndex(0)} className="mx-auto flex max-w-[1120px] flex-col items-center pb-10 pt-[clamp(2rem,6vh,4.5rem)] text-center md:pb-14">
+      <div aria-hidden className="hero-glow" />
+      <div style={revealIndex(0)} className="mx-auto flex px-page max-w-[1120px] flex-col items-center pb-10 pt-[clamp(2rem,6vh,4.5rem)] text-center md:pb-14">
         <h1
           id="hero-title"
           className="max-w-[16ch] text-balance text-[clamp(2.75rem,7.2vw,6.5rem)] font-semibold leading-[0.95] tracking-[-0.045em]"
@@ -29,9 +30,12 @@ export function Hero({ slots, onTryExample }: HeroProps) {
 
       <div
         style={revealIndex(1)}
-        className="flex flex-1 items-center justify-center rounded-[32px] bg-changed p-5 sm:p-8 md:p-12"
+        className="flex flex-1 items-center justify-center px-page pb-16 pt-4 md:pb-24"
       >
-        <div data-ui className="w-full max-w-[1040px] rounded-[26px] bg-card p-2 text-left md:p-2.5">
+        <div
+          data-ui
+          className="w-full max-w-[1040px] rounded-[26px] bg-card p-2 text-left shadow-[0_1px_2px_rgba(28,25,23,0.06),0_24px_64px_-24px_rgba(28,25,23,0.35)] md:p-2.5"
+        >
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-2.5">{slots}</div>
           <div className="flex flex-col items-start justify-between gap-3 px-3 pb-2 pt-4 sm:flex-row sm:items-center">
             <p className="text-[16px] text-muted-foreground">Images never leave your browser.</p>
