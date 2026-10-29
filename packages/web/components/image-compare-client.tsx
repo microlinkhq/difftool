@@ -136,7 +136,7 @@ export function ImageCompareClient() {
             <button
               type="button"
               onClick={handleReset}
-              className="press h-9 shrink-0 rounded-full px-4 text-[16px] font-medium text-primary hover:bg-muted"
+              className="press h-9 shrink-0 rounded-full px-4 text-[16px] font-medium border border-primary text-primary hover:bg-muted"
             >
               New comparison
             </button>

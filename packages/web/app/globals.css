@@ -39,6 +39,7 @@
   --destructive-foreground: var(--white);
   --success: var(--teal9);
   --border: var(--gray2);
+  --panel-border: var(--gray3);
   --input: var(--gray4);
   --ring: var(--black);
   --brand: var(--rust);
@@ -84,6 +85,7 @@
   --color-code-value: var(--code-value);
   --color-link-hover: var(--link-hover);
   --color-border: var(--border);
+  --color-panel-border: var(--panel-border);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-brand: var(--brand);

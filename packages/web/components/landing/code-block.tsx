@@ -33,8 +33,8 @@ export function CodeBlock({ code, language, title }: CodeBlockProps) {
   }
 
   return (
-    <div data-ui className="overflow-hidden rounded-2xl bg-ink-panel text-ink-panel-foreground">
-      <div className="flex items-center justify-between gap-3 bg-ink-panel-raised py-2 pl-4 pr-2">
+    <div data-ui className="overflow-hidden rounded-2xl border border-panel-border bg-ink-panel text-ink-panel-foreground">
+      <div className="flex items-center justify-between gap-3 border-b border-panel-border bg-ink-panel-raised py-2 pl-4 pr-2">
         <span className="truncate text-[14px] text-ink-panel-muted">{title}</span>
         <button
           type="button"

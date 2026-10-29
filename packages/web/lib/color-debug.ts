@@ -1,6 +1,6 @@
 export const COLOR_GROUPS = {
   Accent: ["primary", "primary-foreground", "brand"],
-  Surfaces: ["background", "card", "muted", "border", "input"],
+  Surfaces: ["background", "card", "muted", "border", "panel-border", "input"],
   Text: ["foreground", "muted-foreground", "link", "link-hover"],
   Status: ["destructive", "success"],
   Panels: ["ink-panel", "ink-panel-raised", "ink-panel-foreground", "ink-panel-muted"],
