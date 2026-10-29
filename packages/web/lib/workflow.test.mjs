@@ -152,6 +152,7 @@ describe('validation', () => {
     assert.equal(isRepository('microlinkhq/difftool'), true)
     assert.equal(isRepository(' microlinkhq/difftool '), true)
     assert.equal(isRepository('my-org/app.io'), true)
+    assert.equal(isRepository('my.org/app-name'), true)
     assert.equal(isRepository('microlinkhq'), false)
     assert.equal(isRepository('https://github.com/microlinkhq/difftool'), false)
   })
