@@ -29,7 +29,7 @@ export function ModeSelector({ mode, onModeChange, className = "" }: ModeSelecto
           onClick={() => onModeChange(id)}
           className={`press flex shrink-0 items-center gap-2 rounded-full px-3 py-1.5 text-sm sm:px-3.5 ${
             mode === id
-              ? "bg-primary text-primary-foreground font-medium"
+              ? "bg-active text-active-foreground font-medium"
               : "text-muted-foreground hover:text-foreground hover:bg-muted"
           }`}
         >

@@ -12,6 +12,7 @@
   --gray4: #ced4da;
   --gray5: #adb5bd;
   --gray7: #495057;
+  --gray8: #343a40;
   --gray9: #212529;
   --rust: #9d4612;
   --rust-light: #b05829;
@@ -30,6 +31,11 @@
   --primary: var(--rust);
   --primary-hover: var(--rust-light);
   --primary-foreground: var(--white);
+  --cta: var(--gray9);
+  --cta-hover: var(--gray8);
+  --cta-foreground: var(--white);
+  --active: var(--gray9);
+  --active-foreground: var(--white);
   --secondary: var(--gray1);
   --secondary-foreground: var(--black);
   --muted: var(--gray1);
@@ -73,6 +79,11 @@
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary-hover: var(--primary-hover);
+  --color-cta: var(--cta);
+  --color-cta-hover: var(--cta-hover);
+  --color-cta-foreground: var(--cta-foreground);
+  --color-active: var(--active);
+  --color-active-foreground: var(--active-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
