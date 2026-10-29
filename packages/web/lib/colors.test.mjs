@@ -11,7 +11,7 @@ const MICROLINK_COLORS = new Set([
   '#c92a2a', '#087f5b'
 ])
 
-const RENOIR_COLORS = new Set(['#9d4612'])
+const RENOIR_COLORS = new Set(['#9d4612', '#b05829'])
 
 const css = readFileSync(new URL('../app/globals.css', import.meta.url), 'utf8')
 const rootBlock = css.slice(css.indexOf(':root {'), css.indexOf('}', css.indexOf(':root {')))
@@ -60,6 +60,7 @@ const TEXT_PAIRS = [
   ['muted-foreground', 'muted'],
   ['muted-foreground', 'surface-hover'],
   ['primary-foreground', 'primary'],
+  ['primary-foreground', 'primary-hover'],
   ['destructive', 'card'],
   ['destructive', 'muted'],
   ['success', 'card'],

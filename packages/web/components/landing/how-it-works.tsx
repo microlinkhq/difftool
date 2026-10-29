@@ -102,7 +102,7 @@ function PullRequestComment() {
 export function HowItWorks() {
   return (
     <section id="how-it-works" aria-labelledby="how-title" className="px-page">
-      <div className="rounded-[32px] border border-panel-border bg-ink-panel px-6 py-16 text-ink-panel-foreground sm:px-10 md:py-24 lg:px-16">
+      <div className="rounded-[32px] bg-ink-panel px-6 py-16 text-ink-panel-foreground sm:px-10 md:py-24 lg:px-16">
         <div className="grid gap-12 lg:grid-cols-12 lg:gap-10">
           <Reveal className="min-w-0 lg:col-span-5">
             <h2 id="how-title" className="max-w-[14ch] font-serif text-[clamp(2.25rem,4.4vw,4rem)] font-normal leading-[1] tracking-[-0.03em]">

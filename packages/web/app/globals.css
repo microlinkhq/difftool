@@ -14,6 +14,7 @@
   --gray7: #495057;
   --gray9: #212529;
   --rust: #9d4612;
+  --rust-light: #b05829;
   --red9: #c92a2a;
   --teal9: #087f5b;
   --link-brand: #0473e4;
@@ -27,6 +28,7 @@
   --popover: var(--white);
   --popover-foreground: var(--black);
   --primary: var(--rust);
+  --primary-hover: var(--rust-light);
   --primary-foreground: var(--white);
   --secondary: var(--gray1);
   --secondary-foreground: var(--black);
@@ -70,6 +72,7 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
