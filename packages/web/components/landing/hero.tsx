@@ -1,6 +1,7 @@
 import Image from "next/image"
 import { ArrowRight } from "lucide-react"
 import landscape from "@/public/hero/landscape.webp"
+import { CTA_CLASS } from "@/lib/cta"
 import { EXAMPLE_COMPARE_URL, followExample } from "@/lib/site"
 
 interface HeroProps {
@@ -49,7 +50,7 @@ export function Hero({ slots, onTryExample }: HeroProps) {
               <a
                 href={EXAMPLE_COMPARE_URL}
                 onClick={(event) => followExample(event, onTryExample)}
-                className="press group inline-flex h-11 items-center gap-2.5 rounded-xl bg-cta px-5 font-serif text-[17px] text-cta-foreground hover:bg-cta-hover"
+                className={CTA_CLASS}
               >
                 Try a real example
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />

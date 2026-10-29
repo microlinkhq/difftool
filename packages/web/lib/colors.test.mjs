@@ -64,6 +64,8 @@ const TEXT_PAIRS = [
   ['cta-foreground', 'cta'],
   ['cta-foreground', 'cta-hover'],
   ['active-foreground', 'active'],
+  ['cta', 'card'],
+  ['cta', 'muted'],
   ['destructive', 'card'],
   ['destructive', 'muted'],
   ['success', 'card'],

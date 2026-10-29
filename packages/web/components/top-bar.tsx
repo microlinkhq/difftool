@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Menu, X } from "lucide-react"
+import { CTA_OUTLINE_CLASS } from "@/lib/cta"
 import { GITHUB_URL, SECTIONS } from "@/lib/site"
 import {
   barChildren,
@@ -125,7 +126,7 @@ function LandingNav() {
       </div>
       <a
         href="#setup"
-        className="press ml-1 hidden h-9 items-center whitespace-nowrap rounded-full sm:inline-flex px-4 text-[16px] font-medium border border-primary text-primary hover:bg-muted"
+        className={`${CTA_OUTLINE_CLASS} ml-1 hidden sm:inline-flex`}
       >
         Add to your repo
       </a>

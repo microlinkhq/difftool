@@ -5,6 +5,7 @@ import { ArrowUpRight, Database, Gauge, GitPullRequest, Globe, Plus, X } from "l
 import { CodeBlock } from "./code-block"
 import { Reveal } from "./reveal"
 import { optionSelected, segmentButtonClass, segmentLayout } from "@/lib/segment-layout"
+import { CTA_CLASS } from "@/lib/cta"
 import { DOCS_URL, MICROLINK_DASHBOARD_URL } from "@/lib/site"
 import { previewUrlHidden, secretsLinkProps, stepBodyClass, stepConnectorClass, urlField } from "@/lib/wizard"
 import {
@@ -346,7 +347,7 @@ export function SetupWizard() {
         <div className="mx-auto mt-16 flex max-w-[760px] justify-center">
           <a
             href={DOCS_URL}
-            className="press inline-flex h-12 items-center gap-2 rounded-full px-6 text-[16px] font-medium border border-primary text-primary hover:bg-muted"
+            className={CTA_CLASS}
           >
             Read the docs
             <ArrowUpRight className="h-4 w-4" aria-hidden />
