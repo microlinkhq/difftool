@@ -1,6 +1,7 @@
 import { Plus } from "lucide-react"
 import { BrushStroke } from "./brush-stroke"
 import { MicrolinkLink } from "./microlink-link"
+import { MUTED_SURFACE_LINKS } from "@/lib/link"
 import { Reveal } from "./reveal"
 
 const QUESTIONS: { question: string; answer: React.ReactNode }[] = [
@@ -55,7 +56,7 @@ export function Faq() {
         </Reveal>
         <Reveal className="flex flex-col gap-2 lg:col-span-8">
           {QUESTIONS.map(({ question, answer }) => (
-            <details key={question} className="group rounded-2xl bg-muted">
+            <details key={question} className={`group rounded-2xl bg-muted ${MUTED_SURFACE_LINKS}`}>
               <summary className="flex cursor-pointer list-none items-center justify-between gap-6 px-6 py-5 text-[18px] font-medium tracking-[-0.01em] [&::-webkit-details-marker]:hidden">
                 {question}
                 <Plus className="h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-300 group-open:rotate-45" aria-hidden />

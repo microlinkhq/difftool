@@ -8,6 +8,7 @@ import { MicrolinkLink } from "./microlink-link"
 import { Reveal } from "./reveal"
 import { optionSelected, segmentButtonClass, segmentLayout } from "@/lib/segment-layout"
 import { CTA_CLASS } from "@/lib/cta"
+import { TEXT_LINK_CLASS } from "@/lib/link"
 import { copyIconHidden, copyLabel } from "@/lib/code-highlight"
 import { useCopy } from "@/hooks/use-copy"
 import { DOCS_URL, MICROLINK_DASHBOARD_URL } from "@/lib/site"
@@ -335,7 +336,7 @@ export function SetupWizard() {
                   Use a <MicrolinkLink /> API key, saved as <code className="font-mono text-[14px]">{MICROLINK_SECRET}</code>.{" "}
                   <span className="text-muted-foreground">
                     Without one, screenshots run on the free endpoint, 5 requests a day.{" "}
-                    <a href={MICROLINK_DASHBOARD_URL} className="text-link hover:text-link-hover hover:underline">
+                    <a href={MICROLINK_DASHBOARD_URL} className={TEXT_LINK_CLASS}>
                       Get a key
                     </a>
                   </span>

@@ -10,11 +10,11 @@
   --teal9: #087f5b;
   --shadow-ink: 16, 24, 40;
 
-  --background: oklch(0.99 0 0);
+  --background: oklch(1 0 0);
   --foreground: oklch(0 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0 0 0);
-  --popover: oklch(0.99 0 0);
+  --popover: oklch(1 0 0);
   --popover-foreground: oklch(0 0 0);
   --primary: var(--link-brand);
   --primary-hover: var(--hover-link-brand);
@@ -51,6 +51,7 @@
   --code-value: var(--muted-foreground);
   --link: var(--link-brand);
   --link-hover: var(--hover-link-brand);
+  --link-on-muted: var(--hover-link-brand);
   --shadow-2xs: 0px 1px 2px 0px hsl(0 0% 0% / 0.09);
   --shadow-xs: 0px 1px 2px 0px hsl(0 0% 0% / 0.09);
   --shadow-sm: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 1px 2px -1px hsl(0 0% 0% / 0.18);

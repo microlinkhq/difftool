@@ -1,4 +1,5 @@
 import { MicrolinkLink } from "./microlink-link"
+import { TEXT_LINK_CLASS } from "@/lib/link"
 import { DOCS_URL, GITHUB_URL, HERO_PAINTING_URL, MICROLINK_URL, PRIVACY_URL, TERMS_URL } from "@/lib/site"
 
 const LINKS = [
@@ -9,15 +10,13 @@ const LINKS = [
   { href: TERMS_URL, label: "Terms" },
 ]
 
-const linkClass = "underline-offset-4 hover:text-foreground hover:underline"
-
 export function SiteFooter() {
   return (
     <footer className="px-page pb-8 pt-8">
       <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
         <p className="max-w-[40ch] text-[18px] leading-[1.6] text-muted-foreground">
           Visual regression diffs for every pull request, built on the{" "}
-          <a href={MICROLINK_URL} className="text-foreground underline-offset-4 hover:underline">
+          <a href={MICROLINK_URL} className={TEXT_LINK_CLASS}>
             Microlink
           </a>{" "}
           screenshot API.
@@ -41,7 +40,7 @@ export function SiteFooter() {
         </p>
         <p>
           Painting:{" "}
-          <a href={HERO_PAINTING_URL} className={linkClass}>
+          <a href={HERO_PAINTING_URL} className={TEXT_LINK_CLASS}>
             Landscape
           </a>{" "}
           by Auguste Renoir, 1889, The Met, public domain.

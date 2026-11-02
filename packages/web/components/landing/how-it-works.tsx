@@ -1,6 +1,7 @@
 import { BrushStroke } from "./brush-stroke"
 import { MicrolinkLink } from "./microlink-link"
 import { Reveal } from "./reveal"
+import { TEXT_LINK_CLASS } from "@/lib/link"
 import { columnClass, verdictClass, verdictLabel } from "@/lib/comment-table"
 import { EXAMPLE_COMPARE_URL, EXAMPLE_IMAGES } from "@/lib/site"
 
@@ -144,7 +145,7 @@ export function HowItWorks() {
               <figcaption className="mt-3 max-w-[60ch] text-[16px] leading-[1.6] text-ink-panel-muted">
                 The 0.01% on that route, up close: the marker behind the headline shifted, and every pixel it moved is
                 pink. The comment also links the{" "}
-                <a href="/examples/review.webp" className="text-ink-panel-foreground underline underline-offset-4">
+                <a href="/examples/review.webp" className={TEXT_LINK_CLASS}>
                   full review image
                 </a>
                 .

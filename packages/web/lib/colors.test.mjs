@@ -102,6 +102,8 @@ const TEXT_PAIRS = [
   ['destructive', 'muted'],
   ['success', 'card'],
   ['link', 'card'],
+  ['link', 'background'],
+  ['link-on-muted', 'muted'],
   ['primary-ink', 'background'],
   ['primary-ink', 'card'],
   ['primary-ink', 'muted'],
