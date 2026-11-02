@@ -1,10 +1,10 @@
 import { GITHUB_URL, MICROLINK_URL, SITE_URL } from "./site.ts"
 
 export const SITE_NAME = "difftool"
-export const TITLE = "difftool · Visual diffs on every pull request"
+export const TITLE = "Visual regression testing for pull requests · difftool"
 export const TITLE_TEMPLATE = `%s · ${SITE_NAME}`
 export const DESCRIPTION =
-  "Screenshots production and your preview deploy, diffs them pixel by pixel, and comments on the pull request. Or compare two images in your browser."
+  "A free GitHub Action that screenshots production and your preview deploy, diffs them pixel by pixel, and comments on the PR. Or compare two images online."
 export const PUBLISHER = "Microlink"
 export const TWITTER_HANDLE = "@microlinkhq"
 export const THEME_COLOR = "#ffffff"

@@ -27,6 +27,12 @@ describe('title and description', () => {
     assert.ok(DESCRIPTION.length <= MAX_SNIPPET_CHARS, `description is ${DESCRIPTION.length} chars`)
   })
 
+  test('lead with what people search for: the category, the product form, and the free image tool', () => {
+    assert.match(TITLE, /^Visual regression testing/)
+    assert.match(DESCRIPTION, /GitHub Action/)
+    assert.match(DESCRIPTION, /compare two images/)
+  })
+
   test('child pages are suffixed with the site name', () => {
     assert.equal(TITLE_TEMPLATE.replace('%s', 'Page not found'), 'Page not found · difftool')
   })
