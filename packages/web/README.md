@@ -45,7 +45,7 @@ pnpm --filter @microlink/difftool-web test
 `app/icon.svg` (the Microlink mark) is the source for every other icon. After changing it, regenerate the rest:
 
 ```bash
-./scripts/generate-icons.sh   # needs rsvg-convert and ImageMagick: brew install librsvg imagemagick
+packages/web/scripts/generate-icons.sh   # from the repository root; needs rsvg-convert and ImageMagick: brew install librsvg imagemagick
 ```
 
 It writes `app/favicon.ico` (16, 32, 48px), `app/apple-icon.png` (180px) and `public/icon-{192,512}.png` for the web manifest. The output is the same on every run, so a diff shows only real changes. `lib/metadata.test.mjs` fails if an icon goes missing or its size stops matching the manifest.
