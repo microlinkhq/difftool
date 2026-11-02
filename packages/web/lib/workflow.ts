@@ -148,3 +148,60 @@ export function buildWorkflow({ base, preview, routes, threshold, useApiKey }: W
     "",
   ].join("\n")
 }
+
+export interface InstallPromptOptions extends WorkflowOptions {
+  provider: StorageProvider
+  repository: string
+  docsUrl: string
+  dashboardUrl: string
+}
+
+const BUCKET_PERMISSIONS = "PutObject, GetObject, DeleteObject and ListBucket"
+const FREE_TIER = "5 requests a day"
+const COMMENT_TITLE = "@microlink/difftool visual comparison"
+
+const providerLabel = (provider: StorageProvider) =>
+  STORAGE_PROVIDERS.find((item) => item.id === provider)?.label ?? provider
+
+const secretsPlace = (repository: string) =>
+  isRepository(repository) ? secretsSettingsUrl(repository) : "Settings → Secrets and variables → Actions"
+
+const secretSteps = ({ provider, repository, useApiKey, dashboardUrl }: InstallPromptOptions) => [
+  `Never write secret values into a file or a commit. The workflow reads these repository secrets: ask me to add them at ${secretsPlace(repository)}, or, when the GitHub CLI is installed and signed in, run \`gh secret set <NAME>\` and let me paste the value.`,
+  "",
+  `- \`${S3_SECRET}\`: the ${providerLabel(provider)} bucket the screenshots are uploaded to, as JSON in this shape:`,
+  "",
+  "```json",
+  storageConfig(provider),
+  "```",
+  "",
+  `  Its access key only needs ${BUCKET_PERMISSIONS} on that one bucket.`,
+  useApiKey
+    ? `- \`${MICROLINK_SECRET}\`: a Microlink API key, from ${dashboardUrl}.`
+    : `- No Microlink API key: screenshots use Microlink's free endpoint, ${FREE_TIER}.`,
+]
+
+const vercelStep = [
+  "The workflow uses `head: vercel`: it waits for the Vercel preview deployment of each pull request's head commit. Check that this repository deploys previews on Vercel. If it does not, tell me and ask for a fixed preview URL to use as `head` instead.",
+]
+
+export function buildInstallPrompt(options: InstallPromptOptions) {
+  const steps = [
+    [`Create \`${WORKFLOW_PATH}\` with exactly this content:`, "", "```yaml", buildWorkflow(options).replace(/\n$/, ""), "```"],
+    secretSteps(options),
+    ...(options.preview.kind === "vercel" ? [vercelStep] : []),
+    [
+      `Commit the workflow on a new branch and open a pull request. Confirm the "Visual diff" check runs and, once the preview is ready, a github-actions comment titled "${COMMENT_TITLE}" appears.`,
+    ],
+  ]
+
+  return [
+    "Install microlink difftool in this repository.",
+    "",
+    `difftool is a GitHub Action. On every pull request it screenshots production and the pull request's preview deploy with Microlink, compares them pixel by pixel, and keeps one comment on the pull request up to date with what changed. Docs: ${options.docsUrl}`,
+    "",
+    ...steps.flatMap((lines, index) => [`${index + 1}. ${lines[0]}`, ...lines.slice(1), ""]),
+    "Change nothing else in the repository.",
+    "",
+  ].join("\n")
+}

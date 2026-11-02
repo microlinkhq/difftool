@@ -4,6 +4,7 @@ import { describe, test } from 'node:test'
 import {
   DEFAULT_THRESHOLD,
   addRoute,
+  buildInstallPrompt,
   buildWorkflow,
   commitOnEnter,
   formatPercent,
@@ -205,5 +206,55 @@ describe('storageConfig', () => {
       bucket: 'difftool-assets',
       forcePathStyle: true
     })
+  })
+})
+
+describe('install prompt', () => {
+  const answers = {
+    base: 'https://example.com',
+    preview: { kind: 'vercel' },
+    routes: ['/', '/pricing'],
+    threshold: DEFAULT_THRESHOLD,
+    useApiKey: true,
+    provider: 'r2',
+    repository: 'acme/site',
+    docsUrl: 'https://github.com/microlinkhq/difftool#github-action',
+    dashboardUrl: 'https://dashboard.microlink.io'
+  }
+
+  test('carries the exact workflow the wizard shows', () => {
+    const prompt = buildInstallPrompt(answers)
+    assert.ok(prompt.includes(`\`\`\`yaml\n${buildWorkflow(answers)}\`\`\``))
+    assert.ok(prompt.includes('.github/workflows/visual-diff.yml'))
+  })
+
+  test('names both secrets, the chosen bucket shape and where to add them', () => {
+    const prompt = buildInstallPrompt(answers)
+    assert.ok(prompt.includes('`S3_CONFIG`: the Cloudflare R2 bucket'))
+    assert.ok(prompt.includes('r2.cloudflarestorage.com'))
+    assert.ok(prompt.includes('`MICROLINK_API_KEY`: a Microlink API key, from https://dashboard.microlink.io'))
+    assert.ok(prompt.includes('https://github.com/acme/site/settings/secrets/actions/new'))
+    assert.ok(prompt.includes('Never write secret values into a file or a commit'))
+  })
+
+  test('without an API key it explains the free tier and asks for no key', () => {
+    const prompt = buildInstallPrompt({ ...answers, useApiKey: false })
+    assert.ok(!prompt.includes('MICROLINK_API_KEY'))
+    assert.ok(prompt.includes('free endpoint, 5 requests a day'))
+  })
+
+  test('only a Vercel preview gets the Vercel check, and steps stay numbered in order', () => {
+    const vercel = buildInstallPrompt(answers)
+    const fixed = buildInstallPrompt({ ...answers, preview: { kind: 'url', url: 'https://staging.example.com' } })
+    assert.ok(vercel.includes('head: vercel'))
+    assert.ok(!fixed.includes('Vercel preview deployment'))
+    assert.deepEqual(vercel.match(/^\d+\. /gm), ['1. ', '2. ', '3. ', '4. '])
+    assert.deepEqual(fixed.match(/^\d+\. /gm), ['1. ', '2. ', '3. '])
+  })
+
+  test('without a valid repository it points at the settings path instead of a broken link', () => {
+    const prompt = buildInstallPrompt({ ...answers, repository: 'not a repo' })
+    assert.ok(prompt.includes('Settings → Secrets and variables → Actions'))
+    assert.ok(!prompt.includes('github.com/not'))
   })
 })

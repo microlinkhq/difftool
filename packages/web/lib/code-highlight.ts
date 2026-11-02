@@ -36,7 +36,7 @@ export const reportCopy = async (write: () => Promise<void>) => {
   }
 }
 
-export const copyLabel = (copied: boolean) => (copied ? "Copied" : "Copy")
+export const copyLabel = (copied: boolean, idle = "Copy") => (copied ? "Copied" : idle)
 
 export const copyIconHidden = (copied: boolean, icon: "check" | "copy") =>
   icon === "check" ? !copied : copied

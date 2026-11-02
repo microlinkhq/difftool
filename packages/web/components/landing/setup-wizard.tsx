@@ -1,13 +1,15 @@
 "use client"
 
 import { useId, useMemo, useRef, useState } from "react"
-import { ArrowUpRight, Database, Gauge, GitPullRequest, Globe, Plus, X } from "lucide-react"
+import { ArrowUpRight, Check, Copy, Database, Gauge, GitPullRequest, Globe, Plus, X } from "lucide-react"
 import { BrushStroke } from "./brush-stroke"
 import { CodeBlock } from "./code-block"
 import { MicrolinkLink } from "./microlink-link"
 import { Reveal } from "./reveal"
 import { optionSelected, segmentButtonClass, segmentLayout } from "@/lib/segment-layout"
 import { CTA_CLASS } from "@/lib/cta"
+import { copyIconHidden, copyLabel } from "@/lib/code-highlight"
+import { useCopy } from "@/hooks/use-copy"
 import { DOCS_URL, MICROLINK_DASHBOARD_URL } from "@/lib/site"
 import { previewUrlHidden, secretsLinkProps, stepBodyClass, stepConnectorClass, urlField } from "@/lib/wizard"
 import {
@@ -17,6 +19,7 @@ import {
   STORAGE_PROVIDERS,
   WORKFLOW_PATH,
   addRoute,
+  buildInstallPrompt,
   buildWorkflow,
   commitOnEnter,
   formatPercent,
@@ -181,6 +184,23 @@ export function SetupWizard() {
       }),
     [base, previewKind, previewUrl, routes, threshold, useApiKey]
   )
+
+  const installPrompt = useMemo(
+    () =>
+      buildInstallPrompt({
+        base,
+        preview: previewInput(previewKind, previewUrl),
+        routes,
+        threshold,
+        useApiKey,
+        provider,
+        repository,
+        docsUrl: DOCS_URL,
+        dashboardUrl: MICROLINK_DASHBOARD_URL,
+      }),
+    [base, previewKind, previewUrl, routes, threshold, useApiKey, provider, repository]
+  )
+  const { copied: promptCopied, copy: copyPrompt } = useCopy(installPrompt)
 
   return (
     <section id="setup" aria-labelledby="setup-title" className="px-page">
@@ -353,14 +373,20 @@ export function SetupWizard() {
           </Step>
         </ol>
 
-        <div className="mx-auto mt-16 flex max-w-[760px] justify-center">
-          <a
-            href={DOCS_URL}
-            className={CTA_CLASS}
-          >
-            Read the docs
-            <ArrowUpRight className="h-4 w-4" aria-hidden />
-          </a>
+        <div className="mx-auto mt-16 flex max-w-[760px] flex-col items-center gap-4 text-center">
+          <button type="button" onClick={copyPrompt} className={CTA_CLASS}>
+            <span hidden={copyIconHidden(promptCopied, "check")}>
+              <Check className="h-4 w-4" aria-hidden />
+            </span>
+            <span hidden={copyIconHidden(promptCopied, "copy")}>
+              <Copy className="h-4 w-4" aria-hidden />
+            </span>
+            <span aria-live="polite">{copyLabel(promptCopied, "Copy prompt")}</span>
+          </button>
+          <p className="max-w-[46ch] text-[16px] leading-[1.6] text-muted-foreground">
+            Or hand the setup to a coding agent: the prompt carries your answers above, and any LLM with access to your
+            repository can install difftool from it.
+          </p>
         </div>
       </div>
     </section>

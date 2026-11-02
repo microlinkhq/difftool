@@ -1,15 +1,8 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
 import { Check, Copy } from "lucide-react"
-import {
-  copyIconHidden,
-  copyLabel,
-  highlightSpans,
-  reportCopy,
-  scheduleCopyReset,
-  TONE_CLASS,
-} from "@/lib/code-highlight"
+import { useCopy } from "@/hooks/use-copy"
+import { copyIconHidden, copyLabel, highlightSpans, TONE_CLASS } from "@/lib/code-highlight"
 
 interface CodeBlockProps {
   code: string
@@ -18,19 +11,7 @@ interface CodeBlockProps {
 }
 
 export function CodeBlock({ code, language, title }: CodeBlockProps) {
-  const [copied, setCopied] = useState(false)
-  const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
-
-  useEffect(() => () => clearTimeout(timer.current), [])
-
-  const copy = async () => {
-    const copiedNow = await reportCopy(() => navigator.clipboard.writeText(code))
-    setCopied(copiedNow)
-    clearTimeout(timer.current)
-    scheduleCopyReset(copiedNow, () => setCopied(false), (delay, reset) => {
-      timer.current = setTimeout(reset, delay)
-    })
-  }
+  const { copied, copy } = useCopy(code)
 
   return (
     <div data-ui className="overflow-hidden rounded-2xl border border-panel-border bg-ink-panel text-ink-panel-foreground">
