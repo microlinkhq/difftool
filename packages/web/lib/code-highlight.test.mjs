@@ -7,6 +7,7 @@ import {
   copyIconHidden,
   copyLabel,
   copyResetDelay,
+  copyState,
   highlightSpans,
   reportCopy,
   scheduleCopyReset
@@ -56,19 +57,28 @@ describe('copy', () => {
     assert.equal(await reportCopy(async () => { throw new Error('denied') }), false)
   })
 
-  test('the button label, icon, and reset follow the copied flag', () => {
-    assert.equal(copyLabel(true), 'Copied')
-    assert.equal(copyLabel(false), 'Copy')
-    assert.equal(copyIconHidden(true, 'check'), false)
-    assert.equal(copyIconHidden(true, 'copy'), true)
-    assert.equal(copyIconHidden(false, 'check'), true)
-    assert.equal(copyIconHidden(false, 'copy'), false)
-    assert.equal(copyResetDelay(true), COPIED_FOR_MS)
-    assert.equal(copyResetDelay(false), undefined)
+  test('a write result becomes copied or failed', () => {
+    assert.equal(copyState(true), 'copied')
+    assert.equal(copyState(false), 'failed')
+  })
+
+  test('the button label, icon, and reset follow the copy state', () => {
+    assert.equal(copyLabel('idle'), 'Copy')
+    assert.equal(copyLabel('idle', 'Copy prompt'), 'Copy prompt')
+    assert.equal(copyLabel('copied', 'Copy prompt'), 'Copied')
+    assert.equal(copyLabel('failed', 'Copy prompt'), 'Copy failed')
+    assert.equal(copyIconHidden('copied', 'check'), false)
+    assert.equal(copyIconHidden('copied', 'copy'), true)
+    assert.equal(copyIconHidden('failed', 'check'), true)
+    assert.equal(copyIconHidden('failed', 'copy'), false)
+    assert.equal(copyIconHidden('idle', 'check'), true)
+    assert.equal(copyResetDelay('copied'), COPIED_FOR_MS)
+    assert.equal(copyResetDelay('failed'), COPIED_FOR_MS)
+    assert.equal(copyResetDelay('idle'), undefined)
     let scheduled = 0
-    scheduleCopyReset(false, () => {}, () => { scheduled++ })
+    scheduleCopyReset('idle', () => {}, () => { scheduled++ })
     assert.equal(scheduled, 0)
-    scheduleCopyReset(true, () => {}, (delay) => { scheduled = delay })
+    scheduleCopyReset('failed', () => {}, (delay) => { scheduled = delay })
     assert.equal(scheduled, COPIED_FOR_MS)
   })
 })

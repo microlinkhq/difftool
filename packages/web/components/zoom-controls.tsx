@@ -8,13 +8,15 @@ interface ZoomControlsProps {
   onZoomChange: (zoom: number) => void
   minZoom?: number
   maxZoom?: number
+  resetZoom?: number
 }
 
 export function ZoomControls({ 
   zoom, 
   onZoomChange, 
   minZoom = MIN_ZOOM, 
-  maxZoom = 500 
+  maxZoom = 500,
+  resetZoom = DEFAULT_ZOOM,
 }: ZoomControlsProps) {
   const handleZoomIn = () => {
     const newZoom = Math.min(zoom + 25, maxZoom)
@@ -27,7 +29,7 @@ export function ZoomControls({
   }
 
   const handleReset = () => {
-    onZoomChange(DEFAULT_ZOOM)
+    onZoomChange(resetZoom)
   }
 
   return (
@@ -53,7 +55,7 @@ export function ZoomControls({
       <button
         onClick={handleReset}
         className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-        aria-label={`Reset zoom to ${DEFAULT_ZOOM}%`}
+        aria-label={`Reset zoom to ${resetZoom}%`}
       >
         <Maximize2 className="w-4 h-4" />
       </button>

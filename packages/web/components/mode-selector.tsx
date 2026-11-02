@@ -19,13 +19,12 @@ const MODE_ICONS: Record<ComparisonMode, React.ReactNode> = {
 
 export function ModeSelector({ mode, onModeChange, className = "" }: ModeSelectorProps) {
   return (
-    <div role="tablist" aria-label="Comparison mode" className={`flex items-center gap-1 overflow-x-auto ${className}`}>
+    <div role="group" aria-label="Comparison mode" className={`flex items-center gap-1 overflow-x-auto ${className}`}>
       {COMPARISON_MODES.map((id) => (
         <button
           key={id}
           type="button"
-          role="tab"
-          aria-selected={mode === id}
+          aria-pressed={mode === id}
           onClick={() => onModeChange(id)}
           className={`press flex shrink-0 items-center gap-2 rounded-full px-3 py-1.5 text-sm sm:px-3.5 ${
             mode === id

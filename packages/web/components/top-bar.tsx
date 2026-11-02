@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Menu, X } from "lucide-react"
 import { CTA_OUTLINE_CLASS } from "@/lib/cta"
 import { GITHUB_URL, MICROLINK_URL, SECTIONS } from "@/lib/site"
@@ -67,16 +67,23 @@ const MENU_ID = "phone-menu"
 
 function PhoneMenu() {
   const [open, setOpen] = useState(false)
+  const buttonRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
-    const close = (event: KeyboardEvent) => onMenuKey(event, () => setOpen(false))
+    if (!open) return
+    const close = (event: KeyboardEvent) =>
+      onMenuKey(event, () => {
+        setOpen(false)
+        buttonRef.current?.focus()
+      })
     window.addEventListener("keydown", close)
     return () => window.removeEventListener("keydown", close)
-  }, [])
+  }, [open])
 
   return (
     <div className="lg:hidden">
       <button
+        ref={buttonRef}
         type="button"
         aria-expanded={open}
         aria-controls={MENU_ID}
@@ -95,7 +102,7 @@ function PhoneMenu() {
         key={menuPanelKey(open)}
         id={MENU_ID}
         hidden={menuPanelHidden(open)}
-        className="absolute inset-x-0 top-14 flex flex-col gap-1 bg-card px-page pb-5 pt-2 shadow-[var(--shadow-lifted)] animate-in fade-in slide-in-from-top-2 duration-200"
+        className="absolute inset-x-0 top-14 flex flex-col gap-1 bg-card px-page pb-5 pt-2 shadow-[var(--shadow-lifted)] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2 motion-safe:duration-200"
       >
           {[...SECTIONS.map((section) => ({ href: `#${section.id}`, label: section.label })), { href: GITHUB_URL, label: "GitHub" }].map(
             (link) => (

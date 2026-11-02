@@ -55,7 +55,7 @@ export function ComparisonView({ image1, image2, mode, initialZoom }: Comparison
       </div>
       
       <div className="absolute bottom-4 right-4">
-        <ZoomControls zoom={zoom} onZoomChange={setZoom} />
+        <ZoomControls zoom={zoom} onZoomChange={setZoom} resetZoom={resolveInitialZoom(initialZoom)} />
       </div>
     </div>
   )

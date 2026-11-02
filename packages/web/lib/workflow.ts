@@ -67,6 +67,11 @@ export const isHttpUrl = (value: string) => {
   }
 }
 
+export const BASE_URL_EXAMPLE = "https://example.com"
+export const PREVIEW_URL_EXAMPLE = "https://staging.example.com"
+
+export const urlOrExample = (value: string, example: string) => (isHttpUrl(value) ? value.trim() : example)
+
 export const isPreviewValid = (kind: Preview["kind"], url: string) =>
   kind === "vercel" || isHttpUrl(url)
 
@@ -158,6 +163,7 @@ export interface InstallPromptOptions extends WorkflowOptions {
 
 const BUCKET_PERMISSIONS = "PutObject, GetObject, DeleteObject and ListBucket"
 const FREE_TIER = "5 requests a day"
+const FREE_KEY_TIER = "25 requests a day"
 const COMMENT_TITLE = "@microlink/difftool visual comparison"
 
 const providerLabel = (provider: StorageProvider) =>
@@ -178,7 +184,7 @@ const secretSteps = ({ provider, repository, useApiKey, dashboardUrl }: InstallP
   `  Its access key only needs ${BUCKET_PERMISSIONS} on that one bucket.`,
   useApiKey
     ? `- \`${MICROLINK_SECRET}\`: a Microlink API key, from ${dashboardUrl}.`
-    : `- No Microlink API key: screenshots use Microlink's free endpoint, ${FREE_TIER}.`,
+    : `- No Microlink API key: screenshots use Microlink's free endpoint, ${FREE_TIER}. A free key from ${dashboardUrl} raises that to ${FREE_KEY_TIER}.`,
 ]
 
 const vercelStep = [

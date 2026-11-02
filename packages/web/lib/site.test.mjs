@@ -17,4 +17,14 @@ describe('followExample', () => {
     assert.equal(prevented, 1)
     assert.equal(ran, 1)
   })
+
+  test('a modified or middle click opens the link elsewhere', () => {
+    for (const modifier of [{ metaKey: true }, { ctrlKey: true }, { shiftKey: true }, { altKey: true }, { button: 1 }]) {
+      let prevented = 0
+      let ran = 0
+      followExample({ preventDefault: () => { prevented++ }, ...modifier }, () => { ran++ })
+      assert.equal(prevented, 0, JSON.stringify(modifier))
+      assert.equal(ran, 0, JSON.stringify(modifier))
+    }
+  })
 })

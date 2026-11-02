@@ -1,10 +1,10 @@
 const secretsLinkClass =
   "press inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl px-4 text-[16px] font-medium"
 
-export const urlField = (valid: boolean, message: string) => ({
-  invalid: !valid,
-  message: valid ? "" : message,
-})
+export const urlField = (value: string, valid: boolean, message: string) => {
+  const invalid = value.trim() !== "" && !valid
+  return { invalid, message: invalid ? message : "" }
+}
 
 export const previewUrlHidden = (kind: "vercel" | "url") => kind !== "url"
 

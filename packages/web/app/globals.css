@@ -209,9 +209,15 @@
 }
 
 .press {
-  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), background-color 160ms, color 160ms;
+  transition: background-color 160ms, color 160ms;
 }
 
-.press:active:not(:disabled) {
-  transform: scale(0.97);
+@media (prefers-reduced-motion: no-preference) {
+  .press {
+    transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), background-color 160ms, color 160ms;
+  }
+
+  .press:active:not(:disabled) {
+    transform: scale(0.97);
+  }
 }

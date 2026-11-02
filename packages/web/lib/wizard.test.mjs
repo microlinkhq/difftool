@@ -6,8 +6,13 @@ import { previewUrlHidden, secretsLinkProps, stepBodyClass, stepConnectorClass, 
 
 describe('url fields', () => {
   test('a valid URL clears the message and a rejected one shows it', () => {
-    assert.deepEqual(urlField(true, 'Use a full address'), { invalid: false, message: '' })
-    assert.deepEqual(urlField(false, 'Use a full address'), { invalid: true, message: 'Use a full address' })
+    assert.deepEqual(urlField('https://example.com', true, 'Use a full address'), { invalid: false, message: '' })
+    assert.deepEqual(urlField('example', false, 'Use a full address'), { invalid: true, message: 'Use a full address' })
+  })
+
+  test('an empty field is not flagged before anything is typed', () => {
+    assert.deepEqual(urlField('', false, 'Use a full address'), { invalid: false, message: '' })
+    assert.deepEqual(urlField('   ', false, 'Use a full address'), { invalid: false, message: '' })
   })
 
   test('the preview URL field is hidden until the preview is a fixed URL', () => {

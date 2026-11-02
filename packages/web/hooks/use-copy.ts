@@ -1,20 +1,20 @@
 import { useEffect, useRef, useState } from "react"
-import { reportCopy, scheduleCopyReset } from "@/lib/code-highlight"
+import { copyState, reportCopy, scheduleCopyReset, type CopyState } from "@/lib/code-highlight"
 
 export function useCopy(text: string) {
-  const [copied, setCopied] = useState(false)
+  const [state, setState] = useState<CopyState>("idle")
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   useEffect(() => () => clearTimeout(timer.current), [])
 
   const copy = async () => {
-    const copiedNow = await reportCopy(() => navigator.clipboard.writeText(text))
-    setCopied(copiedNow)
+    const next = copyState(await reportCopy(() => navigator.clipboard.writeText(text)))
+    setState(next)
     clearTimeout(timer.current)
-    scheduleCopyReset(copiedNow, () => setCopied(false), (delay, reset) => {
+    scheduleCopyReset(next, () => setState("idle"), (delay, reset) => {
       timer.current = setTimeout(reset, delay)
     })
   }
 
-  return { copied, copy }
+  return { state, copy }
 }

@@ -30,7 +30,8 @@ const QUESTIONS: { question: string; answer: React.ReactNode }[] = [
     answer: (
       <>
         The action is free and MIT licensed. Screenshots are <MicrolinkLink /> API requests: without a key they use the
-        free endpoint, 5 a day, which is enough to try it. A plan raises the limit for real CI traffic.
+        free endpoint, 5 a day, which is enough to try it. A free API key raises that to 25 a day, and a plan raises it
+        for real CI traffic.
       </>
     ),
   },

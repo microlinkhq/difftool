@@ -14,8 +14,10 @@ import { useCopy } from "@/hooks/use-copy"
 import { DOCS_URL, MICROLINK_DASHBOARD_URL } from "@/lib/site"
 import { previewUrlHidden, secretsLinkProps, stepBodyClass, stepConnectorClass, urlField } from "@/lib/wizard"
 import {
+  BASE_URL_EXAMPLE,
   DEFAULT_THRESHOLD,
   MICROLINK_SECRET,
+  PREVIEW_URL_EXAMPLE,
   S3_SECRET,
   STORAGE_PROVIDERS,
   WORKFLOW_PATH,
@@ -31,6 +33,7 @@ import {
   secretsHref,
   storageConfig,
   type StorageProvider,
+  urlOrExample,
 } from "@/lib/workflow"
 
 const THRESHOLD_PRESETS = [
@@ -80,13 +83,12 @@ function Segmented<T extends string | number>({
   onChange: (value: T) => void
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className={`grid gap-1 rounded-2xl bg-muted p-1 ${segmentLayout(options.length)}`}>
+    <div role="group" aria-label={label} className={`grid gap-1 rounded-2xl bg-muted p-1 ${segmentLayout(options.length)}`}>
       {options.map((option) => (
         <button
           key={String(option.value)}
           type="button"
-          role="radio"
-          aria-checked={optionSelected(value, option.value)}
+          aria-pressed={optionSelected(value, option.value)}
           onClick={() => onChange(option.value)}
           className={`press whitespace-nowrap rounded-xl px-3 py-2 text-[16px] sm:px-4 ${segmentButtonClass(optionSelected(value, option.value))}`}
         >
@@ -171,37 +173,34 @@ export function SetupWizard() {
 
   const baseValid = isHttpUrl(base)
   const previewValid = isPreviewValid(previewKind, previewUrl)
-  const production = urlField(baseValid, "Use a full address, like https://example.com")
-  const preview = urlField(previewValid, "Use a full address, like https://staging.example.com")
+  const production = urlField(base, baseValid, "Use a full address, like https://example.com")
+  const preview = urlField(previewUrl, previewValid, "Use a full address, like https://staging.example.com")
 
-  const workflow = useMemo(
-    () =>
-      buildWorkflow({
-        base,
-        preview: previewInput(previewKind, previewUrl),
-        routes,
-        threshold,
-        useApiKey,
-      }),
+  const answers = useMemo(
+    () => ({
+      base: urlOrExample(base, BASE_URL_EXAMPLE),
+      preview: previewInput(previewKind, urlOrExample(previewUrl, PREVIEW_URL_EXAMPLE)),
+      routes,
+      threshold,
+      useApiKey,
+    }),
     [base, previewKind, previewUrl, routes, threshold, useApiKey]
   )
+
+  const workflow = useMemo(() => buildWorkflow(answers), [answers])
 
   const installPrompt = useMemo(
     () =>
       buildInstallPrompt({
-        base,
-        preview: previewInput(previewKind, previewUrl),
-        routes,
-        threshold,
-        useApiKey,
+        ...answers,
         provider,
         repository,
         docsUrl: DOCS_URL,
         dashboardUrl: MICROLINK_DASHBOARD_URL,
       }),
-    [base, previewKind, previewUrl, routes, threshold, useApiKey, provider, repository]
+    [answers, provider, repository]
   )
-  const { copied: promptCopied, copy: copyPrompt } = useCopy(installPrompt)
+  const { state: promptCopyState, copy: copyPrompt } = useCopy(installPrompt)
 
   return (
     <section id="setup" aria-labelledby="setup-title" className="px-page">
@@ -263,7 +262,7 @@ export function SetupWizard() {
                     type="url"
                     inputMode="url"
                     value={previewUrl}
-                    placeholder="https://staging.example.com"
+                    placeholder={PREVIEW_URL_EXAMPLE}
                     onChange={(event) => setPreviewUrl(event.target.value)}
                     aria-labelledby={ids.preview}
                     aria-invalid={preview.invalid}
@@ -335,7 +334,7 @@ export function SetupWizard() {
                 <span>
                   Use a <MicrolinkLink /> API key, saved as <code className="font-mono text-[14px]">{MICROLINK_SECRET}</code>.{" "}
                   <span className="text-muted-foreground">
-                    Without one, screenshots run on the free endpoint, 5 requests a day.{" "}
+                    Without one, screenshots run on the free endpoint, 5 requests a day; a free key gives 25.{" "}
                     <a href={MICROLINK_DASHBOARD_URL} className={TEXT_LINK_CLASS}>
                       Get a key
                     </a>
@@ -376,13 +375,13 @@ export function SetupWizard() {
 
         <div className="mx-auto mt-16 flex max-w-[760px] flex-col items-center gap-4 text-center">
           <button type="button" onClick={copyPrompt} className={CTA_CLASS}>
-            <span hidden={copyIconHidden(promptCopied, "check")}>
+            <span hidden={copyIconHidden(promptCopyState, "check")}>
               <Check className="h-4 w-4" aria-hidden />
             </span>
-            <span hidden={copyIconHidden(promptCopied, "copy")}>
+            <span hidden={copyIconHidden(promptCopyState, "copy")}>
               <Copy className="h-4 w-4" aria-hidden />
             </span>
-            <span aria-live="polite">{copyLabel(promptCopied, "Copy prompt")}</span>
+            <span aria-live="polite">{copyLabel(promptCopyState, "Copy prompt")}</span>
           </button>
           <p className="max-w-[46ch] text-[16px] leading-[1.6] text-muted-foreground">
             Or hand the setup to a coding agent: the prompt carries your answers above, and any LLM with access to your

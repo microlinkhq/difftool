@@ -21,11 +21,20 @@ export const SECTIONS = [
   { id: "faq", label: "FAQ" },
 ] as const
 
-export const followExample = (
-  event: { preventDefault: () => void },
-  onTryExample?: () => void
-) => {
-  if (!onTryExample) return
+interface ExampleClick {
+  preventDefault: () => void
+  metaKey?: boolean
+  ctrlKey?: boolean
+  shiftKey?: boolean
+  altKey?: boolean
+  button?: number
+}
+
+const opensElsewhere = ({ metaKey, ctrlKey, shiftKey, altKey, button = 0 }: ExampleClick) =>
+  Boolean(metaKey || ctrlKey || shiftKey || altKey) || button !== 0
+
+export const followExample = (event: ExampleClick, onTryExample?: () => void) => {
+  if (!onTryExample || opensElsewhere(event)) return
   event.preventDefault()
   onTryExample()
 }

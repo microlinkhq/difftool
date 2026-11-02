@@ -11,7 +11,7 @@ interface CodeBlockProps {
 }
 
 export function CodeBlock({ code, language, title }: CodeBlockProps) {
-  const { copied, copy } = useCopy(code)
+  const { state, copy } = useCopy(code)
 
   return (
     <div data-ui className="overflow-hidden rounded-2xl border border-panel-border bg-ink-panel text-ink-panel-foreground">
@@ -22,13 +22,13 @@ export function CodeBlock({ code, language, title }: CodeBlockProps) {
           onClick={copy}
           className="press inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-[14px] font-medium text-ink-panel-foreground hover:bg-ink-panel"
         >
-          <span hidden={copyIconHidden(copied, "check")}>
+          <span hidden={copyIconHidden(state, "check")}>
             <Check className="h-4 w-4" aria-hidden />
           </span>
-          <span hidden={copyIconHidden(copied, "copy")}>
+          <span hidden={copyIconHidden(state, "copy")}>
             <Copy className="h-4 w-4" aria-hidden />
           </span>
-          <span aria-live="polite">{copyLabel(copied)}</span>
+          <span aria-live="polite">{copyLabel(state)}</span>
         </button>
       </div>
       <pre className="overflow-x-auto px-4 py-4 text-[13.5px] leading-[1.65]">

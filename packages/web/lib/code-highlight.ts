@@ -36,19 +36,25 @@ export const reportCopy = async (write: () => Promise<void>) => {
   }
 }
 
-export const copyLabel = (copied: boolean, idle = "Copy") => (copied ? "Copied" : idle)
+export type CopyState = "idle" | "copied" | "failed"
 
-export const copyIconHidden = (copied: boolean, icon: "check" | "copy") =>
-  icon === "check" ? !copied : copied
+const COPY_RESULT_LABELS: Record<Exclude<CopyState, "idle">, string> = { copied: "Copied", failed: "Copy failed" }
 
-export const copyResetDelay = (copied: boolean) => (copied ? COPIED_FOR_MS : undefined)
+export const copyState = (copied: boolean): CopyState => (copied ? "copied" : "failed")
+
+export const copyLabel = (state: CopyState, idle = "Copy") => (state === "idle" ? idle : COPY_RESULT_LABELS[state])
+
+export const copyIconHidden = (state: CopyState, icon: "check" | "copy") =>
+  icon === "check" ? state !== "copied" : state === "copied"
+
+export const copyResetDelay = (state: CopyState) => (state === "idle" ? undefined : COPIED_FOR_MS)
 
 export const scheduleCopyReset = (
-  copied: boolean,
+  state: CopyState,
   reset: () => void,
   schedule: (delay: number, reset: () => void) => void
 ) => {
-  const delay = copyResetDelay(copied)
+  const delay = copyResetDelay(state)
   if (delay === undefined) return
   schedule(delay, reset)
 }

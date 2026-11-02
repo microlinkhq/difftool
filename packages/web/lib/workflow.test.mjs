@@ -3,6 +3,8 @@ import { describe, test } from 'node:test'
 
 import {
   DEFAULT_THRESHOLD,
+  BASE_URL_EXAMPLE,
+  PREVIEW_URL_EXAMPLE,
   addRoute,
   buildInstallPrompt,
   buildWorkflow,
@@ -11,6 +13,7 @@ import {
   isHttpUrl,
   isPreviewValid,
   isRepository,
+  urlOrExample,
   normalizeRoute,
   previewInput,
   removeRouteDisabled,
@@ -241,6 +244,7 @@ describe('install prompt', () => {
     const prompt = buildInstallPrompt({ ...answers, useApiKey: false })
     assert.ok(!prompt.includes('MICROLINK_API_KEY'))
     assert.ok(prompt.includes('free endpoint, 5 requests a day'))
+    assert.ok(prompt.includes('raises that to 25 requests a day'))
   })
 
   test('only a Vercel preview gets the Vercel check, and steps stay numbered in order', () => {
@@ -256,5 +260,22 @@ describe('install prompt', () => {
     const prompt = buildInstallPrompt({ ...answers, repository: 'not a repo' })
     assert.ok(prompt.includes('Settings → Secrets and variables → Actions'))
     assert.ok(!prompt.includes('github.com/not'))
+  })
+})
+
+describe('workflow values from an unfinished form', () => {
+  test('an empty or invalid URL falls back to the example, so the YAML always runs', () => {
+    assert.equal(urlOrExample('', PREVIEW_URL_EXAMPLE), PREVIEW_URL_EXAMPLE)
+    assert.equal(urlOrExample('staging', PREVIEW_URL_EXAMPLE), PREVIEW_URL_EXAMPLE)
+    assert.equal(urlOrExample(' https://acme.dev ', BASE_URL_EXAMPLE), 'https://acme.dev')
+    const yaml = buildWorkflow({
+      base: urlOrExample('', BASE_URL_EXAMPLE),
+      preview: { kind: 'url', url: urlOrExample('', PREVIEW_URL_EXAMPLE) },
+      routes: ['/'],
+      threshold: DEFAULT_THRESHOLD,
+      useApiKey: false
+    })
+    assert.match(yaml, /^ {10}base: https:\/\/example\.com$/m)
+    assert.match(yaml, /^ {10}head: https:\/\/staging\.example\.com$/m)
   })
 })
