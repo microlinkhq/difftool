@@ -128,7 +128,7 @@ function RouteList({ routes, onChange }: { routes: string[]; onChange: (routes: 
         <input
           id={inputId}
           value={draft}
-          placeholder="/pricing"
+          placeholder="Type a route, like /pricing"
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={(event) => commitOnEnter(event, commit)}
           className={inputClass}
