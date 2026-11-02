@@ -23,11 +23,22 @@ describe('url fields', () => {
 
 describe('step connector', () => {
   test('the last step hides the dotted connector', () => {
-    assert.equal(stepBodyClass(true), 'min-w-0')
-    assert.equal(stepBodyClass(false), 'min-w-0 pb-16 sm:pb-20')
     assert.equal(stepConnectorClass(true), 'hidden')
     assert.match(stepConnectorClass(false), /border-dotted/)
-    assert.doesNotMatch(stepConnectorClass(false), /hidden/)
+    assert.match(stepConnectorClass(false), /(^| )sm:block( |$)/)
+  })
+
+  test('on phones the connector is hidden and the step body spans the full width under the icon', () => {
+    const classes = (value) => value.split(' ')
+    assert.ok(classes(stepConnectorClass(false)).includes('hidden'))
+    for (const last of [true, false]) {
+      const body = classes(stepBodyClass(last))
+      assert.ok(body.includes('col-span-2'))
+      assert.ok(body.includes('sm:col-span-1'))
+      assert.ok(body.includes('sm:col-start-2'))
+    }
+    assert.ok(classes(stepBodyClass(false)).includes('pb-16'))
+    assert.ok(!classes(stepBodyClass(true)).includes('pb-16'))
   })
 })
 

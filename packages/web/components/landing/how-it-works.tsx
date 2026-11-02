@@ -47,13 +47,13 @@ const ROUTES = [
 function PullRequestComment() {
   return (
     <figure data-ui className="overflow-hidden rounded-2xl bg-card text-card-foreground">
-      <div className="flex items-center gap-3 bg-muted px-5 py-3.5 text-[14px]">
+      <div className="flex items-center gap-3 bg-muted px-4 py-3.5 text-[14px] sm:px-5">
         <img src="https://cdn.microlink.io/logo/logo.svg" alt="" width={24} height={24} className="h-6 w-6 rounded-full bg-background" />
         <span>
           <span className="font-semibold">github-actions</span> <span className="text-muted-foreground">commented on #106</span>
         </span>
       </div>
-      <div className="px-5 pb-5 pt-4">
+      <div className="px-4 pb-5 pt-4 sm:px-5">
         <p className="text-[18px] font-semibold tracking-[-0.01em]">@microlink/difftool visual comparison</p>
         <p className="mt-1 text-[14px] text-muted-foreground">
           base <span className="text-link">unavatar.io</span> · head{" "}
@@ -68,7 +68,7 @@ function PullRequestComment() {
             <thead>
               <tr className="text-muted-foreground">
                 {COLUMNS.map(({ heading, wide }) => (
-                  <th key={heading} scope="col" className={`border-b border-border py-2 pr-3 font-medium ${columnClass(wide)}`}>
+                  <th key={heading} scope="col" className={`border-b border-border py-2 pr-2 font-medium sm:pr-3 ${columnClass(wide)}`}>
                     {heading}
                   </th>
                 ))}
@@ -77,20 +77,20 @@ function PullRequestComment() {
             <tbody>
               {ROUTES.map(({ route, changes, verdict }) => (
                 <tr key={route}>
-                  <td className="border-b border-border py-2.5 pr-3">
+                  <td className="border-b border-border py-2.5 pr-2 sm:pr-3">
                     <code className="font-mono text-[14px]">{route}</code>
                   </td>
-                  <td className="border-b border-border py-2.5 pr-3 tabular-nums">{changes}</td>
-                  <td className="hidden border-b border-border py-2.5 pr-3 sm:table-cell">
+                  <td className="border-b border-border py-2.5 pr-2 sm:pr-3 tabular-nums">{changes}</td>
+                  <td className="hidden border-b border-border py-2.5 pr-2 sm:pr-3 sm:table-cell">
                     <a className="text-link hover:text-link-hover hover:underline" href={EXAMPLE_IMAGES.base}>open</a>
                   </td>
-                  <td className="hidden border-b border-border py-2.5 pr-3 sm:table-cell">
+                  <td className="hidden border-b border-border py-2.5 pr-2 sm:pr-3 sm:table-cell">
                     <a className="text-link hover:text-link-hover hover:underline" href={EXAMPLE_IMAGES.head}>open</a>
                   </td>
-                  <td className="hidden border-b border-border py-2.5 pr-3 sm:table-cell">
+                  <td className="hidden border-b border-border py-2.5 pr-2 sm:pr-3 sm:table-cell">
                     <a className="text-link hover:text-link-hover hover:underline" href="/examples/diff.webp">open</a>
                   </td>
-                  <td className="border-b border-border py-2.5 pr-3">
+                  <td className="border-b border-border py-2.5 pr-2 sm:pr-3">
                     <a className="text-link hover:text-link-hover hover:underline" href={EXAMPLE_COMPARE_URL}>compare</a>
                   </td>
                   <td className="border-b border-border py-2.5">
@@ -110,7 +110,7 @@ function PullRequestComment() {
 export function HowItWorks() {
   return (
     <section id="how-it-works" aria-labelledby="how-title" className="px-page">
-      <div className="rounded-[32px] bg-ink-panel px-6 py-16 text-ink-panel-foreground sm:px-10 md:py-24 lg:px-16">
+      <div className="rounded-[32px] bg-ink-panel text-ink-panel-foreground sm:px-10 sm:py-16 md:py-24 lg:px-16">
         <div className="grid gap-12 lg:grid-cols-12 lg:gap-10">
           <Reveal className="min-w-0 lg:col-span-5">
             <h2 id="how-title" className="max-w-[14ch] font-serif text-[clamp(2.25rem,4.4vw,4rem)] font-normal leading-[1] tracking-[-0.03em]">

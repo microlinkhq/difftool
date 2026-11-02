@@ -19,14 +19,14 @@ export function Landing({ slots, onTryExample }: LandingProps) {
       <TopBar />
       <main id={MAIN_ID} tabIndex={-1} className="focus:outline-none">
         <Hero slots={slots} onTryExample={onTryExample} />
-        <div className="flex flex-col gap-32 pt-8 md:gap-44">
+        <div className="flex flex-col gap-24 pt-8 sm:gap-32 md:gap-44">
           <HowItWorks />
           <ModesDemo />
           <SetupWizard />
           <Faq />
         </div>
       </main>
-      <div className="mt-32 md:mt-44">
+      <div className="mt-24 sm:mt-32 md:mt-44">
         <SiteFooter />
       </div>
     </>
