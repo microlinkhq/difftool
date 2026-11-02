@@ -1,6 +1,6 @@
 "use client"
 
-import { useId, useMemo, useState } from "react"
+import { useId, useMemo, useRef, useState } from "react"
 import { ArrowUpRight, Database, Gauge, GitPullRequest, Globe, Plus, X } from "lucide-react"
 import { BrushStroke } from "./brush-stroke"
 import { CodeBlock } from "./code-block"
@@ -17,7 +17,6 @@ import {
   STORAGE_PROVIDERS,
   WORKFLOW_PATH,
   addRoute,
-  addRouteDisabled,
   buildWorkflow,
   commitOnEnter,
   formatPercent,
@@ -97,9 +96,16 @@ function Segmented<T extends string | number>({
 function RouteList({ routes, onChange }: { routes: string[]; onChange: (routes: string[]) => void }) {
   const [draft, setDraft] = useState("")
   const inputId = useId()
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const commit = () => {
-    onChange(addRoute(routes, draft))
+    const next = addRoute(routes, draft)
+    if (next === routes) {
+      inputRef.current?.select()
+      inputRef.current?.focus()
+      return
+    }
+    onChange(next)
     setDraft("")
   }
 
@@ -127,6 +133,7 @@ function RouteList({ routes, onChange }: { routes: string[]; onChange: (routes: 
       <div className="mt-3 flex gap-2">
         <input
           id={inputId}
+          ref={inputRef}
           value={draft}
           placeholder="Type a route, like /pricing"
           onChange={(event) => setDraft(event.target.value)}
@@ -136,8 +143,7 @@ function RouteList({ routes, onChange }: { routes: string[]; onChange: (routes: 
         <button
           type="button"
           onClick={commit}
-          disabled={addRouteDisabled(draft)}
-          className="press inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl px-4 text-[16px] font-medium border border-primary text-primary hover:bg-muted disabled:border-border disabled:bg-transparent disabled:text-muted-foreground"
+          className="press inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl border border-primary px-4 text-[16px] font-medium text-primary hover:bg-muted"
         >
           <Plus className="h-4 w-4" aria-hidden />
           Add

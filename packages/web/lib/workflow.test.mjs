@@ -4,7 +4,6 @@ import { describe, test } from 'node:test'
 import {
   DEFAULT_THRESHOLD,
   addRoute,
-  addRouteDisabled,
   buildWorkflow,
   commitOnEnter,
   formatPercent,
@@ -102,10 +101,11 @@ describe('routes', () => {
     assert.deepEqual(addRoute(['/'], ' '), ['/'])
   })
 
-  test('the add button stays disabled until the draft is a route', () => {
-    assert.equal(addRouteDisabled(' '), true)
-    assert.equal(addRouteDisabled('blog'), false)
-    assert.equal(addRouteDisabled('/docs'), false)
+  test('addRoute returns the same list when nothing new is added', () => {
+    const routes = ['/', '/blog']
+    assert.equal(addRoute(routes, ' '), routes)
+    assert.equal(addRoute(routes, 'blog'), routes)
+    assert.notEqual(addRoute(routes, '/docs'), routes)
   })
 
   test('the last route cannot be removed', () => {

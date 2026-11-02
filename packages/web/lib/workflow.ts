@@ -85,8 +85,6 @@ export const addRoute = (routes: string[], value: string) => {
   return [...routes, route]
 }
 
-export const addRouteDisabled = (draft: string) => normalizeRoute(draft) === ""
-
 export const removeRouteDisabled = (count: number) => count <= 1
 
 export const commitOnEnter = (
