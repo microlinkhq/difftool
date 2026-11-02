@@ -4,72 +4,65 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --black: #000;
-  --white: #fff;
-  --gray1: #f1f3f5;
-  --gray2: #e9ecef;
-  --gray3: #dee2e6;
-  --gray4: #ced4da;
-  --gray5: #adb5bd;
-  --gray7: #495057;
-  --gray8: #343a40;
-  --gray9: #212529;
-  --rust: #9d4612;
-  --rust-light: #b05829;
   --clay: #c48472;
-  --red9: #c92a2a;
   --teal9: #087f5b;
-  --link-brand: #0473e4;
-  --hover-link-brand: #015cba;
   --shadow-ink: 16, 24, 40;
 
-  --background: var(--white);
-  --foreground: var(--black);
-  --card: var(--white);
-  --card-foreground: var(--black);
-  --popover: var(--white);
-  --popover-foreground: var(--black);
-  --primary: var(--rust);
-  --primary-hover: var(--rust-light);
-  --primary-foreground: var(--white);
-  --cta: var(--gray9);
-  --cta-hover: var(--gray8);
-  --cta-foreground: var(--white);
-  --active: var(--gray9);
-  --active-foreground: var(--white);
-  --secondary: var(--gray1);
-  --secondary-foreground: var(--black);
-  --muted: var(--gray1);
-  --muted-foreground: var(--gray7);
-  --accent: var(--gray1);
-  --accent-foreground: var(--black);
-  --surface-hover: var(--gray2);
-  --destructive: var(--red9);
-  --destructive-foreground: var(--white);
+  --background: oklch(0.99 0 0);
+  --foreground: oklch(0 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0 0 0);
+  --popover: oklch(0.99 0 0);
+  --popover-foreground: oklch(0 0 0);
+  --primary: oklch(0 0 0);
+  --primary-hover: oklch(0.25 0 0);
+  --primary-foreground: oklch(1 0 0);
+  --cta: var(--primary);
+  --cta-hover: var(--primary-hover);
+  --cta-foreground: var(--primary-foreground);
+  --active: var(--primary);
+  --active-foreground: var(--primary-foreground);
+  --secondary: oklch(0.94 0 0);
+  --secondary-foreground: oklch(0 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.44 0 0);
+  --accent: oklch(0.94 0 0);
+  --accent-foreground: oklch(0 0 0);
+  --surface-hover: var(--accent);
+  --destructive: oklch(0.57 0.19 23.03);
+  --destructive-foreground: oklch(1 0 0);
   --success: var(--teal9);
-  --border: var(--gray2);
-  --panel-border: var(--gray3);
+  --border: oklch(0.92 0 0);
+  --panel-border: var(--border);
   --brush-stroke: var(--clay);
-  --input: var(--gray4);
-  --ring: var(--black);
-  --brand: var(--rust);
+  --input: oklch(0.94 0 0);
+  --ring: oklch(0 0 0);
+  --brand: var(--primary);
   --ink-panel: var(--background);
   --ink-panel-raised: var(--background);
   --ink-panel-foreground: var(--foreground);
-  --ink-panel-muted: var(--gray7);
-  --code-plain: var(--gray9);
-  --code-punctuation: var(--gray7);
-  --code-value: var(--gray7);
-  --link: var(--link-brand);
-  --link-hover: var(--hover-link-brand);
+  --ink-panel-muted: var(--muted-foreground);
+  --code-plain: var(--foreground);
+  --code-punctuation: var(--muted-foreground);
+  --code-value: var(--muted-foreground);
+  --link: oklch(0.55 0.22 264.53);
+  --link-hover: var(--foreground);
+  --shadow-2xs: 0px 1px 2px 0px hsl(0 0% 0% / 0.09);
+  --shadow-xs: 0px 1px 2px 0px hsl(0 0% 0% / 0.09);
+  --shadow-sm: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 1px 2px -1px hsl(0 0% 0% / 0.18);
+  --shadow: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 1px 2px -1px hsl(0 0% 0% / 0.18);
+  --shadow-md: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 2px 4px -1px hsl(0 0% 0% / 0.18);
+  --shadow-lg: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 4px 6px -1px hsl(0 0% 0% / 0.18);
+  --shadow-xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 8px 10px -1px hsl(0 0% 0% / 0.18);
+  --shadow-2xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.45);
   --shadow-lifted: 0 8px 16px rgba(var(--shadow-ink), 0.06), 0 24px 56px rgba(var(--shadow-ink), 0.12);
   --shadow-ring: 0 0 0 1px rgba(var(--shadow-ink), 0.1);
-  --radius: 0.75rem;
+  --radius: 0.5rem;
   --page-margin: clamp(16px, 3vw, 32px);
 }
 
 @theme inline {
-  --font-sans: var(--font-inter), 'Inter', system-ui, sans-serif;
+  --font-sans: var(--font-geist), 'Geist', system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --font-serif: Georgia, 'Times New Roman', Times, serif;
   --color-background: var(--background);
@@ -116,6 +109,14 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --spacing-page: var(--page-margin);
+  --shadow-2xs: var(--shadow-2xs);
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow: var(--shadow);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+  --shadow-2xl: var(--shadow-2xl);
 }
 
 @layer base {
@@ -134,7 +135,7 @@
   }
   ::selection {
     background: var(--brand);
-    color: var(--white);
+    color: var(--primary-foreground);
   }
 }
 
