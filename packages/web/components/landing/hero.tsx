@@ -28,7 +28,7 @@ export function Hero({ slots, onTryExample }: HeroProps) {
         </h1>
         <BrushStroke className="mt-6" />
         <p className="mt-5 max-w-[40ch] text-pretty text-[17px] leading-[1.5] text-muted-foreground">
-          Pixel diffs of production against your preview deploy, posted on every pull request.
+          A GitHub Action that posts pixel diffs of production against your preview deploy on every pull request.
         </p>
       </div>
 
