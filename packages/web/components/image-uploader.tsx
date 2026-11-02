@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from "react"
 import { Database, GitBranch, Link, Loader2, X } from "lucide-react"
+import { leavesZone } from "@/lib/drop-zone"
 import { canDisplay, fetchDisplayableImage, fileNameFromUrl, readDataUrl } from "@/lib/load-image"
 
 interface ImageUploaderProps {
@@ -29,7 +30,7 @@ export function ImageUploader({ label, hint, image, onImageChange, isLoading, lo
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault()
-    setIsDragging(false)
+    if (leavesZone(e.currentTarget, e.relatedTarget)) setIsDragging(false)
   }, [])
 
   const readFile = useCallback(async (file: File | undefined) => {
@@ -116,7 +117,7 @@ export function ImageUploader({ label, hint, image, onImageChange, isLoading, lo
       className={`flex flex-col gap-4 rounded-xl ${isDragging ? "bg-brand/5" : ""}`}
     >
       <div className="flex items-center gap-3">
-        <label className={`flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl ${mark.chip}`}>
+        <label className={`flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 ${mark.chip}`}>
           <input
             type="file"
             accept="image/*"
@@ -150,7 +151,7 @@ export function ImageUploader({ label, hint, image, onImageChange, isLoading, lo
           type="button"
           onClick={handleUrlSubmit}
           disabled={isLoadingUrl || !urlValue.trim()}
-          className="press h-11 shrink-0 rounded-xl border border-field-border bg-card px-4 text-[15px] font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed"
+          className="press h-11 shrink-0 rounded-xl border border-field-border bg-card px-4 text-[15px] font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:border-border disabled:text-muted-foreground disabled:hover:bg-card"
         >
           {isLoadingUrl ? <Loader2 className="w-4 h-4 animate-spin" aria-label="Loading" /> : "Load"}
         </button>
