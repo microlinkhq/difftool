@@ -2,18 +2,19 @@ import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
+import { SITE_URL } from '@/lib/site'
 import './globals.css'
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist' })
 const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono' })
 
-const SITE_URL = 'https://difftool.microlink.io'
 const TITLE = 'difftool · Visual diffs on every pull request'
 const DESCRIPTION =
   'difftool screenshots production and your preview deploy, compares them pixel by pixel, and comments on the pull request with what changed. Or drop two images and compare them in the browser.'
 
 export const viewport: Viewport = {
   themeColor: '#fcfcfc',
+  colorScheme: 'light',
 }
 
 export const metadata: Metadata = {

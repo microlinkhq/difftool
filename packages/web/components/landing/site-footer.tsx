@@ -1,10 +1,12 @@
 import { MicrolinkLink } from "./microlink-link"
-import { DOCS_URL, GITHUB_URL, HERO_PAINTING_URL, MICROLINK_URL } from "@/lib/site"
+import { DOCS_URL, GITHUB_URL, HERO_PAINTING_URL, MICROLINK_URL, PRIVACY_URL, TERMS_URL } from "@/lib/site"
 
 const LINKS = [
   { href: GITHUB_URL, label: "GitHub" },
   { href: DOCS_URL, label: "Documentation" },
   { href: `${GITHUB_URL}/blob/master/LICENSE.md`, label: "MIT license" },
+  { href: PRIVACY_URL, label: "Privacy" },
+  { href: TERMS_URL, label: "Terms" },
 ]
 
 const linkClass = "underline-offset-4 hover:text-foreground hover:underline"

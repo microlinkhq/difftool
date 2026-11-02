@@ -1,4 +1,5 @@
 import { TopBar } from "@/components/top-bar"
+import { MAIN_ID, SkipLink } from "@/components/skip-link"
 import { Hero } from "./hero"
 import { HowItWorks } from "./how-it-works"
 import { ModesDemo } from "./modes-demo"
@@ -14,8 +15,9 @@ interface LandingProps {
 export function Landing({ slots, onTryExample }: LandingProps) {
   return (
     <>
+      <SkipLink />
       <TopBar />
-      <main>
+      <main id={MAIN_ID} tabIndex={-1} className="focus:outline-none">
         <Hero slots={slots} onTryExample={onTryExample} />
         <div className="flex flex-col gap-32 pt-8 md:gap-44">
           <HowItWorks />

@@ -1,6 +1,9 @@
 export const GITHUB_URL = "https://github.com/microlinkhq/difftool"
 export const DOCS_URL = `${GITHUB_URL}#github-action`
+export const SITE_URL = "https://difftool.microlink.io"
 export const MICROLINK_URL = "https://microlink.io"
+export const PRIVACY_URL = `${MICROLINK_URL}/privacy`
+export const TERMS_URL = `${MICROLINK_URL}/terms`
 export const MICROLINK_DASHBOARD_URL = "https://dashboard.microlink.io"
 export const HERO_PAINTING_URL = "https://www.metmuseum.org/art/collection/search/459968"
 
