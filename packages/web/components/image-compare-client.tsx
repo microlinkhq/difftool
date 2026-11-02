@@ -30,6 +30,7 @@ export function ImageCompareClient() {
   const [image2Error, setImage2Error] = useState<string | null>(null)
 
   const latestLoad = useRef({ base: 0, head: 0 })
+  const [exampleRequest, setExampleRequest] = useState(0)
 
   const loadImageFromUrl = useCallback(async (
     slot: "base" | "head",
@@ -70,7 +71,7 @@ export function ImageCompareClient() {
       latestLoad.current.base++
       setIsLoadingImage1(false)
     }
-  }, [image1Url, image1Data, loadImageFromUrl])
+  }, [image1Url, image1Data, exampleRequest, loadImageFromUrl])
 
   useEffect(() => {
     if (image2Url && !image2Data) {
@@ -79,7 +80,7 @@ export function ImageCompareClient() {
       latestLoad.current.head++
       setIsLoadingImage2(false)
     }
-  }, [image2Url, image2Data, loadImageFromUrl])
+  }, [image2Url, image2Data, exampleRequest, loadImageFromUrl])
 
   const handleImage1Change = useCallback((dataUrl: string | null, name?: string, originalUrl?: string) => {
     latestLoad.current.base++
@@ -119,14 +120,13 @@ export function ImageCompareClient() {
   }, [setImage1Url, setImage2Url])
 
   const handleTryExample = useCallback(() => {
-    latestLoad.current.base++
-    latestLoad.current.head++
     setImage1Data(null)
     setImage2Data(null)
     setImage1Error(null)
     setImage2Error(null)
     setImage1Url(EXAMPLE_IMAGES.base)
     setImage2Url(EXAMPLE_IMAGES.head)
+    setExampleRequest((request) => request + 1)
   }, [setImage1Url, setImage2Url])
 
   if (image1Data && image2Data) {
