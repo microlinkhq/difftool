@@ -1,21 +1,22 @@
 "use client"
 
 import { Minus, Plus, Maximize2 } from "lucide-react"
-
-export const DEFAULT_ZOOM = 50
+import { DEFAULT_ZOOM, MIN_ZOOM } from "@/lib/zoom"
 
 interface ZoomControlsProps {
   zoom: number
   onZoomChange: (zoom: number) => void
   minZoom?: number
   maxZoom?: number
+  resetZoom?: number
 }
 
 export function ZoomControls({ 
   zoom, 
   onZoomChange, 
-  minZoom = 10, 
-  maxZoom = 500 
+  minZoom = MIN_ZOOM, 
+  maxZoom = 500,
+  resetZoom = DEFAULT_ZOOM,
 }: ZoomControlsProps) {
   const handleZoomIn = () => {
     const newZoom = Math.min(zoom + 25, maxZoom)
@@ -28,7 +29,7 @@ export function ZoomControls({
   }
 
   const handleReset = () => {
-    onZoomChange(DEFAULT_ZOOM)
+    onZoomChange(resetZoom)
   }
 
   return (
@@ -48,13 +49,13 @@ export function ZoomControls({
         max={maxZoom}
         value={zoom}
         onChange={(e) => onZoomChange(Number(e.target.value))}
-        className="w-24 h-1 bg-border rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:cursor-pointer"
+        className="w-24 h-1 bg-border rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-active [&::-webkit-slider-thumb]:cursor-pointer"
       />
       
       <button
         onClick={handleReset}
         className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-        aria-label={`Reset zoom to ${DEFAULT_ZOOM}%`}
+        aria-label={`Reset zoom to ${resetZoom}%`}
       >
         <Maximize2 className="w-4 h-4" />
       </button>
