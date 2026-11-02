@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { describe, test } from 'node:test'
 
 const BODY_TEXT_RATIO = 4.5
@@ -148,4 +148,49 @@ describe('color tokens', () => {
       assert.ok(L < source[0], `${fix} is not darker than its theme color`)
     }
   })
+})
+
+const SITE_ROOT = new URL('../', import.meta.url)
+const UI_KIT = 'components/ui/'
+const SURFACES = ['card', 'background', 'muted']
+const DIMMED_TEXT = /(?:placeholder:)?text-([a-z-]+)\/(\d+)/g
+
+const encode = c => (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055)
+const decode = c => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
+const encoded = value => oklabToLinear(oklab(value)).map(encode)
+const compositeLuminance = (text, alpha, surface) => {
+  const [r, g, b] = encoded(text).map((channel, i) => decode(alpha * channel + (1 - alpha) * encoded(surface)[i]))
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b
+}
+const surfaceLuminance = surface => {
+  const [r, g, b] = oklabToLinear(oklab(surface))
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b
+}
+
+const tsxUnder = dir => readdirSync(new URL(dir, SITE_ROOT), { recursive: true }).filter(file => file.endsWith('.tsx')).map(file => `${dir}${file}`)
+const siteFiles = [...tsxUnder('app/'), ...tsxUnder('components/').filter(file => !file.startsWith(UI_KIT))]
+const sourceOf = file => readFileSync(new URL(file, SITE_ROOT), 'utf8')
+const usedKitFiles = [...new Set(siteFiles.flatMap(file => [...sourceOf(file).matchAll(/@\/components\/ui\/([a-z-]+)/g)].map(([, name]) => `${UI_KIT}${name}.tsx`)))]
+
+const dimmedTextUses = [...siteFiles, ...usedKitFiles].flatMap(file =>
+  sourceOf(file).split('\n').flatMap((line, index) =>
+    line.includes('aria-hidden') ? [] : [...line.matchAll(DIMMED_TEXT)].map(([className, token, percent]) => ({ where: `${file}:${index + 1}`, className, token, alpha: Number(percent) / 100 }))
+  )
+)
+
+describe('text dimmed with an alpha class', () => {
+  test('the scan reads the site sources', () => {
+    assert.ok(siteFiles.includes('components/image-uploader.tsx'))
+  })
+
+  for (const { where, className, token, alpha } of dimmedTextUses) {
+    test(`${className} at ${where} reaches ${BODY_TEXT_RATIO}:1 on every surface`, () => {
+      assert.ok(declared[token], `${className} uses --${token}, which is not a color token`)
+      for (const surface of SURFACES) {
+        const text = compositeLuminance(resolve(token), alpha, resolve(surface))
+        const ratio = (Math.max(text, surfaceLuminance(resolve(surface))) + 0.05) / (Math.min(text, surfaceLuminance(resolve(surface))) + 0.05)
+        assert.ok(ratio >= BODY_TEXT_RATIO, `${ratio.toFixed(2)}:1 on --${surface}`)
+      }
+    })
+  }
 })
