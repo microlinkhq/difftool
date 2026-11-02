@@ -18,6 +18,7 @@ components/landing/        hero, how it works, modes demo, setup wizard, FAQ, fo
 components/comparison-*    the comparison tool
 lib/workflow.ts            builds the workflow YAML and the S3 config the wizard shows
 lib/pixel-diff.ts          the highlight and subtract algorithms
+lib/metadata.ts            title, description, manifest and JSON-LD, shared by app/layout.tsx and app/page.tsx
 public/examples/           a real production/preview pair from unavatar.io used by "Try a real example"
 ```
 
@@ -38,6 +39,16 @@ pnpm --filter @microlink/difftool-web test
 ```
 
 `lib/workflow.test.mjs` pins the generated workflow to the one documented in the root README; change both together.
+
+## Icons
+
+`app/icon.svg` (the Microlink mark) is the source for every other icon. After changing it, regenerate the rest:
+
+```bash
+./scripts/generate-icons.sh   # needs rsvg-convert and ImageMagick: brew install librsvg imagemagick
+```
+
+It writes `app/favicon.ico` (16, 32, 48px), `app/apple-icon.png` (180px) and `public/icon-{192,512}.png` for the web manifest. The output is the same on every run, so a diff shows only real changes. `lib/metadata.test.mjs` fails if an icon goes missing or its size stops matching the manifest.
 
 ## Deploying
 

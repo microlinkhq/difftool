@@ -4,7 +4,9 @@ import { CTA_CLASS, CTA_OUTLINE_CLASS } from "@/lib/cta"
 import { DOCS_URL } from "@/lib/site"
 
 export const metadata: Metadata = {
-  title: "Page not found · difftool",
+  title: "Page not found",
+  alternates: { canonical: null },
+  openGraph: null,
 }
 
 export default function NotFound() {
