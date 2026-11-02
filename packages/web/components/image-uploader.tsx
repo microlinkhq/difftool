@@ -1,7 +1,8 @@
 "use client"
 
 import { useCallback, useRef, useState } from "react"
-import { ImageUp, Loader2, X } from "lucide-react"
+import { Database, GitBranch, Link, Loader2, X } from "lucide-react"
+import { leavesZone } from "@/lib/drop-zone"
 import { canDisplay, fetchDisplayableImage, fileNameFromUrl, readDataUrl } from "@/lib/load-image"
 
 interface ImageUploaderProps {
@@ -29,7 +30,7 @@ export function ImageUploader({ label, hint, image, onImageChange, isLoading, lo
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault()
-    setIsDragging(false)
+    if (leavesZone(e.currentTarget, e.relatedTarget)) setIsDragging(false)
   }, [])
 
   const readFile = useCallback(async (file: File | undefined) => {
@@ -104,55 +105,58 @@ export function ImageUploader({ label, hint, image, onImageChange, isLoading, lo
     )
   }
 
+  const mark = label === "Preview"
+    ? { Icon: GitBranch, chip: "bg-primary/10 text-primary-ink" }
+    : { Icon: Database, chip: "bg-muted text-foreground" }
+
   return (
     <div
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`${slot} group flex flex-col justify-between gap-4 p-4 md:gap-6 md:p-5 transition-colors ${
-        isDragging ? "bg-brand/10 ring-2 ring-brand" : "bg-muted hover:bg-surface-hover"
-      }`}
+      className={`flex flex-col gap-4 rounded-xl ${isDragging ? "bg-brand/5" : ""}`}
     >
-      <input
-        type="file"
-        accept="image/*"
-        onChange={handleFileSelect}
-        aria-label={`Choose the ${label.toLowerCase()} image`}
-        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-      />
-      <div className="pointer-events-none flex items-start justify-between gap-3">
+      <div className="flex items-center gap-3">
+        <label className={`flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 ${mark.chip}`}>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileSelect}
+            aria-label={`Choose the ${label.toLowerCase()} image`}
+            className="sr-only"
+          />
+          <mark.Icon className="h-5 w-5" aria-hidden />
+        </label>
         <div>
-          <p className="text-[18px] font-semibold tracking-[-0.01em]">{label}</p>
-          <p className="mt-1 hidden text-[16px] text-muted-foreground sm:block">{hint}</p>
+          <p className="text-[20px] font-semibold leading-none tracking-[-0.02em]">{label}</p>
+          <p className="mt-1 text-[14px] leading-snug text-muted-foreground">{hint}</p>
         </div>
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-background text-foreground transition-transform group-hover:-translate-y-0.5">
-          <ImageUp className="w-[18px] h-[18px]" aria-hidden />
-        </span>
       </div>
 
-      <div className="relative z-10">
-        <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+      <div className="flex gap-2">
+        <div className="relative min-w-0 flex-1">
+          <Link className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/35" aria-hidden />
           <input
             type="url"
             inputMode="url"
-            placeholder="or paste a URL"
+            placeholder="https://..."
             aria-label={`${label} image URL`}
             value={urlValue}
             onChange={(e) => { setUrlValue(e.target.value); setError(null); setDismissedLoadError(loadError ?? null) }}
             onKeyDown={(e) => e.key === "Enter" && handleUrlSubmit()}
-            className="min-w-0 flex-1 h-10 rounded-full bg-background px-4 text-[16px] placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-11 w-full rounded-xl border border-field-border bg-card pl-10 pr-4 text-[15px] placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
-          <button
-            type="button"
-            onClick={handleUrlSubmit}
-            disabled={isLoadingUrl || !urlValue.trim()}
-            className="press h-10 rounded-full bg-foreground px-4 text-[16px] font-medium text-background hover:bg-foreground/85 disabled:bg-background disabled:text-muted-foreground disabled:cursor-not-allowed"
-          >
-            {isLoadingUrl ? <Loader2 className="w-4 h-4 animate-spin" aria-label="Loading" /> : "Load"}
-          </button>
         </div>
-        <p role="alert" className="mt-2 min-h-5 text-[14px] text-destructive">{visibleError}</p>
+        <button
+          type="button"
+          onClick={handleUrlSubmit}
+          disabled={isLoadingUrl || !urlValue.trim()}
+          className="press h-11 shrink-0 rounded-xl border border-field-border bg-card px-4 text-[15px] font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:border-border disabled:text-muted-foreground disabled:hover:bg-card"
+        >
+          {isLoadingUrl ? <Loader2 className="w-4 h-4 animate-spin" aria-label="Loading" /> : "Load"}
+        </button>
       </div>
+      {visibleError ? <p role="alert" className="text-[14px] text-destructive">{visibleError}</p> : null}
     </div>
   )
 }

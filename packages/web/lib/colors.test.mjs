@@ -3,11 +3,12 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { describe, test } from 'node:test'
 
 const BODY_TEXT_RATIO = 4.5
+const NON_TEXT_RATIO = 3
 const DISTINCT_HUE_DEGREES = 15
 
 const VERCEL_THEME = new Set([
   'oklch(0.99 0 0)', 'oklch(1 0 0)', 'oklch(0 0 0)', 'oklch(0.94 0 0)', 'oklch(0.97 0 0)', 'oklch(0.44 0 0)',
-  'oklch(0.92 0 0)', 'oklch(0.25 0 0)', 'oklch(0.63 0.19 23.03)', 'oklch(0.55 0.22 264.53)'
+  'oklch(0.92 0 0)', 'oklch(0.25 0 0)', 'oklch(0.56 0 0)', 'oklch(0.63 0.19 23.03)', 'oklch(0.55 0.22 264.53)'
 ])
 
 const OUTSIDE_THEME = new Set(['#0473e4', '#015cba', '#c48472', '#087f5b'])
@@ -117,7 +118,19 @@ const TEXT_PAIRS = [
   ['code-value', 'ink-panel']
 ]
 
+const NON_TEXT_PAIRS = [
+  ['field-border', 'card'],
+  ['field-border', 'background']
+]
+
 describe('color tokens', () => {
+  for (const [boundary, surface] of NON_TEXT_PAIRS) {
+    test(`--${boundary} on --${surface} reaches ${NON_TEXT_RATIO}:1 (WCAG 1.4.11)`, () => {
+      const ratio = contrast(resolve(boundary), resolve(surface))
+      assert.ok(ratio >= NON_TEXT_RATIO, `${ratio.toFixed(2)}:1`)
+    })
+  }
+
   for (const [text, surface] of TEXT_PAIRS) {
     test(`--${text} on --${surface} reaches ${BODY_TEXT_RATIO}:1`, () => {
       const ratio = contrast(resolve(text), resolve(surface))
@@ -195,4 +208,13 @@ describe('text dimmed with an alpha class', () => {
       }
     })
   }
+})
+
+describe('component colors', () => {
+  test('no component hard-codes a hex color class; tokens only', () => {
+    const literals = [...siteFiles, ...usedKitFiles].flatMap(file =>
+      sourceOf(file).split('\n').flatMap((line, index) => [...line.matchAll(/\[#[0-9a-f]{3,8}\]/gi)].map(([match]) => `${file}:${index + 1} ${match}`))
+    )
+    assert.deepEqual(literals, [])
+  })
 })
