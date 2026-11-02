@@ -4,6 +4,8 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  --link-brand: #0473e4;
+  --hover-link-brand: #015cba;
   --clay: #c48472;
   --teal9: #087f5b;
   --shadow-ink: 16, 24, 40;
@@ -14,12 +16,14 @@
   --card-foreground: oklch(0 0 0);
   --popover: oklch(0.99 0 0);
   --popover-foreground: oklch(0 0 0);
-  --primary: oklch(0 0 0);
-  --primary-hover: oklch(0.25 0 0);
+  --primary: var(--link-brand);
+  --primary-hover: var(--hover-link-brand);
   --primary-foreground: oklch(1 0 0);
+  --primary-ink: var(--hover-link-brand);
   --cta: var(--primary);
   --cta-hover: var(--primary-hover);
   --cta-foreground: var(--primary-foreground);
+  --cta-ink: var(--primary-ink);
   --active: var(--primary);
   --active-foreground: var(--primary-foreground);
   --secondary: oklch(0.94 0 0);
@@ -45,8 +49,8 @@
   --code-plain: var(--foreground);
   --code-punctuation: var(--muted-foreground);
   --code-value: var(--muted-foreground);
-  --link: oklch(0.55 0.22 264.53);
-  --link-hover: var(--foreground);
+  --link: var(--link-brand);
+  --link-hover: var(--hover-link-brand);
   --shadow-2xs: 0px 1px 2px 0px hsl(0 0% 0% / 0.09);
   --shadow-xs: 0px 1px 2px 0px hsl(0 0% 0% / 0.09);
   --shadow-sm: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 1px 2px -1px hsl(0 0% 0% / 0.18);
@@ -74,9 +78,11 @@
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary-hover: var(--primary-hover);
+  --color-primary-ink: var(--primary-ink);
   --color-cta: var(--cta);
   --color-cta-hover: var(--cta-hover);
   --color-cta-foreground: var(--cta-foreground);
+  --color-cta-ink: var(--cta-ink);
   --color-active: var(--active);
   --color-active-foreground: var(--active-foreground);
   --color-secondary: var(--secondary);

@@ -143,7 +143,7 @@ function RouteList({ routes, onChange }: { routes: string[]; onChange: (routes: 
         <button
           type="button"
           onClick={commit}
-          className="press inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl border border-primary px-4 text-[16px] font-medium text-primary hover:bg-muted"
+          className="press inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl border border-primary px-4 text-[16px] font-medium text-primary-ink hover:bg-muted"
         >
           <Plus className="h-4 w-4" aria-hidden />
           Add

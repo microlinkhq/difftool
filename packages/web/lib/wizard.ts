@@ -26,6 +26,6 @@ export const secretsLinkProps = (href: string | undefined) => {
   }
   return {
     href,
-    className: `${secretsLinkClass} border border-primary text-primary hover:bg-muted`,
+    className: `${secretsLinkClass} border border-primary text-primary-ink hover:bg-muted`,
   }
 }
