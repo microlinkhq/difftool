@@ -11,6 +11,25 @@ import { ArrowLeftRight } from "lucide-react"
 import { fetchDisplayableImage, fileNameFromUrl } from "@/lib/load-image"
 import { COMPARISON_MODES } from "@/lib/modes"
 import { EXAMPLE_IMAGES } from "@/lib/site"
+import { zoomForViewport } from "@/lib/zoom"
+
+function useFitZoom(image: string | null) {
+  const [zoom, setZoom] = useState<number>()
+  useEffect(() => {
+    setZoom(undefined)
+    if (!image) return
+    const element = new Image()
+    let active = true
+    const measure = () => active && setZoom(zoomForViewport(window.innerWidth, element.naturalWidth))
+    element.onload = measure
+    element.onerror = measure
+    element.src = image
+    return () => {
+      active = false
+    }
+  }, [image])
+  return zoom
+}
 
 export function ImageCompareClient() {
   const [mode, setMode] = useQueryState(
@@ -131,6 +150,8 @@ export function ImageCompareClient() {
     setExampleRequest((request) => request + 1)
   }, [setImage1Url, setImage2Url])
 
+  const initialZoom = useFitZoom(image1Data)
+
   if (image1Data && image2Data) {
     return (
       <main className="flex h-dvh flex-col bg-background">
@@ -144,15 +165,18 @@ export function ImageCompareClient() {
             <button
               type="button"
               onClick={handleReset}
+              aria-label="New comparison"
               className="press h-9 shrink-0 rounded-full px-4 text-[16px] font-medium border border-primary text-primary-ink hover:bg-muted"
             >
-              New comparison
+              New<span className="hidden sm:inline"> comparison</span>
             </button>
           </div>
         </TopBar>
         <ModeSelector mode={mode} onModeChange={setMode} className="justify-start px-page pb-3 sm:justify-center" />
         <div className="flex-1 overflow-hidden">
-          <ComparisonView image1={image1Data} image2={image2Data} mode={mode} />
+          {initialZoom !== undefined && (
+            <ComparisonView image1={image1Data} image2={image2Data} mode={mode} initialZoom={initialZoom} />
+          )}
         </div>
       </main>
     )

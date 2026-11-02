@@ -8,12 +8,14 @@ export const urlField = (value: string, valid: boolean, message: string) => {
 
 export const previewUrlHidden = (kind: "vercel" | "url") => kind !== "url"
 
-export const stepBodyClass = (last: boolean) => (last ? "min-w-0" : "min-w-0 pb-16 sm:pb-20")
+const STEP_BODY_CLASS = "col-span-2 min-w-0 sm:col-span-1 sm:col-start-2"
+
+export const stepBodyClass = (last: boolean) => (last ? STEP_BODY_CLASS : `${STEP_BODY_CLASS} pb-16 sm:pb-20`)
 
 export const stepConnectorClass = (last: boolean) =>
   last
     ? "hidden"
-    : "absolute bottom-0 left-[21px] top-14 border-l-2 border-dotted border-input sm:left-[25px] sm:top-16"
+    : "absolute bottom-0 left-[25px] top-16 hidden border-l-2 border-dotted border-input sm:block"
 
 export const secretsLinkProps = (href: string | undefined) => {
   if (!href) {

@@ -57,14 +57,14 @@ interface StepProps {
 
 function Step({ icon, title, description, children, last = false }: StepProps) {
   return (
-    <li className="relative grid grid-cols-[44px_1fr] gap-x-5 sm:grid-cols-[52px_1fr] sm:gap-x-8">
+    <li className="relative grid grid-cols-[44px_1fr] gap-x-4 sm:grid-cols-[52px_1fr] sm:gap-x-8">
       <span aria-hidden className={stepConnectorClass(last)} />
-      <span className="relative flex h-11 w-11 items-center justify-center rounded-full bg-muted text-foreground sm:h-[52px] sm:w-[52px]">
+      <span className="relative flex h-11 w-11 items-center justify-center rounded-full bg-muted text-foreground sm:row-span-2 sm:h-[52px] sm:w-[52px]">
         {icon}
       </span>
+      <h3 className="self-center text-[22px] font-semibold tracking-[-0.02em] sm:self-start sm:pt-3">{title}</h3>
       <div className={stepBodyClass(last)}>
-        <h3 className="pt-2 text-[22px] font-semibold tracking-[-0.02em] sm:pt-3">{title}</h3>
-        <div className="mt-2 max-w-[60ch] text-[16px] leading-[1.6] text-muted-foreground">{description}</div>
+        <div className="mt-3 max-w-[60ch] text-[16px] leading-[1.6] text-muted-foreground sm:mt-2">{description}</div>
         <div className="mt-6">{children}</div>
       </div>
     </li>
@@ -90,7 +90,7 @@ function Segmented<T extends string | number>({
           type="button"
           aria-pressed={optionSelected(value, option.value)}
           onClick={() => onChange(option.value)}
-          className={`press whitespace-nowrap rounded-xl px-3 py-2 text-[16px] sm:px-4 ${segmentButtonClass(optionSelected(value, option.value))}`}
+          className={`press text-balance rounded-xl px-3 py-2 text-[16px] leading-snug sm:px-4 sm:leading-normal ${segmentButtonClass(optionSelected(value, option.value))}`}
         >
           {option.label}
         </button>
@@ -204,7 +204,7 @@ export function SetupWizard() {
 
   return (
     <section id="setup" aria-labelledby="setup-title" className="px-page">
-      <div className="mx-auto max-w-[1280px] rounded-[32px] bg-card px-5 py-16 shadow-[var(--shadow-ring)] sm:px-10 md:py-24">
+      <div className="mx-auto max-w-[1280px] rounded-[32px] bg-card px-4 py-12 shadow-[var(--shadow-ring)] sm:px-10 sm:py-16 md:py-24">
         <Reveal className="mx-auto max-w-[760px] text-center">
           <h2 id="setup-title" className="font-serif text-[clamp(2.25rem,4.4vw,4rem)] font-normal leading-[1] tracking-[-0.03em]">
             Add it to <em className="italic">your</em> project
@@ -216,7 +216,7 @@ export function SetupWizard() {
           </p>
         </Reveal>
 
-        <ol className="mx-auto mt-16 max-w-[760px] md:mt-20">
+        <ol className="mx-auto mt-12 max-w-[760px] sm:mt-16 md:mt-20">
           <Step
             icon={<Globe className="h-5 w-5" aria-hidden />}
             title="Point it at your site"

@@ -6,11 +6,14 @@ export const FRAME_PADDING_PX = 32
 
 export const resolveInitialZoom = (initialZoom = DEFAULT_ZOOM) => initialZoom
 
-export const fitZoom = (frameWidth: number) =>
+export const fitZoom = (frameWidth: number, imageWidth = EXAMPLE_WIDTH_PX, maxZoom = MAX_DEMO_ZOOM) =>
   Math.min(
-    MAX_DEMO_ZOOM,
-    Math.max(MIN_ZOOM, Math.floor(((frameWidth - FRAME_PADDING_PX) / EXAMPLE_WIDTH_PX) * 100))
+    maxZoom,
+    Math.max(MIN_ZOOM, Math.floor(((frameWidth - FRAME_PADDING_PX) / imageWidth) * 100))
   )
+
+export const zoomForViewport = (viewportWidth: number, imageWidth: number) =>
+  imageWidth > 0 ? fitZoom(viewportWidth, imageWidth, DEFAULT_ZOOM) : DEFAULT_ZOOM
 
 export const frameWidth = (element: { clientWidth: number } | null) => element?.clientWidth
 
