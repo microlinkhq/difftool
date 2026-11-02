@@ -120,6 +120,8 @@ export function ImageCompareClient() {
   }, [setImage1Url, setImage2Url])
 
   const handleTryExample = useCallback(() => {
+    latestLoad.current.base++
+    latestLoad.current.head++
     setImage1Data(null)
     setImage2Data(null)
     setImage1Error(null)
