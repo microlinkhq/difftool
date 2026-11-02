@@ -1,5 +1,7 @@
 import Image from "next/image"
-import { ArrowRight } from "lucide-react"
+import { TEXT_LINK_CLASS } from "@/lib/link"
+import { BrushStroke } from "./brush-stroke"
+import { ArrowRight, Camera } from "lucide-react"
 import landscape from "@/public/hero/landscape.webp"
 import { CTA_CLASS } from "@/lib/cta"
 import { EXAMPLE_COMPARE_URL, followExample } from "@/lib/site"
@@ -20,11 +22,12 @@ export function Hero({ slots, onTryExample }: HeroProps) {
       <div style={revealIndex(0)} className="flex flex-col items-center px-page">
         <h1
           id="hero-title"
-          className="max-w-[12ch] text-balance font-serif text-[clamp(2.75rem,5.4vw,4.25rem)] font-normal leading-[0.95] tracking-[-0.03em]"
+          className="max-w-[12ch] text-balance font-serif text-[clamp(2.75rem,5.4vw,4.25rem)] font-normal leading-[1.15] tracking-[-0.03em]"
         >
           See <em className="italic">every</em> pixel your PR changed
         </h1>
-        <p className="mt-6 max-w-[40ch] text-pretty text-[17px] leading-[1.5] text-muted-foreground">
+        <BrushStroke className="mt-6" />
+        <p className="mt-5 max-w-[40ch] text-pretty text-[17px] leading-[1.5] text-muted-foreground">
           Pixel diffs of production against your preview deploy, posted on every pull request.
         </p>
       </div>
@@ -42,11 +45,23 @@ export function Hero({ slots, onTryExample }: HeroProps) {
         <div className="flex w-full flex-1 items-center justify-center px-page pb-[clamp(5rem,16vh,10rem)] pt-[clamp(7rem,22vh,14rem)]">
           <div
             data-ui
-            className="w-full max-w-[1040px] rounded-[26px] bg-card p-2 text-left shadow-[var(--shadow-lifted)] md:p-2.5"
+            className="w-full max-w-[920px] rounded-[24px] bg-card p-5 text-left shadow-[var(--shadow-lifted)] sm:p-6"
           >
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-2.5">{slots}</div>
-            <div className="flex flex-col items-start justify-between gap-3 px-3 pb-2 pt-4 sm:flex-row sm:items-center">
-              <p className="text-[16px] text-muted-foreground">No screenshots at hand? Use a real pair.</p>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-x-10">{slots}</div>
+            <div className="mt-5 flex flex-col items-start justify-between gap-3 border-t border-foreground/10 pt-4 sm:flex-row sm:items-center">
+              <p className="flex items-center gap-2.5 text-[15px]">
+                <Camera className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                <span>
+                  No screenshots at hand?{" "}
+                  <a
+                    href={EXAMPLE_COMPARE_URL}
+                    onClick={(event) => followExample(event, onTryExample)}
+                    className={TEXT_LINK_CLASS}
+                  >
+                    Use a real pair.
+                  </a>
+                </span>
+              </p>
               <a
                 href={EXAMPLE_COMPARE_URL}
                 onClick={(event) => followExample(event, onTryExample)}

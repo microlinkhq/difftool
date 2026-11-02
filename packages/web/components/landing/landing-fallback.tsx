@@ -10,8 +10,8 @@ export function LandingFallback() {
     <Landing
       slots={
         <>
-          <ImageUploader label="Production" hint="The page as it is today" image={null} onImageChange={ignore} />
-          <ImageUploader label="Preview" hint="The page as this change ships it" image={null} onImageChange={ignore} />
+          <ImageUploader label="Production" hint="The page as it is today." image={null} onImageChange={ignore} />
+          <ImageUploader label="Preview" hint="The page as this change ships it." image={null} onImageChange={ignore} />
         </>
       }
     />

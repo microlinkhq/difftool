@@ -165,7 +165,7 @@ export function ImageCompareClient() {
         <>
           <ImageUploader
             label="Production"
-            hint="The page as it is today"
+            hint="The page as it is today."
             image={image1Data}
             onImageChange={handleImage1Change}
             isLoading={isLoadingImage1}
@@ -173,7 +173,7 @@ export function ImageCompareClient() {
           />
           <ImageUploader
             label="Preview"
-            hint="The page as this change ships it"
+            hint="The page as this change ships it."
             image={image2Data}
             onImageChange={handleImage2Change}
             isLoading={isLoadingImage2}
