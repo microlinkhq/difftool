@@ -1,8 +1,8 @@
 import { createCanvas, loadImage } from 'canvas'
 
-const HEADER_HEIGHT = 64
-const FOOTER_HEIGHT = 40
-const SEPARATOR_WIDTH = 2
+export const HEADER_HEIGHT = 64
+export const FOOTER_HEIGHT = 40
+export const SEPARATOR_WIDTH = 2
 const PADDING_X = 16
 
 const truncate = (str, max) => (str.length <= max ? str : `${str.slice(0, max - 1)}…`)

@@ -16,7 +16,7 @@ const DEFAULT_TTL_SECONDS = 86400
 
 const FILES = ['base.png', 'head.png', 'diff.png', 'review.png']
 
-const slugFor = route => {
+export const slugFor = route => {
   if (!route.outDir || route.outDir === '.') return 'root'
   return route.outDir
 }
