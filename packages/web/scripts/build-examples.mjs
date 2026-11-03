@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -10,7 +10,7 @@ const CLI_DIR = path.join(WEB_DIR, '../cli')
 const OUT_DIR = path.join(WEB_DIR, 'public/examples')
 
 const { createCanvas, loadImage } = createRequire(path.join(CLI_DIR, 'package.json'))('canvas')
-const { composite } = await import(path.join(CLI_DIR, 'src/composite.js'))
+const { composite, FOOTER_HEIGHT, HEADER_HEIGHT, SEPARATOR_WIDTH } = await import(path.join(CLI_DIR, 'src/composite.js'))
 const { slugFor } = await import(path.join(CLI_DIR, 'src/s3.js'))
 const { highlightDifferences } = await import(path.join(WEB_DIR, 'lib/pixel-diff.ts'))
 const { EXAMPLE_WIDTH_PX } = await import(path.join(WEB_DIR, 'lib/zoom.ts'))
@@ -19,11 +19,11 @@ const EXAMPLE_HEIGHT_PX = 900
 const HIGHLIGHT_SIZE = { width: 1440, height: 440 }
 const UNAVATAR_HERO_CROP = '317,84,805'
 const REVIEW_SIZE = { width: 2400, height: 800 }
-const REVIEW_COLUMN_HEIGHT_PX = 1400
 const WEBP_QUALITY = '90'
 const USAGE = `usage: node packages/web/scripts/build-examples.mjs <run-dir> [route] [left,top,width]
 
-<run-dir>       summary.json plus <slug>-{base,head,diff}.png from one difftool run
+<run-dir>       one difftool run: a local CLI --out folder as is, or summary.json plus
+                <slug>-{base,head,diff}.png downloaded from the PR comment
 [route]         the route to use, default /
 [left,top,width] the highlight crop, in pixels of the ${EXAMPLE_WIDTH_PX}px-wide preview, default ${UNAVATAR_HERO_CROP} (the unavatar.io hero)`
 
@@ -43,7 +43,9 @@ if (![cropLeft, cropTop, cropWidth].every(Number.isFinite)) throw new Error(`cro
 const magick = (...args) => execFileSync('magick', args, { stdio: 'inherit' })
 const sizeOf = file => execFileSync('magick', ['identify', '-format', '%w %h', file]).toString().split(' ').map(Number)
 const outFile = name => path.join(OUT_DIR, name)
-const screenshot = name => path.join(runDir, `${slugFor(route)}-${name}.png`)
+const fromComment = name => path.join(runDir, `${slugFor(route)}-${name}.png`)
+const fromCli = name => path.join(runDir, route.outDir, `${name}.png`)
+const screenshot = name => (existsSync(fromComment(name)) ? fromComment(name) : fromCli(name))
 
 const readCanvas = async file => {
   const image = await loadImage(readFileSync(file))
@@ -55,11 +57,13 @@ const readCanvas = async file => {
 
 const build = async work => {
   const workFile = name => path.join(work, name)
-  const nativeWidth = Math.max(...['base', 'head', 'diff'].map(name => sizeOf(screenshot(name))[0]))
+  const sizes = ['base', 'head', 'diff'].map(name => sizeOf(screenshot(name)))
+  const nativeWidth = Math.max(...sizes.map(([width]) => width))
+  const nativeHeight = Math.max(...sizes.map(([, height]) => height))
   const toNative = previewPx => Math.round(previewPx * nativeWidth / EXAMPLE_WIDTH_PX)
 
   for (const name of ['base', 'head', 'diff']) {
-    magick(screenshot(name), '-background', 'white', '-gravity', 'NorthWest', '-extent', `${nativeWidth}x`, workFile(`${name}.png`))
+    magick(screenshot(name), '-background', 'white', '-gravity', 'NorthWest', '-extent', `${nativeWidth}x${nativeHeight}`, workFile(`${name}.png`))
   }
 
   const firstScreen = (input, output) =>
@@ -79,8 +83,11 @@ const build = async work => {
   writeFileSync(workFile('highlight.png'), highlightBase.canvas.toBuffer('image/png'))
   magick(workFile('highlight.png'), '-resize', `${HIGHLIGHT_SIZE.width}x${HIGHLIGHT_SIZE.height}!`, '-quality', WEBP_QUALITY, outFile('highlight.webp'))
 
+  const reviewWidth = nativeWidth * 3 + SEPARATOR_WIDTH * 2
+  const reviewHeight = Math.round(reviewWidth * REVIEW_SIZE.height / REVIEW_SIZE.width)
+  const reviewColumnHeight = Math.min(nativeHeight, reviewHeight - HEADER_HEIGHT - FOOTER_HEIGHT)
   for (const name of ['base', 'head', 'diff']) {
-    magick(workFile(`${name}.png`), '-crop', `${nativeWidth}x${toNative(REVIEW_COLUMN_HEIGHT_PX)}+0+0`, '+repage', workFile(`review-${name}.png`))
+    magick(workFile(`${name}.png`), '-crop', `${nativeWidth}x${reviewColumnHeight}+0+0`, '+repage', workFile(`review-${name}.png`))
   }
   writeFileSync(workFile('review.png'), await composite({
     baseBuffer: readFileSync(workFile('review-base.png')),
@@ -95,9 +102,7 @@ const build = async work => {
     verdict: route.verdict,
     passed: route.passed
   }))
-  const [reviewWidth] = sizeOf(workFile('review.png'))
-  const reviewTop = Math.round(reviewWidth * REVIEW_SIZE.height / REVIEW_SIZE.width)
-  magick(workFile('review.png'), '-crop', `x${reviewTop}+0+0`, '+repage', '-resize', `${REVIEW_SIZE.width}x${REVIEW_SIZE.height}!`, '-quality', WEBP_QUALITY, outFile('review.webp'))
+  magick(workFile('review.png'), '-resize', `${REVIEW_SIZE.width}x${REVIEW_SIZE.height}`, '-background', '#0b0d10', '-gravity', 'North', '-extent', `${REVIEW_SIZE.width}x${REVIEW_SIZE.height}`, '-quality', WEBP_QUALITY, outFile('review.webp'))
 }
 
 const work = mkdtempSync(path.join(tmpdir(), 'difftool-examples-'))

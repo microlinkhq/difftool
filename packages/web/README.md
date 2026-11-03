@@ -55,10 +55,10 @@ It writes `app/favicon.ico` (16, 32, 48px), `app/apple-icon.png` (180px) and `pu
 
 `public/examples/` comes from one real run of the GitHub Action ([unavatar-www#192](https://github.com/microlinkhq/unavatar-www/pull/192)). `production.webp` and `preview.webp` feed "Try a real example"; `diff.webp`, `highlight.webp` and `review.webp` illustrate "How it works".
 
-To swap in another run, build a folder with:
+To swap in another run, point the script at either:
 
-- `summary.json`: the configuration block at the bottom of the PR comment. Pasting it with its `<pre><code>` tags is fine.
-- `<slug>-base.png`, `<slug>-head.png`, `<slug>-diff.png`: the route's Production, Preview and Difference "open" links in the same comment. `<slug>` is `root` for `/` and for a single-route run, otherwise the route's `outDir`. The links are presigned for 24 hours and the files are deleted when the PR closes, so download them while the PR is open. From a local CLI run, rename `<out>/<slug>/{base,head,diff}.png` to this layout.
+- **A local CLI run:** its `--out` folder, as is. The CLI writes `summary.json` there, with the images in the same folder for a single route, or in `<out>/<outDir>/` for several.
+- **A PR comment:** a folder holding `summary.json` (the configuration block at the bottom of the comment; pasting it with its `<pre><code>` tags is fine) and `<slug>-base.png`, `<slug>-head.png`, `<slug>-diff.png` from the route's Production, Preview and Difference "open" links. `<slug>` is `root` for `/` and for a single-route run, otherwise the route's `outDir`. The links are presigned for 24 hours and the files are deleted when the PR closes, so download them while the PR is open.
 
 Then, from the repository root, with `pnpm install` done (it brings `canvas` for the CLI) and ImageMagick on the path:
 

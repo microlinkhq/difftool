@@ -136,14 +136,14 @@ export function HowItWorks() {
             <figure>
               <img
                 src="/examples/highlight.webp"
-                alt="The unavatar.io hero in highlight mode: the badge changed from “The open source avatar API” to “Star us on GitHub”, the headline from “The universal avatars API” to “One URL for every avatar”, and every pixel that changed is painted pink."
+                alt="The unavatar.io hero in highlight mode: the badge changed from “The open source avatar API” to “Star us on GitHub”, the headline from “The universal avatars API” to “One URL for every avatar”, and the pixels that changed past the highlight threshold are painted pink."
                 width={1440}
                 height={440}
                 loading="lazy"
                 className="w-full rounded-2xl bg-card"
               />
               <figcaption className="mt-3 max-w-[60ch] text-[16px] leading-[1.6] text-ink-panel-muted">
-                Where the 3.52% starts: a new badge and headline, and every pixel that changed is pink. Each run also
+                Where the 3.52% starts: a new badge and headline, with every pixel past the highlight threshold painted pink. Each run also
                 renders a{" "}
                 <a href="/examples/review.webp" className={TEXT_LINK_CLASS}>
                   full review image
