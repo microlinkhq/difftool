@@ -63,11 +63,11 @@ const build = async work => {
   const toNative = previewPx => Math.round(previewPx * nativeWidth / EXAMPLE_WIDTH_PX)
 
   for (const name of ['base', 'head', 'diff']) {
-    magick(screenshot(name), '-background', 'white', '-gravity', 'NorthWest', '-extent', `${nativeWidth}x${nativeHeight}`, workFile(`${name}.png`))
+    magick(screenshot(name), '-background', 'none', '-gravity', 'NorthWest', '-extent', `${nativeWidth}x${nativeHeight}`, workFile(`${name}.png`))
   }
 
   const firstScreen = (input, output) =>
-    magick(input, '-resize', `${EXAMPLE_WIDTH_PX}x`, '-crop', `${EXAMPLE_WIDTH_PX}x${EXAMPLE_HEIGHT_PX}+0+0`, '+repage', '-quality', WEBP_QUALITY, output)
+    magick(input, '-background', 'white', '-flatten', '-resize', `${EXAMPLE_WIDTH_PX}x`, '-crop', `${EXAMPLE_WIDTH_PX}x${EXAMPLE_HEIGHT_PX}+0+0`, '+repage', '-quality', WEBP_QUALITY, output)
   firstScreen(workFile('base.png'), outFile('production.webp'))
   firstScreen(workFile('head.png'), outFile('preview.webp'))
   firstScreen(workFile('diff.png'), outFile('diff.webp'))
