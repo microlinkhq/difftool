@@ -34,8 +34,8 @@ export function ModesDemo() {
           </h2>
           <BrushStroke className="mt-6 block" />
           <p className="mt-5 max-w-[46ch] text-[18px] leading-[1.6] text-muted-foreground">
-            Every compare link in the comment opens here. This is the pull request from above: the unavatar.io
-            headline moved by a few pixels. Switch modes and find it.
+            Every compare link in the comment opens here. This is the pull request from above: a new badge, headline
+            and intro on unavatar.io, and everything under them moved up. Switch modes and watch it change.
           </p>
         </Reveal>
 

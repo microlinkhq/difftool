@@ -11,7 +11,7 @@ const VERCEL_THEME = new Set([
   'oklch(0.92 0 0)', 'oklch(0.25 0 0)', 'oklch(0.56 0 0)', 'oklch(0.63 0.19 23.03)', 'oklch(0.55 0.22 264.53)'
 ])
 
-const OUTSIDE_THEME = new Set(['#0473e4', '#015cba', '#c48472', '#087f5b'])
+const OUTSIDE_THEME = new Set(['#0473e4', '#015cba', '#c48472', '#087f5b', '#9e5a00'])
 
 const CONTRAST_FIXES = new Set(['oklch(0.57 0.19 23.03)'])
 
@@ -102,6 +102,7 @@ const TEXT_PAIRS = [
   ['destructive', 'card'],
   ['destructive', 'muted'],
   ['success', 'card'],
+  ['warning', 'card'],
   ['link', 'card'],
   ['link', 'background'],
   ['link-on-muted', 'muted'],
@@ -141,7 +142,7 @@ describe('color tokens', () => {
   test('the brand accent keeps one meaning: a hued brand sits at least 15° from every status color', () => {
     const brand = resolve('brand')
     if (chroma(brand) < ACHROMATIC_CHROMA) return
-    for (const status of ['destructive', 'success', 'code-value']) {
+    for (const status of ['destructive', 'warning', 'success', 'code-value']) {
       const gap = hueGap(brand, resolve(status))
       assert.ok(gap >= DISTINCT_HUE_DEGREES, `--${status} is ${gap.toFixed(1)}° from --brand`)
     }

@@ -8,6 +8,7 @@
   --hover-link-brand: #015cba;
   --clay: #c48472;
   --teal9: #087f5b;
+  --amber11: #9e5a00;
   --shadow-ink: 16, 24, 40;
 
   --background: oklch(1 0 0);
@@ -36,6 +37,7 @@
   --destructive: oklch(0.57 0.19 23.03);
   --destructive-foreground: oklch(1 0 0);
   --success: var(--teal9);
+  --warning: var(--amber11);
   --border: oklch(0.92 0 0);
   --panel-border: var(--border);
   --brush-stroke: var(--clay);
@@ -97,6 +99,7 @@
   --color-destructive-foreground: var(--destructive-foreground);
   --color-surface-hover: var(--surface-hover);
   --color-success: var(--success);
+  --color-warning: var(--warning);
   --color-code-plain: var(--code-plain);
   --color-code-punctuation: var(--code-punctuation);
   --color-code-value: var(--code-value);

@@ -2,7 +2,7 @@ import { BrushStroke } from "./brush-stroke"
 import { MicrolinkLink } from "./microlink-link"
 import { Reveal } from "./reveal"
 import { TEXT_LINK_CLASS } from "@/lib/link"
-import { columnClass, verdictClass, verdictLabel } from "@/lib/comment-table"
+import { columnClass, verdictClass, verdictDotClass, verdictLabel } from "@/lib/comment-table"
 import { EXAMPLE_COMPARE_URL, EXAMPLE_IMAGES } from "@/lib/site"
 
 const STAGES: { title: string; body: React.ReactNode }[] = [
@@ -40,8 +40,8 @@ const COLUMNS = [
 ]
 
 const ROUTES = [
-  { route: "/kikobeats", changes: "3.20%", verdict: "fail" },
-  { route: "/", changes: "0.01%", verdict: "pass" },
+  { route: "/", changes: "3.52%", verdict: "warning" },
+  { route: "/styleguide", changes: "0.17%", verdict: "pass" },
 ] as const
 
 function PullRequestComment() {
@@ -50,18 +50,18 @@ function PullRequestComment() {
       <div className="flex items-center gap-3 bg-muted px-4 py-3.5 text-[14px] sm:px-5">
         <img src="https://cdn.microlink.io/logo/logo.svg" alt="" width={24} height={24} className="h-6 w-6 rounded-full bg-background" />
         <span>
-          <span className="font-semibold">github-actions</span> <span className="text-muted-foreground">commented on #106</span>
+          <span className="font-semibold">github-actions</span> <span className="text-muted-foreground">commented on #192</span>
         </span>
       </div>
       <div className="px-4 pb-5 pt-4 sm:px-5">
         <p className="text-[18px] font-semibold tracking-[-0.01em]">@microlink/difftool visual comparison</p>
         <p className="mt-1 text-[14px] text-muted-foreground">
           base <span className="text-link">unavatar.io</span> · head{" "}
-          <span className="text-link">unavatar-www-git-fix-microlink.vercel.app</span>
+          <span className="text-link">unavatar-5xos75mnn-microlink.vercel.app</span>
         </p>
         <p className="mt-4 flex items-center gap-2 text-[16px] font-semibold">
-          <span className="h-2.5 w-2.5 rounded-full bg-destructive" aria-hidden />
-          1/2 routes failed
+          <span className={`h-2.5 w-2.5 rounded-full ${verdictDotClass("warning")}`} aria-hidden />
+          1/2 routes with warnings
         </p>
         <div className="mt-3 overflow-x-auto">
           <table className="w-full sm:min-w-[520px] border-collapse text-left text-[14px]">
@@ -136,19 +136,19 @@ export function HowItWorks() {
             <figure>
               <img
                 src="/examples/highlight.webp"
-                alt="The unavatar.io headline in highlight mode: the yellow marker behind “avatars API” moved by a few pixels, and every pixel it moved is painted pink."
+                alt="The unavatar.io hero in highlight mode: the badge changed from “The open source avatar API” to “Star us on GitHub”, the headline from “The universal avatars API” to “One URL for every avatar”, and every pixel that changed is painted pink."
                 width={1440}
                 height={440}
                 loading="lazy"
                 className="w-full rounded-2xl bg-card"
               />
               <figcaption className="mt-3 max-w-[60ch] text-[16px] leading-[1.6] text-ink-panel-muted">
-                The 0.01% on that route, up close: the marker behind the headline shifted, and every pixel it moved is
-                pink. The comment also links the{" "}
+                Where the 3.52% starts: a new badge and headline, and every pixel that changed is pink. Each run also
+                renders a{" "}
                 <a href="/examples/review.webp" className={TEXT_LINK_CLASS}>
                   full review image
-                </a>
-                .
+                </a>{" "}
+                with production, preview and diff side by side.
               </figcaption>
             </figure>
           </Reveal>
