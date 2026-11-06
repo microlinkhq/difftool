@@ -1,6 +1,17 @@
 import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, test } from 'node:test'
+import { fileURLToPath } from 'node:url'
 import { findPrerenderProblem, findReadProblem } from './prerender.mjs'
+
+const script = fileURLToPath(new URL('../scripts/check-prerender.mjs', import.meta.url))
+
+function runCheck(args) {
+  return spawnSync(process.execPath, [script, ...args], { encoding: 'utf8' })
+}
 
 const landing = '<main id="main" tabindex="-1"><h1>Spot every pixel</h1></main>'
 const bailout = (content) => `<!--$!--><template data-dgst="BAILOUT_TO_CLIENT_SIDE_RENDERING"></template>${content}<!--/$-->`
@@ -56,5 +67,48 @@ describe('prerender check', () => {
 
   test('a missing prerender file is the static-render failure', () => {
     assert.match(findReadProblem({ code: 'ENOENT' }), /not prerendered as static HTML/)
+  })
+
+  test('the check requires the prerendered file', () => {
+    const result = runCheck([])
+    assert.equal(result.status, 1)
+    assert.match(result.stderr, /pass the path/)
+  })
+
+  test('the check fails when that file was not prerendered', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'prerender-'))
+    try {
+      const result = runCheck([join(dir, 'index.html')])
+      assert.equal(result.status, 1)
+      assert.match(result.stderr, /not prerendered as static HTML/)
+    } finally {
+      rmSync(dir, { recursive: true })
+    }
+  })
+
+  test('the check accepts prerendered landing HTML', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'prerender-'))
+    const file = join(dir, 'index.html')
+    writeFileSync(file, `<body>${landing}</body>`)
+    try {
+      const result = runCheck([file])
+      assert.equal(result.status, 0)
+      assert.match(result.stdout, /fully prerendered/)
+    } finally {
+      rmSync(dir, { recursive: true })
+    }
+  })
+
+  test('the check rejects a landing the client will replace', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'prerender-'))
+    const file = join(dir, 'index.html')
+    writeFileSync(file, `<body>${bailout(landing)}</body>`)
+    try {
+      const result = runCheck([file])
+      assert.equal(result.status, 1)
+      assert.match(result.stderr, /throws the server HTML away/)
+    } finally {
+      rmSync(dir, { recursive: true })
+    }
   })
 })
