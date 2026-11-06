@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
-import { findPrerenderProblem } from '../lib/prerender.mjs'
+import { findPrerenderProblem, findReadProblem } from '../lib/prerender.mjs'
 
 const HOME_HTML = fileURLToPath(new URL('../.next/server/app/index.html', import.meta.url))
 
@@ -10,7 +10,8 @@ const fail = (problem) => {
 }
 
 const html = await readFile(HOME_HTML, 'utf8').catch((error) => {
-  if (error.code === 'ENOENT') fail('/ was not prerendered as static HTML, so it renders on every request')
+  const problem = findReadProblem(error)
+  if (problem) fail(problem)
   throw error
 })
 
