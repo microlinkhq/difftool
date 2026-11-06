@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
-import { NuqsAdapter } from 'nuqs/adapters/next/app'
+import { NuqsAdapter } from 'nuqs/adapters/react'
 import { MICROLINK_URL, SITE_URL } from '@/lib/site'
 import { DESCRIPTION, PUBLISHER, SITE_NAME, THEME_COLOR, TITLE, TITLE_TEMPLATE, TWITTER_HANDLE } from '@/lib/metadata'
 import './globals.css'

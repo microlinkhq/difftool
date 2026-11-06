@@ -4,6 +4,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "node scripts/check-prerender.mjs",
     "start": "next start",
     "lint": "eslint .",
     "test": "node --test lib/*.test.mjs"
