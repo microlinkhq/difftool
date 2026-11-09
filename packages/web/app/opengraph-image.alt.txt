@@ -1,1 +1,1 @@
-difftool: See every pixel your PR changed. Production and preview drop slots over a Renoir watercolour.
+difftool: See every pixel your code changed. Production and preview drop slots over a Renoir watercolour.

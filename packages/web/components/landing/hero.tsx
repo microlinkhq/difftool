@@ -22,13 +22,13 @@ export function Hero({ slots, onTryExample }: HeroProps) {
       <div style={revealIndex(0)} className="flex flex-col items-center px-page">
         <h1
           id="hero-title"
-          className="max-w-[12ch] text-balance font-serif text-[clamp(2.75rem,5.4vw,4.25rem)] font-normal leading-[1.15] tracking-[-0.03em]"
+          className="max-w-[16ch] text-balance font-serif text-[clamp(2.75rem,5.4vw,4.25rem)] font-normal leading-[1.15] tracking-[-0.03em]"
         >
-          See <em className="italic">every</em> pixel your PR changed
+          See <em className="italic">every</em> pixel your code changed
         </h1>
         <BrushStroke className="mt-6" />
         <p className="mt-5 max-w-[40ch] text-pretty text-[17px] leading-[1.5] text-muted-foreground">
-          A GitHub Action that posts pixel diffs of production against your preview deploy on every pull request.
+          A GitHub Action that posts pixel diffs of production against your preview deploy on every code change.
         </p>
       </div>
 

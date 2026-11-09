@@ -114,7 +114,7 @@ export function HowItWorks() {
         <div className="grid gap-12 lg:grid-cols-12 lg:gap-10">
           <Reveal className="min-w-0 lg:col-span-5">
             <h2 id="how-title" className="max-w-[14ch] font-serif text-[clamp(2.25rem,4.4vw,4rem)] font-normal leading-[1] tracking-[-0.03em]">
-              Every PR gets a <em className="italic">visual</em> diff
+              Every code change gets a <em className="italic">visual</em> diff
             </h2>
             <BrushStroke className="mt-6 block" />
             <p className="mt-5 max-w-[44ch] text-[18px] leading-[1.6] text-ink-panel-muted">
