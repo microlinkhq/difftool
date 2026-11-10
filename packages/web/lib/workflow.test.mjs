@@ -5,7 +5,9 @@ import {
   DEFAULT_THRESHOLD,
   BASE_URL_EXAMPLE,
   PREVIEW_URL_EXAMPLE,
+  AGENT_PROMPT_BASE,
   addRoute,
+  buildAgentPrompt,
   buildInstallPrompt,
   buildWorkflow,
   commitOnEnter,
@@ -277,5 +279,43 @@ describe('workflow values from an unfinished form', () => {
     })
     assert.match(yaml, /^ {10}base: https:\/\/example\.com$/m)
     assert.match(yaml, /^ {10}head: https:\/\/staging\.example\.com$/m)
+  })
+})
+
+describe('buildAgentPrompt', () => {
+  const urls = {
+    docsUrl: 'https://github.com/microlinkhq/difftool#github-action',
+    dashboardUrl: 'https://dashboard.microlink.io',
+    siteUrl: 'https://difftool.microlink.io'
+  }
+  const prompt = buildAgentPrompt(urls)
+
+  test('embeds the workflow template with a production placeholder the agent must replace', () => {
+    const template = buildWorkflow({ ...options(), base: AGENT_PROMPT_BASE })
+    assert.ok(prompt.includes(`\`\`\`yaml\n${template}\`\`\``))
+    assert.ok(prompt.includes(`replacing \`${AGENT_PROMPT_BASE}\``))
+  })
+
+  test('asks the agent to discover production, previews and routes, and to ask when unsure', () => {
+    assert.ok(prompt.includes('Find the production URL'))
+    assert.ok(prompt.includes('If you cannot tell for sure, ask me'))
+    assert.ok(prompt.includes('keep `head: vercel`'))
+    assert.ok(prompt.includes('ask me for the preview URL'))
+    assert.ok(prompt.includes('Pick the routes to compare'))
+  })
+
+  test('keeps secrets out of the repository and explains both of them', () => {
+    assert.ok(prompt.includes('Never write secret values into a file or a commit'))
+    assert.ok(prompt.includes('`S3_CONFIG`'))
+    assert.ok(prompt.includes('r2.cloudflarestorage.com'))
+    assert.ok(prompt.includes('AWS S3, Backblaze B2, MinIO'))
+    assert.ok(prompt.includes('`MICROLINK_API_KEY`: optional'))
+    assert.ok(prompt.includes('free endpoint, 5 requests a day'))
+  })
+
+  test('links every surface it mentions and numbers steps in order', () => {
+    for (const url of Object.values(urls)) assert.ok(prompt.includes(url), url)
+    assert.deepEqual(prompt.match(/^\d+\. /gm), ['1. ', '2. ', '3. ', '4. ', '5. ', '6. '])
+    assert.ok(prompt.endsWith('Change nothing else in the repository.\n'))
   })
 })

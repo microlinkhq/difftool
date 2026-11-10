@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Menu, X } from "lucide-react"
-import { CTA_OUTLINE_CLASS } from "@/lib/cta"
 import { GITHUB_URL, MICROLINK_URL, SECTIONS } from "@/lib/site"
 import {
   barChildren,
@@ -135,12 +134,6 @@ function LandingNav() {
           GitHub
         </a>
       </div>
-      <a
-        href="#setup"
-        className={`${CTA_OUTLINE_CLASS} ml-1 hidden sm:inline-flex`}
-      >
-        Add to your project
-      </a>
     </nav>
   )
 }
