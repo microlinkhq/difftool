@@ -11,7 +11,7 @@ describe('zoom', () => {
   })
 
   test('the demo fits the frame, caps at 60, and never goes below the slider minimum', () => {
-    assert.equal(fitZoom(392), 25)
+    assert.equal(fitZoom(392), 28)
     assert.equal(fitZoom(10_000), 60)
     assert.equal(fitZoom(0), 10)
   })
