@@ -1,6 +1,7 @@
 import Image from "next/image"
 import { TEXT_LINK_CLASS } from "@/lib/link"
 import { BrushStroke } from "./brush-stroke"
+import { CopyAgentPrompt } from "./copy-agent-prompt"
 import { ArrowRight, Camera } from "lucide-react"
 import landscape from "@/public/hero/landscape.webp"
 import { CTA_CLASS } from "@/lib/cta"
@@ -30,6 +31,7 @@ export function Hero({ slots, onTryExample }: HeroProps) {
         <p className="mt-5 max-w-[40ch] text-pretty text-[17px] leading-[1.5] text-muted-foreground">
           A GitHub Action that posts pixel diffs of production against your preview deploy on every code change.
         </p>
+        <CopyAgentPrompt className="mt-6" />
       </div>
 
       <div style={revealIndex(1)} className="relative mt-4 flex w-full flex-1 flex-col items-center">

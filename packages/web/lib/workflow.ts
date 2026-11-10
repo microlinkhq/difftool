@@ -187,9 +187,15 @@ const secretSteps = ({ provider, repository, useApiKey, dashboardUrl }: InstallP
     : `- No Microlink API key: screenshots use Microlink's free endpoint, ${FREE_TIER}. A free key from ${dashboardUrl} raises that to ${FREE_KEY_TIER}.`,
 ]
 
+const numberedSteps = (steps: string[][]) =>
+  steps.flatMap((lines, index) => [`${index + 1}. ${lines[0]}`, ...lines.slice(1), ""])
+
 const vercelStep = [
   "The workflow uses `head: vercel`: it waits for the Vercel preview deployment of each pull request's head commit. Check that this repository deploys previews on Vercel. If it does not, tell me and ask for a fixed preview URL to use as `head` instead.",
 ]
+
+const ABOUT_DIFFTOOL = (docsUrl: string) =>
+  `difftool is a GitHub Action. On every pull request it screenshots production and the pull request's preview deploy with Microlink, compares them pixel by pixel, and keeps one comment on the pull request up to date with what changed. Docs: ${docsUrl}`
 
 export function buildInstallPrompt(options: InstallPromptOptions) {
   const steps = [
@@ -204,9 +210,77 @@ export function buildInstallPrompt(options: InstallPromptOptions) {
   return [
     "Install microlink difftool in this repository.",
     "",
-    `difftool is a GitHub Action. On every pull request it screenshots production and the pull request's preview deploy with Microlink, compares them pixel by pixel, and keeps one comment on the pull request up to date with what changed. Docs: ${options.docsUrl}`,
+    ABOUT_DIFFTOOL(options.docsUrl),
     "",
-    ...steps.flatMap((lines, index) => [`${index + 1}. ${lines[0]}`, ...lines.slice(1), ""]),
+    ...numberedSteps(steps),
+    "Change nothing else in the repository.",
+    "",
+  ].join("\n")
+}
+
+export interface AgentPromptOptions {
+  docsUrl: string
+  dashboardUrl: string
+  siteUrl: string
+}
+
+export const AGENT_PROMPT_BASE = "https://<production-domain>"
+
+const AGENT_TEMPLATE_OPTIONS: WorkflowOptions = {
+  base: AGENT_PROMPT_BASE,
+  preview: { kind: "vercel" },
+  routes: ["/"],
+  threshold: DEFAULT_THRESHOLD,
+  useApiKey: true,
+}
+
+const otherProviders = STORAGE_PROVIDERS.filter(({ id }) => id !== "r2")
+  .map(({ label }) => label)
+  .join(", ")
+
+export function buildAgentPrompt({ docsUrl, dashboardUrl, siteUrl }: AgentPromptOptions) {
+  const steps = [
+    [
+      "Find the production URL of the site this repository deploys. Look at the README, the `homepage` field in package.json, and deploy config such as vercel.json or netlify.toml. If you cannot tell for sure, ask me.",
+    ],
+    [
+      "Find how pull requests get a preview deploy. If the repository deploys on Vercel (vercel.json, a `.vercel` directory, or Vercel bot comments on past pull requests), keep `head: vercel`: the action waits for the Vercel preview of each pull request's head commit. Otherwise ask me for the preview URL and use it as `head`, and drop `deployments: read` from the permissions.",
+    ],
+    [
+      "Pick the routes to compare: `/` plus up to four of the most important pages you find in the router or the sitemap. Show me the list before going on.",
+    ],
+    [
+      `Create \`${WORKFLOW_PATH}\` from this template, replacing \`${AGENT_PROMPT_BASE}\`, \`head\` and \`routes\` with what you found:`,
+      "",
+      "```yaml",
+      buildWorkflow(AGENT_TEMPLATE_OPTIONS).replace(/\n$/, ""),
+      "```",
+    ],
+    [
+      "Never write secret values into a file or a commit. The workflow reads these repository secrets: ask me to add them in Settings → Secrets and variables → Actions, or, when the GitHub CLI is installed and signed in, run `gh secret set <NAME>` and let me paste the value.",
+      "",
+      `- \`${S3_SECRET}\`: an S3-compatible bucket the screenshots are uploaded to. Ask me which provider I use. Cloudflare R2 is recommended (free egress) and takes this shape:`,
+      "",
+      "```json",
+      storageConfig("r2"),
+      "```",
+      "",
+      `  ${otherProviders} also work with the same keys; the docs list each shape. The access key only needs ${BUCKET_PERMISSIONS} on that one bucket.`,
+      `- \`${MICROLINK_SECRET}\`: optional. Without it screenshots use Microlink's free endpoint, ${FREE_TIER}. A free key from ${dashboardUrl} raises that to ${FREE_KEY_TIER}; if I have none, remove the \`microlink-api-key\` line.`,
+    ],
+    [
+      `Commit the workflow on a new branch and open a pull request. Confirm the "Visual diff" check runs and, once the preview is ready, a github-actions comment titled "${COMMENT_TITLE}" appears.`,
+    ],
+  ]
+
+  return [
+    "Set up microlink difftool in this repository.",
+    "",
+    ABOUT_DIFFTOOL(docsUrl),
+    "",
+    `To compare two screenshots by hand, without the action, use the web app at ${siteUrl}.`,
+    "",
+    ...numberedSteps(steps),
     "Change nothing else in the repository.",
     "",
   ].join("\n")
