@@ -25,7 +25,7 @@ export function CopyAgentPrompt({ className }: { className?: string }) {
       <span hidden={copyIconHidden(state, "copy")}>
         <Copy className="h-4 w-4" aria-hidden />
       </span>
-      <span aria-live="polite">{copyLabel(state, "Copy prompt for your agent")}</span>
+      <span aria-live="polite">{copyLabel(state, "Copy prompt")}</span>
     </button>
   )
 }
