@@ -13,11 +13,11 @@ const { createCanvas, loadImage } = createRequire(path.join(CLI_DIR, 'package.js
 const { composite, FOOTER_HEIGHT, HEADER_HEIGHT, SEPARATOR_WIDTH } = await import(path.join(CLI_DIR, 'src/composite.js'))
 const { slugFor } = await import(path.join(CLI_DIR, 'src/s3.js'))
 const { highlightDifferences } = await import(path.join(WEB_DIR, 'lib/pixel-diff.ts'))
-const { EXAMPLE_WIDTH_PX } = await import(path.join(WEB_DIR, 'lib/zoom.ts'))
+const { EXAMPLE_WIDTH_PX, SAFARI_CANVAS_MAX_PIXELS } = await import(path.join(WEB_DIR, 'lib/zoom.ts'))
 
-const EXAMPLE_HEIGHT_PX = 900
+const DIFF_SIZE = { width: 1440, height: 900 }
 const HIGHLIGHT_SIZE = { width: 1440, height: 440 }
-const UNAVATAR_HERO_CROP = '317,84,805'
+const UNAVATAR_HERO_CROP = '282,75,716'
 const REVIEW_SIZE = { width: 2400, height: 800 }
 const WEBP_QUALITY = '90'
 const USAGE = `usage: node packages/web/scripts/build-examples.mjs <run-dir> [route] [left,top,width]
@@ -66,10 +66,17 @@ const build = async work => {
     magick(screenshot(name), '-background', 'none', '-gravity', 'NorthWest', '-extent', `${nativeWidth}x${nativeHeight}`, workFile(`${name}.png`))
   }
 
+  const fullPage = (input, output) => {
+    magick(input, '-background', 'white', '-flatten', '-resize', `${EXAMPLE_WIDTH_PX}x`, '-quality', WEBP_QUALITY, output)
+    const [width, height] = sizeOf(output)
+    if (width * height > SAFARI_CANVAS_MAX_PIXELS) {
+      throw new Error(`${path.basename(output)} is ${width}x${height}, over the ${SAFARI_CANVAS_MAX_PIXELS} pixel canvas Safari allows, so highlight and subtract would fail there; lower EXAMPLE_WIDTH_PX`)
+    }
+  }
   const firstScreen = (input, output) =>
-    magick(input, '-background', 'white', '-flatten', '-resize', `${EXAMPLE_WIDTH_PX}x`, '-crop', `${EXAMPLE_WIDTH_PX}x${EXAMPLE_HEIGHT_PX}+0+0`, '+repage', '-quality', WEBP_QUALITY, output)
-  firstScreen(workFile('base.png'), outFile('production.webp'))
-  firstScreen(workFile('head.png'), outFile('preview.webp'))
+    magick(input, '-background', 'white', '-flatten', '-resize', `${DIFF_SIZE.width}x`, '-crop', `${DIFF_SIZE.width}x${DIFF_SIZE.height}+0+0`, '+repage', '-quality', WEBP_QUALITY, output)
+  fullPage(workFile('base.png'), outFile('production.webp'))
+  fullPage(workFile('head.png'), outFile('preview.webp'))
   firstScreen(workFile('diff.png'), outFile('diff.webp'))
 
   const highlightWidth = toNative(cropWidth)

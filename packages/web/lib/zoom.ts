@@ -1,7 +1,8 @@
 export const DEFAULT_ZOOM = 50
 export const MIN_ZOOM = 10
 export const MAX_DEMO_ZOOM = 60
-export const EXAMPLE_WIDTH_PX = 1440
+export const EXAMPLE_WIDTH_PX = 1280
+export const SAFARI_CANVAS_MAX_PIXELS = 4096 * 4096
 export const FRAME_PADDING_PX = 32
 
 export const resolveInitialZoom = (initialZoom = DEFAULT_ZOOM) => initialZoom

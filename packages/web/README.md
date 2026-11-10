@@ -53,7 +53,7 @@ It writes `app/favicon.ico` (16, 32, 48px), `app/apple-icon.png` (180px) and `pu
 
 ## Example images
 
-`public/examples/` comes from one real run of the GitHub Action ([unavatar-www#192](https://github.com/microlinkhq/unavatar-www/pull/192)). `production.webp` and `preview.webp` feed "Try a real example"; `diff.webp`, `highlight.webp` and `review.webp` illustrate "How it works".
+`public/examples/` comes from one real run of the GitHub Action ([unavatar-www#192](https://github.com/microlinkhq/unavatar-www/pull/192)). `production.webp` and `preview.webp` are the full pages, 1280px wide so highlight and subtract stay under the 16.7M pixel canvas Safari allows, and feed "Try a real example"; `diff.webp`, `highlight.webp` and `review.webp` illustrate "How it works".
 
 To swap in another run, point the script at either:
 
@@ -66,7 +66,7 @@ Then, from the repository root, with `pnpm install` done (it brings `canvas` for
 node packages/web/scripts/build-examples.mjs <folder> [route] [left,top,width]
 ```
 
-`route` defaults to `/`. `left,top,width` frames `highlight.webp`, in pixels of the 1440px-wide preview; the default `317,84,805` fits the unavatar.io hero, so pass your own for any other page. The script crops every image from the same screenshots, runs the highlight with `lib/pixel-diff.ts` and the review with the CLI's `composite.js`, so the images match what the site and the action render. Last, update the numbers, captions and alt text in `components/landing/how-it-works.tsx` and the intro in `components/landing/modes-demo.tsx` to describe the new run.
+`route` defaults to `/`. `left,top,width` frames `highlight.webp`, in pixels of the 1280px-wide preview; the default `282,75,716` fits the unavatar.io hero, so pass your own for any other page. The script crops every image from the same screenshots, runs the highlight with `lib/pixel-diff.ts` and the review with the CLI's `composite.js`, so the images match what the site and the action render. Last, update the numbers, captions and alt text in `components/landing/how-it-works.tsx` and the intro in `components/landing/modes-demo.tsx` to describe the new run.
 
 ## Deploying
 
