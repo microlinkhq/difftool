@@ -15,7 +15,7 @@ export function SiteFooter() {
     <footer className="px-page pb-8 pt-8">
       <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
         <p className="max-w-[40ch] text-[18px] leading-[1.6] text-muted-foreground">
-          Visual regression diffs for every pull request, built on the{" "}
+          Visual regression diffs for every code change, built on the{" "}
           <a href={MICROLINK_URL} className={TEXT_LINK_CLASS}>
             Microlink
           </a>{" "}

@@ -1,7 +1,7 @@
 import { GITHUB_URL, MICROLINK_URL, SITE_URL } from "./site.ts"
 
 export const SITE_NAME = "difftool"
-export const TITLE = "Visual regression testing for pull requests · difftool"
+export const TITLE = "Visual regression testing for code changes · difftool"
 export const TITLE_TEMPLATE = `%s · ${SITE_NAME}`
 export const DESCRIPTION =
   "A free GitHub Action that screenshots production and your preview deploy, diffs them pixel by pixel, and comments on the PR. Or compare two images online."
