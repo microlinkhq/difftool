@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
+import { mkdtempSync, rmSync, symlinkSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
 import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 
@@ -46,3 +49,19 @@ rejectsMissing(
 
 rejectsMissing('cleanup-upstash', ['--key-prefix'], /cleanup-upstash: --key-prefix is required/)
 rejectsMissing('cleanup-vercel', ['--key-prefix'], /cleanup-vercel: --key-prefix is required/)
+
+test('a symlinked bin still parses arguments', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'difftool-bin-'))
+  const link = path.join(dir, 'microlink-difftool')
+  try {
+    symlinkSync(cli, link)
+    const result = spawnSync(process.execPath, [link, 'cleanup-upstash'], {
+      encoding: 'utf8',
+      env: { ...process.env, UPSTASH_BLOB_TOKEN: '', BLOB_READ_WRITE_TOKEN: '' }
+    })
+    assert.equal(result.status, 2)
+    assert.match(result.stderr, /cleanup-upstash: --key-prefix is required/)
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
