@@ -26,6 +26,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "3",
     "@aws-sdk/s3-request-presigner": "3",
+    "@upstash/blob": "0.0.13",
     "cac": "~7.1.0",
     "canvas": "~3.2.3",
     "microlink.io": "~1.0.2",

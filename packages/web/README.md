@@ -2,7 +2,7 @@
 
 The site at [difftool.microlink.io](https://difftool.microlink.io). One page, two jobs:
 
-- **Landing.** Explains difftool and walks you through adding the GitHub Action to a repository. The setup wizard builds `.github/workflows/visual-diff.yml` and the `S3_CONFIG` secret from your answers.
+- **Landing.** Explains difftool and walks you through adding the GitHub Action to a repository. The setup wizard builds `.github/workflows/visual-diff.yml` and the storage secret (`S3_CONFIG`, or `UPSTASH_BLOB_TOKEN` for Upstash Blob) from your answers.
 - **Comparison tool.** Drop two images (or paste their URLs) in the hero to compare them in split, fade, slider, highlight, or subtract mode. Nothing is uploaded; the browser does the work.
 
 The GitHub Action's PR comment links here with `?base=<url>&head=<url>`. When both are present the page skips the landing and opens the comparison directly. `?mode=` selects the starting mode.
@@ -16,7 +16,7 @@ app/                       page shell, fonts, design tokens (globals.css)
 components/top-bar.tsx     the bar shared by the landing and the comparison view
 components/landing/        hero, how it works, modes demo, setup wizard, FAQ, footer
 components/comparison-*    the comparison tool
-lib/workflow.ts            builds the workflow YAML and the S3 config the wizard shows
+lib/workflow.ts            builds the workflow YAML and the storage secret the wizard shows
 lib/pixel-diff.ts          the highlight and subtract algorithms
 lib/metadata.ts            title, description, manifest and JSON-LD, shared by app/layout.tsx and app/page.tsx
 public/examples/           a real production/preview pair from unavatar.io used by "Try a real example"

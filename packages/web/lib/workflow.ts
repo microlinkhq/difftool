@@ -1,6 +1,8 @@
 export const DEFAULT_THRESHOLD = 0.001
 export const WORKFLOW_PATH = ".github/workflows/visual-diff.yml"
 export const S3_SECRET = "S3_CONFIG"
+export const UPSTASH_SECRET = "UPSTASH_BLOB_TOKEN"
+export const UPSTASH_CONSOLE_URL = "https://console.upstash.com"
 export const MICROLINK_SECRET = "MICROLINK_API_KEY"
 
 export type Preview = { kind: "vercel" } | { kind: "url"; url: string }
@@ -11,18 +13,28 @@ export interface WorkflowOptions {
   routes: string[]
   threshold: number
   useApiKey: boolean
+  provider: StorageProvider
 }
 
-export type StorageProvider = "r2" | "aws" | "b2" | "minio"
+export type S3Provider = "r2" | "aws" | "b2" | "minio"
+export type StorageProvider = S3Provider | "upstash"
 
 export const STORAGE_PROVIDERS: { id: StorageProvider; label: string }[] = [
   { id: "r2", label: "Cloudflare R2" },
   { id: "aws", label: "AWS S3" },
   { id: "b2", label: "Backblaze B2" },
   { id: "minio", label: "MinIO" },
+  { id: "upstash", label: "Upstash Blob" },
 ]
 
-const STORAGE_CONFIGS: Record<StorageProvider, Record<string, string | boolean>> = {
+export const isS3Provider = (provider: StorageProvider): provider is S3Provider => provider !== "upstash"
+
+export const storageSecret = (provider: StorageProvider) =>
+  isS3Provider(provider)
+    ? { name: S3_SECRET, input: "s3-config" }
+    : { name: UPSTASH_SECRET, input: "upstash-blob-token" }
+
+const S3_CONFIGS: Record<S3Provider, Record<string, string | boolean>> = {
   r2: {
     endpoint: "https://<account-id>.r2.cloudflarestorage.com",
     region: "auto",
@@ -55,8 +67,7 @@ const STORAGE_CONFIGS: Record<StorageProvider, Record<string, string | boolean>>
   },
 }
 
-export const storageConfig = (provider: StorageProvider) =>
-  JSON.stringify(STORAGE_CONFIGS[provider], null, 2)
+export const storageConfig = (provider: S3Provider) => JSON.stringify(S3_CONFIGS[provider], null, 2)
 
 export const isHttpUrl = (value: string) => {
   try {
@@ -117,7 +128,12 @@ const quote = (value: string) => `'${value.replace(/'/g, "''")}'`
 
 const formatRatio = (ratio: number) => String(Number(ratio.toFixed(6)))
 
-export function buildWorkflow({ base, preview, routes, threshold, useApiKey }: WorkflowOptions) {
+const secretInput = (provider: StorageProvider) => {
+  const { name, input } = storageSecret(provider)
+  return `          ${input}: \${{ secrets.${name} }}`
+}
+
+export function buildWorkflow({ base, preview, routes, threshold, useApiKey, provider }: WorkflowOptions) {
   const head = preview.kind === "vercel" ? "vercel" : stripTrailingSlash(preview.url)
   const routeList = routes.length > 0 ? routes : ["/"]
 
@@ -132,7 +148,7 @@ export function buildWorkflow({ base, preview, routes, threshold, useApiKey }: W
   ]
   if (threshold !== DEFAULT_THRESHOLD) inputs.push(`          threshold: ${formatRatio(threshold)}`)
   if (useApiKey) inputs.push(`          microlink-api-key: \${{ secrets.${MICROLINK_SECRET} }}`)
-  inputs.push(`          s3-config: \${{ secrets.${S3_SECRET} }}`)
+  inputs.push(secretInput(provider))
 
   return [
     "name: Visual diff",
@@ -155,13 +171,14 @@ export function buildWorkflow({ base, preview, routes, threshold, useApiKey }: W
 }
 
 export interface InstallPromptOptions extends WorkflowOptions {
-  provider: StorageProvider
   repository: string
   docsUrl: string
   dashboardUrl: string
 }
 
 const BUCKET_PERMISSIONS = "PutObject, GetObject, DeleteObject and ListBucket"
+const UPSTASH_PUBLIC_BUCKET =
+  "The bucket must be public: a private one only signs links that expire within 10 minutes, too soon for a pull request comment. Every run uploads under a random path, so the links cannot be guessed."
 const FREE_TIER = "5 requests a day"
 const FREE_KEY_TIER = "25 requests a day"
 const COMMENT_TITLE = "@microlink/difftool visual comparison"
@@ -172,16 +189,25 @@ const providerLabel = (provider: StorageProvider) =>
 const secretsPlace = (repository: string) =>
   isRepository(repository) ? secretsSettingsUrl(repository) : "Settings → Secrets and variables → Actions"
 
+const storageSecretLines = (provider: StorageProvider) =>
+  isS3Provider(provider)
+    ? [
+        `- \`${S3_SECRET}\`: the ${providerLabel(provider)} bucket the screenshots are uploaded to, as JSON in this shape:`,
+        "",
+        "```json",
+        storageConfig(provider),
+        "```",
+        "",
+        `  Its access key only needs ${BUCKET_PERMISSIONS} on that one bucket.`,
+      ]
+    : [
+        `- \`${UPSTASH_SECRET}\`: the token of the Upstash Blob bucket the screenshots are uploaded to, from ${UPSTASH_CONSOLE_URL}. ${UPSTASH_PUBLIC_BUCKET}`,
+      ]
+
 const secretSteps = ({ provider, repository, useApiKey, dashboardUrl }: InstallPromptOptions) => [
   `Never write secret values into a file or a commit. The workflow reads these repository secrets: ask me to add them at ${secretsPlace(repository)}, or, when the GitHub CLI is installed and signed in, run \`gh secret set <NAME>\` and let me paste the value.`,
   "",
-  `- \`${S3_SECRET}\`: the ${providerLabel(provider)} bucket the screenshots are uploaded to, as JSON in this shape:`,
-  "",
-  "```json",
-  storageConfig(provider),
-  "```",
-  "",
-  `  Its access key only needs ${BUCKET_PERMISSIONS} on that one bucket.`,
+  ...storageSecretLines(provider),
   useApiKey
     ? `- \`${MICROLINK_SECRET}\`: a Microlink API key, from ${dashboardUrl}.`
     : `- No Microlink API key: screenshots use Microlink's free endpoint, ${FREE_TIER}. A free key from ${dashboardUrl} raises that to ${FREE_KEY_TIER}.`,
@@ -232,9 +258,10 @@ const AGENT_TEMPLATE_OPTIONS: WorkflowOptions = {
   routes: ["/"],
   threshold: DEFAULT_THRESHOLD,
   useApiKey: true,
+  provider: "r2",
 }
 
-const otherProviders = STORAGE_PROVIDERS.filter(({ id }) => id !== "r2")
+const otherS3Providers = STORAGE_PROVIDERS.filter(({ id }) => id !== "r2" && isS3Provider(id))
   .map(({ label }) => label)
   .join(", ")
 
@@ -265,7 +292,8 @@ export function buildAgentPrompt({ docsUrl, dashboardUrl, siteUrl }: AgentPrompt
       storageConfig("r2"),
       "```",
       "",
-      `  ${otherProviders} also work with the same keys; the docs list each shape. The access key only needs ${BUCKET_PERMISSIONS} on that one bucket.`,
+      `  ${otherS3Providers} also work with the same keys; the docs list each shape. The access key only needs ${BUCKET_PERMISSIONS} on that one bucket.`,
+      `  If I use Upstash Blob instead, replace the \`s3-config\` line with \`${secretInput("upstash").trim()}\` and ask me to add \`${UPSTASH_SECRET}\`: the bucket token from ${UPSTASH_CONSOLE_URL}. ${UPSTASH_PUBLIC_BUCKET}`,
       `- \`${MICROLINK_SECRET}\`: optional. Without it screenshots use Microlink's free endpoint, ${FREE_TIER}. A free key from ${dashboardUrl} raises that to ${FREE_KEY_TIER}; if I have none, remove the \`microlink-api-key\` line.`,
     ],
     [

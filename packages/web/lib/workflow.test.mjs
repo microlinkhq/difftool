@@ -21,7 +21,10 @@ import {
   removeRouteDisabled,
   secretsHref,
   secretsSettingsUrl,
-  storageConfig
+  STORAGE_PROVIDERS,
+  isS3Provider,
+  storageConfig,
+  storageSecret
 } from './workflow.ts'
 
 const options = overrides => ({
@@ -30,6 +33,7 @@ const options = overrides => ({
   routes: ['/'],
   threshold: DEFAULT_THRESHOLD,
   useApiKey: true,
+  provider: 'r2',
   ...overrides
 })
 
@@ -91,6 +95,20 @@ describe('buildWorkflow', () => {
 
   test('omits the Microlink key when the free tier is chosen', () => {
     assert.doesNotMatch(buildWorkflow(options({ useApiKey: false })), /microlink-api-key/)
+  })
+
+  test('every S3 provider reads S3_CONFIG', () => {
+    for (const provider of ['r2', 'aws', 'b2', 'minio']) {
+      const yaml = buildWorkflow(options({ provider }))
+      assert.match(yaml, /^ {10}s3-config: \$\{\{ secrets\.S3_CONFIG \}\}$/m, provider)
+      assert.doesNotMatch(yaml, /upstash/, provider)
+    }
+  })
+
+  test('Upstash Blob reads its token instead of S3_CONFIG, as the last input like the README', () => {
+    const yaml = buildWorkflow(options({ provider: 'upstash' }))
+    assert.ok(yaml.endsWith('          upstash-blob-token: ${{ secrets.UPSTASH_BLOB_TOKEN }}\n'))
+    assert.doesNotMatch(yaml, /s3-config|S3_CONFIG/)
   })
 })
 
@@ -179,6 +197,19 @@ describe('validation', () => {
   })
 })
 
+describe('storage providers', () => {
+  test('Upstash Blob is offered after the S3 providers, and only it is not S3', () => {
+    assert.deepEqual(STORAGE_PROVIDERS.map(({ id }) => id), ['r2', 'aws', 'b2', 'minio', 'upstash'])
+    assert.deepEqual(STORAGE_PROVIDERS.filter(({ id }) => !isS3Provider(id)), [{ id: 'upstash', label: 'Upstash Blob' }])
+  })
+
+  test('each provider names the secret and the action input that reads it', () => {
+    assert.deepEqual(storageSecret('r2'), { name: 'S3_CONFIG', input: 's3-config' })
+    assert.deepEqual(storageSecret('minio'), { name: 'S3_CONFIG', input: 's3-config' })
+    assert.deepEqual(storageSecret('upstash'), { name: 'UPSTASH_BLOB_TOKEN', input: 'upstash-blob-token' })
+  })
+})
+
 describe('storageConfig', () => {
   test('each provider is the documented template', () => {
     assert.deepEqual(JSON.parse(storageConfig('r2')), {
@@ -242,6 +273,18 @@ describe('install prompt', () => {
     assert.ok(prompt.includes('Never write secret values into a file or a commit'))
   })
 
+  test('Upstash Blob asks for the token of a public bucket and no S3 config', () => {
+    const prompt = buildInstallPrompt({ ...answers, provider: 'upstash' })
+    assert.ok(prompt.includes(`\`\`\`yaml\n${buildWorkflow({ ...answers, provider: 'upstash' })}\`\`\``))
+    assert.ok(prompt.includes('`UPSTASH_BLOB_TOKEN`: the token of the Upstash Blob bucket'))
+    assert.ok(prompt.includes('https://console.upstash.com'))
+    assert.ok(prompt.includes('The bucket must be public'))
+    assert.ok(prompt.includes('expire within 10 minutes'))
+    assert.ok(!prompt.includes('S3_CONFIG'))
+    assert.ok(!prompt.includes('```json'))
+    assert.ok(!prompt.includes('ListBucket'))
+  })
+
   test('without an API key it explains the free tier and asks for no key', () => {
     const prompt = buildInstallPrompt({ ...answers, useApiKey: false })
     assert.ok(!prompt.includes('MICROLINK_API_KEY'))
@@ -275,7 +318,8 @@ describe('workflow values from an unfinished form', () => {
       preview: { kind: 'url', url: urlOrExample('', PREVIEW_URL_EXAMPLE) },
       routes: ['/'],
       threshold: DEFAULT_THRESHOLD,
-      useApiKey: false
+      useApiKey: false,
+      provider: 'r2'
     })
     assert.match(yaml, /^ {10}base: https:\/\/example\.com$/m)
     assert.match(yaml, /^ {10}head: https:\/\/staging\.example\.com$/m)
@@ -308,7 +352,9 @@ describe('buildAgentPrompt', () => {
     assert.ok(prompt.includes('Never write secret values into a file or a commit'))
     assert.ok(prompt.includes('`S3_CONFIG`'))
     assert.ok(prompt.includes('r2.cloudflarestorage.com'))
-    assert.ok(prompt.includes('AWS S3, Backblaze B2, MinIO'))
+    assert.ok(prompt.includes('AWS S3, Backblaze B2, MinIO also work'))
+    assert.ok(prompt.includes('If I use Upstash Blob instead, replace the `s3-config` line with `upstash-blob-token: ${{ secrets.UPSTASH_BLOB_TOKEN }}`'))
+    assert.ok(prompt.includes('The bucket must be public'))
     assert.ok(prompt.includes('`MICROLINK_API_KEY`: optional'))
     assert.ok(prompt.includes('free endpoint, 5 requests a day'))
   })

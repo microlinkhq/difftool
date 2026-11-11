@@ -106,15 +106,21 @@ jobs:
           s3-config: ${{ secrets.S3_CONFIG }}
 ```
 
-That's it. No checkout, no separate cleanup workflow, no pre-step to discover the preview URL. You do need to set up an S3-compatible bucket — see [S3 storage setup](#s3-storage-setup) below.
+That's it. No checkout, no separate cleanup workflow, no pre-step to discover the preview URL. You do need a bucket for the screenshots: an S3-compatible one or Upstash Blob, see [Storage setup](#storage-setup) below.
 
 ### `head: vercel`
 
 Pass `head: vercel` and the action waits for the Vercel deployment associated with the PR's head SHA to be ready, then uses its preview URL. Tune the polling with `provider-timeout` (seconds, default `600`) and `provider-interval` (seconds, default `10`). For other providers — or to bypass auto-discovery entirely — pass an explicit URL.
 
-### S3 storage setup
+### Storage setup
 
-The action uploads screenshots to an **S3-compatible object store** that you control, then references them via pre-signed URLs in the PR comment. This works for public *and* private repos, and any provider speaking the S3 API: Cloudflare R2 (recommended — free egress), AWS S3, Backblaze B2, MinIO, DigitalOcean Spaces, etc.
+The action uploads screenshots to a bucket you control: an [S3-compatible object store](#s3-storage-setup) through `s3-config`, or [Upstash Blob](#upstash-blob) through `upstash-blob-token`. Set one of the two.
+
+<a id="s3-storage-setup"></a>
+
+#### S3-compatible storage
+
+The PR comment references the screenshots via pre-signed URLs. This works for public *and* private repos, and any provider speaking the S3 API: Cloudflare R2 (recommended — free egress), AWS S3, Backblaze B2, MinIO, DigitalOcean Spaces, etc.
 
 Steps:
 
@@ -124,7 +130,7 @@ Steps:
 
 Required keys: `accessKeyId`, `secretAccessKey`, `bucket`. Other keys are provider-dependent.
 
-#### Cloudflare R2 (recommended)
+##### Cloudflare R2 (recommended)
 
 ```json
 {
@@ -137,7 +143,7 @@ Required keys: `accessKeyId`, `secretAccessKey`, `bucket`. Other keys are provid
 }
 ```
 
-#### AWS S3
+##### AWS S3
 
 ```json
 {
@@ -148,7 +154,7 @@ Required keys: `accessKeyId`, `secretAccessKey`, `bucket`. Other keys are provid
 }
 ```
 
-#### Backblaze B2
+##### Backblaze B2
 
 ```json
 {
@@ -161,13 +167,29 @@ Required keys: `accessKeyId`, `secretAccessKey`, `bucket`. Other keys are provid
 }
 ```
 
-#### MinIO / DigitalOcean Spaces / other
+##### MinIO / DigitalOcean Spaces / other
 
 Use the provider's S3 endpoint URL, set `forcePathStyle: true` for MinIO, and use the provider's regions. Same JSON shape.
 
+#### Upstash Blob
+
+1. Create a bucket in the [Upstash console](https://console.upstash.com) and set it to **public**.
+2. Store its token as a repo secret named `UPSTASH_BLOB_TOKEN`.
+3. Pass it instead of `s3-config`:
+
+```yaml
+      - uses: microlinkhq/difftool@master
+        with:
+          base: https://unavatar.io
+          head: vercel
+          upstash-blob-token: ${{ secrets.UPSTASH_BLOB_TOKEN }}
+```
+
+The bucket has to be public because Upstash signs read links for 10 minutes at most, too short for a PR comment people open hours later. To keep public links unguessable, every run uploads under a random path (`<owner>/<repo>/pr-<number>/<sha>/<uuid>/<route-slug>-<file>.png`), and the links stay valid until the PR closes and its prefix is deleted. Screenshots are cached for an hour, so a copy already fetched can outlive the deletion by up to that long. Each run writes a fresh set of screenshots rather than overwriting the last one; they all go when the PR closes. `presigned-ttl-seconds` does not apply.
+
 ### How image hosting works
 
-Screenshots are uploaded under `<owner>/<repo>/pr-<number>/<sha>/<route-slug>-<file>.png` (e.g. `microlinkhq/unavatar-www/pr-106/abc123/root-base.png`). The PR comment links to **pre-signed GetObject URLs** — your bucket stays private, the URLs work for anyone viewing the PR, and they expire after `presigned-ttl-seconds` (default 24h).
+With S3-compatible storage, screenshots are uploaded under `<owner>/<repo>/pr-<number>/<sha>/<route-slug>-<file>.png` (e.g. `microlinkhq/unavatar-www/pr-106/abc123/root-base.png`). The PR comment links to **pre-signed GetObject URLs** — your bucket stays private, the URLs work for anyone viewing the PR, and they expire after `presigned-ttl-seconds` (default 24h).
 
 The comment is regenerated on every workflow run, so reviewers always see fresh URLs. When the PR closes (`pull_request: closed`), the action deletes everything under `pr-<number>/` from your bucket.
 
@@ -177,7 +199,8 @@ The comment is regenerated on every workflow run, so reviewers always see fresh 
 | --- | --- | --- |
 | `base` | *(required)* | Production / baseline URL |
 | `head` | *(required)* | Preview URL, or `vercel` to auto-discover |
-| `s3-config` | *(required)* | JSON config for an S3-compatible bucket (see above) |
+| `s3-config` | *(empty)* | JSON config for an S3-compatible bucket (see above). Set this or `upstash-blob-token` |
+| `upstash-blob-token` | *(empty)* | Token of a public [Upstash Blob](#upstash-blob) bucket. Set this or `s3-config` |
 | `pr-number` | *(event)* | PR number; defaults to the current `pull_request` event |
 | `sha` | *(event)* | Commit SHA; defaults to `github.event.pull_request.head.sha` |
 | `routes` | `["/"]` | Array of paths to diff (JSON array string or YAML list string with `|`) |
