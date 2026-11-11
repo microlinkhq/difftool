@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 import { readFile, writeFile } from 'node:fs/promises'
+import { realpathSync } from 'node:fs'
 import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 
 import { cac } from 'cac'
 
-import { run } from '../src/index.js'
 import { renderComment } from '../src/render-comment.js'
-import { uploadAssets, cleanupPrefix } from '../src/s3.js'
+import * as s3 from '../src/s3.js'
 
 const cli = cac('microlink-difftool')
 
@@ -77,6 +78,7 @@ cli
     const mql = opts.mql ? JSON.parse(opts.mql) : undefined
 
     try {
+      const { run } = await import('../src/index.js')
       const result = await run({
         base: opts.base,
         head: opts.head,
@@ -187,7 +189,7 @@ cli
         readFile(opts.summary, 'utf8').then(JSON.parse),
         readFile(opts['s3-config'], 'utf8').then(JSON.parse)
       ])
-      const urls = await uploadAssets({
+      const urls = await s3.uploadAssets({
         summary,
         outDir: opts.outDir,
         config,
@@ -216,7 +218,7 @@ cli
     }
     try {
       const config = JSON.parse(await readFile(opts['s3-config'], 'utf8'))
-      const deleted = await cleanupPrefix({ config, keyPrefix: opts.keyPrefix })
+      const deleted = await s3.cleanupPrefix({ config, keyPrefix: opts.keyPrefix })
       console.error(`cleanup-s3: deleted ${deleted} object(s) under ${opts.keyPrefix}/`)
     } catch (err) {
       console.error(`cleanup-s3: ${err.message}`)
@@ -224,5 +226,135 @@ cli
     }
   })
 
-cli.help()
-cli.parse()
+cli
+  .command(
+    'upload-upstash',
+    'Upload screenshots to a public Upstash Blob bucket (token read from UPSTASH_BLOB_TOKEN) and emit a JSON URL map'
+  )
+  .option('--summary <path>', 'Path to summary.json from a diff run')
+  .option('--out-dir <path>', 'Directory containing the per-route screenshots')
+  .option(
+    '--key-prefix <prefix>',
+    'Object path prefix (e.g. "owner/repo/pr-106/<sha>")'
+  )
+  .option('--urls-out <path>', 'Where to write the slug/basename → URL JSON map')
+  .action(async opts => {
+    if (!opts.summary || !opts.outDir || !opts.keyPrefix || !opts.urlsOut) {
+      console.error('upload-upstash: --summary, --out-dir, --key-prefix, --urls-out are all required')
+      process.exit(2)
+    }
+    try {
+      const upstash = await import('../src/upstash.js')
+      const bucket = upstash.createBucket(process.env[upstash.TOKEN_ENV])
+      const summary = JSON.parse(await readFile(opts.summary, 'utf8'))
+      const urls = await upstash.uploadAssets({
+        summary,
+        outDir: opts.outDir,
+        bucket,
+        keyPrefix: opts.keyPrefix
+      })
+      await writeFile(opts.urlsOut, JSON.stringify(urls, null, 2))
+      console.error(`upload-upstash: wrote ${Object.keys(urls).length} URLs to ${opts.urlsOut}`)
+    } catch (err) {
+      console.error(`upload-upstash: ${err.message}`)
+      process.exit(2)
+    }
+  })
+
+cli
+  .command(
+    'cleanup-upstash',
+    'Delete all screenshots under a path prefix from an Upstash Blob bucket (token read from UPSTASH_BLOB_TOKEN)'
+  )
+  .option('--key-prefix <prefix>', 'Object path prefix to delete recursively')
+  .action(async opts => {
+    if (!opts.keyPrefix) {
+      console.error('cleanup-upstash: --key-prefix is required')
+      process.exit(2)
+    }
+    try {
+      const upstash = await import('../src/upstash.js')
+      const bucket = upstash.createBucket(process.env[upstash.TOKEN_ENV])
+      await upstash.cleanupPrefix({ bucket, keyPrefix: opts.keyPrefix })
+      console.error(`cleanup-upstash: deleted everything under ${opts.keyPrefix}/`)
+    } catch (err) {
+      console.error(`cleanup-upstash: ${err.message}`)
+      process.exit(2)
+    }
+  })
+
+cli
+  .command(
+    'upload-vercel',
+    'Upload screenshots to a private Vercel Blob store (token read from BLOB_READ_WRITE_TOKEN) and emit a JSON map of presigned URLs'
+  )
+  .option('--summary <path>', 'Path to summary.json from a diff run')
+  .option('--out-dir <path>', 'Directory containing the per-route screenshots')
+  .option(
+    '--key-prefix <prefix>',
+    'Blob pathname prefix (e.g. "owner/repo/pr-106/<sha>")'
+  )
+  .option('--urls-out <path>', 'Where to write the slug/basename → URL JSON map')
+  .option('--ttl-seconds <n>', 'Presigned URL lifetime in seconds, at most 7 days')
+  .action(async opts => {
+    if (!opts.summary || !opts.outDir || !opts.keyPrefix || !opts.urlsOut) {
+      console.error('upload-vercel: --summary, --out-dir, --key-prefix, --urls-out are all required')
+      process.exit(2)
+    }
+    let ttlSeconds
+    if (opts.ttlSeconds !== undefined) {
+      ttlSeconds = Number(opts.ttlSeconds)
+      if (!Number.isFinite(ttlSeconds) || ttlSeconds <= 0) {
+        console.error('upload-vercel: --ttl-seconds must be a positive number of seconds')
+        process.exit(2)
+      }
+    }
+    try {
+      const vercel = await import('../src/vercel.js')
+      const store = vercel.createStore(process.env[vercel.TOKEN_ENV])
+      const summary = JSON.parse(await readFile(opts.summary, 'utf8'))
+      const urls = await vercel.uploadAssets({
+        summary,
+        outDir: opts.outDir,
+        store,
+        keyPrefix: opts.keyPrefix,
+        ttlSeconds
+      })
+      await writeFile(opts.urlsOut, JSON.stringify(urls, null, 2))
+      console.error(`upload-vercel: wrote ${Object.keys(urls).length} URLs to ${opts.urlsOut}`)
+    } catch (err) {
+      console.error(`upload-vercel: ${err.message}`)
+      process.exit(2)
+    }
+  })
+
+cli
+  .command(
+    'cleanup-vercel',
+    'Delete all screenshots under a pathname prefix from a Vercel Blob store (token read from BLOB_READ_WRITE_TOKEN)'
+  )
+  .option('--key-prefix <prefix>', 'Blob pathname prefix to delete recursively')
+  .action(async opts => {
+    if (!opts.keyPrefix) {
+      console.error('cleanup-vercel: --key-prefix is required')
+      process.exit(2)
+    }
+    try {
+      const vercel = await import('../src/vercel.js')
+      const store = vercel.createStore(process.env[vercel.TOKEN_ENV])
+      const deleted = await vercel.cleanupPrefix({ store, keyPrefix: opts.keyPrefix })
+      console.error(`cleanup-vercel: deleted ${deleted} object(s) under ${opts.keyPrefix}/`)
+    } catch (err) {
+      console.error(`cleanup-vercel: ${err.message}`)
+      process.exit(2)
+    }
+  })
+
+export { cli }
+
+const invokedAsCli = Boolean(process.argv[1]) &&
+  import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href
+if (invokedAsCli) {
+  cli.help()
+  cli.parse()
+}

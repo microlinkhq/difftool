@@ -26,6 +26,8 @@
   "dependencies": {
     "@aws-sdk/client-s3": "3",
     "@aws-sdk/s3-request-presigner": "3",
+    "@upstash/blob": "0.0.13",
+    "@vercel/blob": "2.9.0",
     "cac": "~7.1.0",
     "canvas": "~3.2.3",
     "microlink.io": "~1.0.2",
@@ -34,7 +36,7 @@
   },
   "scripts": {
     "start": "./bin/cli.js",
-    "test": "node --test"
+    "test": "node --experimental-test-module-mocks --test test/*.test.js"
   },
   "repository": {
     "type": "git",

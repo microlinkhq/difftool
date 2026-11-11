@@ -1,11 +1,8 @@
+import { slugFor } from './assets.js'
+
 const pct = ratio => `${(ratio * 100).toFixed(2)}%`
 
 const stripProtocol = url => url.replace(/^https?:\/\//, '').replace(/\/+$/, '')
-
-const slugFor = route => {
-  if (!route.outDir || route.outDir === '.') return 'root'
-  return route.outDir
-}
 
 const lookup = (assetUrls, slug, basename) => {
   const url = assetUrls[`${slug}/${basename}`]

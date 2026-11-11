@@ -15,10 +15,10 @@ import { DOCS_URL, MICROLINK_DASHBOARD_URL } from "@/lib/site"
 import { previewUrlHidden, secretsLinkProps, stepBodyClass, stepConnectorClass, urlField } from "@/lib/wizard"
 import {
   BASE_URL_EXAMPLE,
+  BLOB_STORES,
   DEFAULT_THRESHOLD,
   MICROLINK_SECRET,
   PREVIEW_URL_EXAMPLE,
-  S3_SECRET,
   STORAGE_PROVIDERS,
   WORKFLOW_PATH,
   addRoute,
@@ -27,11 +27,13 @@ import {
   commitOnEnter,
   formatPercent,
   isHttpUrl,
+  isS3Provider,
   isPreviewValid,
   previewInput,
   removeRouteDisabled,
   secretsHref,
   storageConfig,
+  storageSecret,
   type StorageProvider,
   urlOrExample,
 } from "@/lib/workflow"
@@ -43,6 +45,44 @@ const THRESHOLD_PRESETS = [
 ]
 
 const WARNING_THRESHOLD_PERCENT = 5
+
+function SecretName({ provider }: { provider: StorageProvider }) {
+  return <code className="font-mono text-[14px] text-foreground">{storageSecret(provider).name}</code>
+}
+
+function StorageDescription({ provider }: { provider: StorageProvider }) {
+  if (isS3Provider(provider)) {
+    return (
+      <>
+        Screenshots go to an S3-compatible bucket you own, so private repos stay private. Save this as a repository
+        secret named <SecretName provider={provider} />.
+      </>
+    )
+  }
+  const { label, noun } = BLOB_STORES[provider]
+  return (
+    <>
+      Screenshots go to your own {label} {noun}. Save its token as a repository secret named{" "}
+      <SecretName provider={provider} />.
+    </>
+  )
+}
+
+function StorageSecretValue({ provider }: { provider: StorageProvider }) {
+  if (isS3Provider(provider)) {
+    return <CodeBlock code={storageConfig(provider)} language="json" title={storageSecret(provider).name} />
+  }
+  const { noun, access, dashboard, why } = BLOB_STORES[provider]
+  return (
+    <p className="max-w-[60ch] rounded-2xl bg-muted px-4 py-3 text-[16px] leading-[1.6]">
+      Create a <strong className="font-semibold">{access}</strong> {noun} in the{" "}
+      <a href={dashboard.url} className={TEXT_LINK_CLASS}>
+        {dashboard.name}
+      </a>{" "}
+      and copy its token. <span className="text-muted-foreground">{why}</span>
+    </p>
+  )
+}
 
 const inputClass =
   "h-11 w-full rounded-xl bg-muted px-4 text-[16px] placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-[invalid=true]:ring-2 aria-[invalid=true]:ring-destructive"
@@ -183,8 +223,9 @@ export function SetupWizard() {
       routes,
       threshold,
       useApiKey,
+      provider,
     }),
-    [base, previewKind, previewUrl, routes, threshold, useApiKey]
+    [base, previewKind, previewUrl, routes, threshold, useApiKey, provider]
   )
 
   const workflow = useMemo(() => buildWorkflow(answers), [answers])
@@ -193,12 +234,11 @@ export function SetupWizard() {
     () =>
       buildInstallPrompt({
         ...answers,
-        provider,
         repository,
         docsUrl: DOCS_URL,
         dashboardUrl: MICROLINK_DASHBOARD_URL,
       }),
-    [answers, provider, repository]
+    [answers, repository]
   )
   const { state: promptCopyState, copy: copyPrompt } = useCopy(installPrompt)
 
@@ -307,12 +347,7 @@ export function SetupWizard() {
           <Step
             icon={<Database className="h-5 w-5" aria-hidden />}
             title="Give it a bucket"
-            description={
-              <>
-                Screenshots go to an S3-compatible bucket you own, so private repos stay private. Save this as a
-                repository secret named <code className="font-mono text-[14px] text-foreground">{S3_SECRET}</code>.
-              </>
-            }
+            description={<StorageDescription provider={provider} />}
           >
             <div className="flex flex-col gap-5">
               <Segmented
@@ -321,7 +356,7 @@ export function SetupWizard() {
                 onChange={setProvider}
                 options={STORAGE_PROVIDERS.map((item) => ({ value: item.id, label: item.label }))}
               />
-              <CodeBlock code={storageConfig(provider)} language="json" title={S3_SECRET} />
+              <StorageSecretValue provider={provider} />
 
               <label htmlFor={ids.apiKey} className="flex max-w-[60ch] cursor-pointer items-start gap-3 text-[16px] leading-[1.55]">
                 <input

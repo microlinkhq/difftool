@@ -1,6 +1,3 @@
-import fs from 'node:fs/promises'
-import path from 'node:path'
-
 import {
   S3Client,
   PutObjectCommand,
@@ -10,16 +7,11 @@ import {
 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
+import { joinPath, screenshotAssets } from './assets.js'
+
 const REQUIRED_CONFIG_FIELDS = ['accessKeyId', 'secretAccessKey', 'bucket']
 
 const DEFAULT_TTL_SECONDS = 86400
-
-const FILES = ['base.png', 'head.png', 'diff.png', 'review.png']
-
-export const slugFor = route => {
-  if (!route.outDir || route.outDir === '.') return 'root'
-  return route.outDir
-}
 
 const validateConfig = config => {
   if (!config || typeof config !== 'object') {
@@ -51,41 +43,23 @@ export const uploadAssets = async ({ summary, outDir, config, keyPrefix, ttlSeco
   const expiresIn = ttlSeconds || config.presignedTtlSeconds || DEFAULT_TTL_SECONDS
   const urls = {}
 
-  for (const route of summary.routes) {
-    const slug = slugFor(route)
-    const routeDir = !route.outDir || route.outDir === '.' ? outDir : path.join(outDir, route.outDir)
+  for await (const { slug, basename, body, urlKey } of screenshotAssets({ summary, outDir })) {
+    const key = joinPath(keyPrefix, `${slug}-${basename}`)
 
-    for (const basename of FILES) {
-      const localPath = path.join(routeDir, basename)
-      let body
-      try {
-        body = await fs.readFile(localPath)
-      } catch (err) {
-        if (err.code === 'ENOENT') {
-          continue
-        }
-        throw err
-      }
+    await client.send(
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        Body: body,
+        ContentType: 'image/png'
+      })
+    )
 
-      const key = `${keyPrefix}/${slug}-${basename}`
-
-      await client.send(
-        new PutObjectCommand({
-          Bucket: bucket,
-          Key: key,
-          Body: body,
-          ContentType: 'image/png'
-        })
-      )
-
-      const url = await getSignedUrl(
-        client,
-        new GetObjectCommand({ Bucket: bucket, Key: key }),
-        { expiresIn }
-      )
-
-      urls[`${slug}/${basename}`] = url
-    }
+    urls[urlKey] = await getSignedUrl(
+      client,
+      new GetObjectCommand({ Bucket: bucket, Key: key }),
+      { expiresIn }
+    )
   }
 
   return urls

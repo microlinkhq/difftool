@@ -11,7 +11,7 @@ const OUT_DIR = path.join(WEB_DIR, 'public/examples')
 
 const { createCanvas, loadImage } = createRequire(path.join(CLI_DIR, 'package.json'))('canvas')
 const { composite, FOOTER_HEIGHT, HEADER_HEIGHT, SEPARATOR_WIDTH } = await import(path.join(CLI_DIR, 'src/composite.js'))
-const { slugFor } = await import(path.join(CLI_DIR, 'src/s3.js'))
+const { slugFor } = await import(path.join(CLI_DIR, 'src/assets.js'))
 const { highlightDifferences } = await import(path.join(WEB_DIR, 'lib/pixel-diff.ts'))
 const { EXAMPLE_WIDTH_PX, SAFARI_CANVAS_MAX_PIXELS } = await import(path.join(WEB_DIR, 'lib/zoom.ts'))
 

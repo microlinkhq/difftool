@@ -8,7 +8,7 @@ const QUESTIONS: { question: string; answer: React.ReactNode }[] = [
   {
     question: "Does it work on private repositories?",
     answer:
-      "Yes. Screenshots are uploaded to your own bucket and the comment links to pre-signed URLs, so anyone who can see the pull request can open them while the bucket stays private. The links expire after 24 hours by default and are refreshed on every run.",
+      "Yes. Screenshots are uploaded to your own bucket and the comment links to pre-signed URLs, so anyone who can see the pull request can open them while the bucket stays private. The links expire after 24 hours by default and are refreshed on every run. Vercel Blob works the same way with a private store. Upstash Blob is the exception: its bucket has to be public, so the links never expire while the pull request is open and anyone who gets hold of one can open it. Every run uploads under a random path, so they cannot be guessed.",
   },
   {
     question: "I don't deploy previews on Vercel.",
@@ -23,7 +23,7 @@ const QUESTIONS: { question: string; answer: React.ReactNode }[] = [
   {
     question: "Which storage can I use?",
     answer:
-      "Anything that speaks the S3 API: Cloudflare R2, AWS S3, Backblaze B2, MinIO, DigitalOcean Spaces. The token only needs to put, get, delete and list objects in that one bucket. When a pull request closes, everything under its prefix is deleted.",
+      "Anything that speaks the S3 API: Cloudflare R2, AWS S3, Backblaze B2, DigitalOcean Spaces. The token only needs to put, get, delete and list objects in that one bucket. Upstash Blob and Vercel Blob work too, with just a token: a public Upstash bucket or a private Vercel store. When a pull request closes, everything under its prefix is deleted.",
   },
   {
     question: "What does it cost?",

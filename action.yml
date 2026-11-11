@@ -17,7 +17,18 @@ inputs:
       JSON object with S3-compatible storage credentials. Required keys:
       accessKeyId, secretAccessKey, bucket. Optional: endpoint (provider URL),
       region, forcePathStyle, presignedTtlSeconds. Pass via a secret.
-    required: true
+      Set exactly one of s3-config, upstash-blob-token or vercel-blob-token.
+    required: false
+  upstash-blob-token:
+    description: |
+      Token of a public Upstash Blob bucket, used instead of s3-config.
+      Pass via a secret. Set exactly one of s3-config, upstash-blob-token or vercel-blob-token.
+    required: false
+  vercel-blob-token:
+    description: |
+      Read-write token (BLOB_READ_WRITE_TOKEN) of a private Vercel Blob store, used instead of s3-config.
+      Pass via a secret. Set exactly one of s3-config, upstash-blob-token or vercel-blob-token.
+    required: false
   pr-number:
     description: Pull request number to comment on. Defaults to the current pull_request event's number.
     required: false
@@ -50,7 +61,7 @@ inputs:
     description: Optional Microlink paid-tier key (recommended for CI)
     required: false
   presigned-ttl-seconds:
-    description: TTL in seconds for pre-signed URLs in the comment. Overrides s3-config.presignedTtlSeconds. Defaults to 86400 (24h).
+    description: TTL in seconds for pre-signed URLs in the comment. Overrides s3-config.presignedTtlSeconds. Defaults to 86400 (24h). Vercel Blob caps it at 7 days; Upstash Blob ignores it.
     required: false
   comment-marker:
     description: HTML comment marker so re-runs edit the same PR comment
@@ -109,17 +120,32 @@ runs:
           echo "mode=diff" >> "$GITHUB_OUTPUT"
         fi
 
+    - name: Resolve storage
+      id: storage
+      shell: bash
+      env:
+        S3_CONFIG: ${{ inputs.s3-config }}
+        UPSTASH_BLOB_TOKEN: ${{ inputs.upstash-blob-token }}
+        VERCEL_BLOB_TOKEN: ${{ inputs.vercel-blob-token }}
+      run: |
+        BACKENDS=()
+        [ -n "$S3_CONFIG" ] && BACKENDS+=(s3)
+        [ -n "$UPSTASH_BLOB_TOKEN" ] && BACKENDS+=(upstash)
+        [ -n "$VERCEL_BLOB_TOKEN" ] && BACKENDS+=(vercel)
+        if [ "${#BACKENDS[@]}" -ne 1 ]; then
+          echo "::error::microlink-difftool: set exactly one of s3-config, upstash-blob-token or vercel-blob-token (got ${#BACKENDS[@]}). See https://github.com/microlinkhq/difftool#storage-setup"
+          exit 2
+        fi
+        echo "backend=${BACKENDS[0]}" >> "$GITHUB_OUTPUT"
+
     - name: Stage S3 credentials
       id: s3
+      if: steps.storage.outputs.backend == 's3'
       shell: bash
       env:
         S3_CONFIG: ${{ inputs.s3-config }}
         CONFIG_PATH: ${{ runner.temp }}/microlink-difftool-s3.json
       run: |
-        if [ -z "$S3_CONFIG" ]; then
-          echo "::error::microlink-difftool: s3-config is required. See https://github.com/microlinkhq/difftool#s3-storage-setup"
-          exit 2
-        fi
 
         # Quick structural check before writing.
         echo "$S3_CONFIG" | node -e "
@@ -146,7 +172,7 @@ runs:
 
     - name: Detect cleanup tooling
       id: cleanup-tooling
-      if: steps.pr.outputs.mode == 'cleanup'
+      if: steps.pr.outputs.mode == 'cleanup' && steps.storage.outputs.backend == 's3'
       shell: bash
       run: |
         if command -v aws >/dev/null 2>&1; then
@@ -179,7 +205,7 @@ runs:
         pnpm install --no-frozen-lockfile --filter @microlink/difftool
 
     - name: Cleanup on PR close via AWS CLI
-      if: steps.pr.outputs.mode == 'cleanup' && steps.cleanup-tooling.outputs.use-aws-cli == 'true'
+      if: steps.pr.outputs.mode == 'cleanup' && steps.storage.outputs.backend == 's3' && steps.cleanup-tooling.outputs.use-aws-cli == 'true'
       shell: bash
       env:
         CONFIG_PATH: ${{ steps.s3.outputs.config-path }}
@@ -232,7 +258,7 @@ runs:
         echo "cleanup-s3: deleted ${DELETED_COUNT:-0} object(s) under $PREFIX"
 
     - name: Cleanup on PR close
-      if: steps.pr.outputs.mode == 'cleanup' && steps.cleanup-tooling.outputs.use-aws-cli != 'true'
+      if: steps.pr.outputs.mode == 'cleanup' && steps.storage.outputs.backend == 's3' && steps.cleanup-tooling.outputs.use-aws-cli != 'true'
       shell: bash
       env:
         CONFIG_PATH: ${{ steps.s3.outputs.config-path }}
@@ -242,6 +268,30 @@ runs:
       run: |
         node "${{ github.action_path }}/packages/cli/bin/cli.js" cleanup-s3 \
           --s3-config "$CONFIG_PATH" \
+          --key-prefix "$OWNER/$NAME/pr-$PR_NUMBER"
+
+    - name: Cleanup on PR close from Upstash Blob
+      if: steps.pr.outputs.mode == 'cleanup' && steps.storage.outputs.backend == 'upstash'
+      shell: bash
+      env:
+        UPSTASH_BLOB_TOKEN: ${{ inputs.upstash-blob-token }}
+        OWNER: ${{ github.repository_owner }}
+        NAME: ${{ github.event.repository.name }}
+        PR_NUMBER: ${{ steps.pr.outputs.number }}
+      run: |
+        node "${{ github.action_path }}/packages/cli/bin/cli.js" cleanup-upstash \
+          --key-prefix "$OWNER/$NAME/pr-$PR_NUMBER"
+
+    - name: Cleanup on PR close from Vercel Blob
+      if: steps.pr.outputs.mode == 'cleanup' && steps.storage.outputs.backend == 'vercel'
+      shell: bash
+      env:
+        BLOB_READ_WRITE_TOKEN: ${{ inputs.vercel-blob-token }}
+        OWNER: ${{ github.repository_owner }}
+        NAME: ${{ github.event.repository.name }}
+        PR_NUMBER: ${{ steps.pr.outputs.number }}
+      run: |
+        node "${{ github.action_path }}/packages/cli/bin/cli.js" cleanup-vercel \
           --key-prefix "$OWNER/$NAME/pr-$PR_NUMBER"
 
     - name: Resolve head URL
@@ -420,8 +470,8 @@ runs:
         echo "diff-exit=$DIFF_EXIT" >> "$GITHUB_OUTPUT"
 
     - name: Upload screenshots to S3-compatible storage
-      id: upload-assets
-      if: steps.pr.outputs.mode == 'diff'
+      id: upload-s3
+      if: steps.pr.outputs.mode == 'diff' && steps.storage.outputs.backend == 's3'
       shell: bash
       env:
         SUMMARY_PATH: ${{ steps.diff.outputs.summary-json }}
@@ -447,13 +497,61 @@ runs:
           $TTL_FLAG
         echo "urls-path=$URLS_PATH" >> "$GITHUB_OUTPUT"
 
+    - name: Upload screenshots to Upstash Blob
+      id: upload-upstash
+      if: steps.pr.outputs.mode == 'diff' && steps.storage.outputs.backend == 'upstash'
+      shell: bash
+      env:
+        UPSTASH_BLOB_TOKEN: ${{ inputs.upstash-blob-token }}
+        SUMMARY_PATH: ${{ steps.diff.outputs.summary-json }}
+        OUT_DIR: ${{ runner.temp }}/microlink-difftool
+        URLS_PATH: ${{ runner.temp }}/microlink-difftool-urls.json
+        OWNER: ${{ github.repository_owner }}
+        NAME: ${{ github.event.repository.name }}
+        PR_NUMBER: ${{ steps.pr.outputs.number }}
+        PR_SHA: ${{ steps.pr.outputs.sha }}
+      run: |
+        node "${{ github.action_path }}/packages/cli/bin/cli.js" upload-upstash \
+          --summary "$SUMMARY_PATH" \
+          --out-dir "$OUT_DIR" \
+          --key-prefix "$OWNER/$NAME/pr-$PR_NUMBER/$PR_SHA" \
+          --urls-out "$URLS_PATH"
+        echo "urls-path=$URLS_PATH" >> "$GITHUB_OUTPUT"
+
+    - name: Upload screenshots to Vercel Blob
+      id: upload-vercel
+      if: steps.pr.outputs.mode == 'diff' && steps.storage.outputs.backend == 'vercel'
+      shell: bash
+      env:
+        BLOB_READ_WRITE_TOKEN: ${{ inputs.vercel-blob-token }}
+        SUMMARY_PATH: ${{ steps.diff.outputs.summary-json }}
+        OUT_DIR: ${{ runner.temp }}/microlink-difftool
+        URLS_PATH: ${{ runner.temp }}/microlink-difftool-urls.json
+        OWNER: ${{ github.repository_owner }}
+        NAME: ${{ github.event.repository.name }}
+        PR_NUMBER: ${{ steps.pr.outputs.number }}
+        PR_SHA: ${{ steps.pr.outputs.sha }}
+        TTL_INPUT: ${{ inputs.presigned-ttl-seconds }}
+      run: |
+        TTL_FLAG=()
+        if [ -n "$TTL_INPUT" ]; then
+          TTL_FLAG=(--ttl-seconds "$TTL_INPUT")
+        fi
+        node "${{ github.action_path }}/packages/cli/bin/cli.js" upload-vercel \
+          --summary "$SUMMARY_PATH" \
+          --out-dir "$OUT_DIR" \
+          --key-prefix "$OWNER/$NAME/pr-$PR_NUMBER/$PR_SHA" \
+          --urls-out "$URLS_PATH" \
+          "${TTL_FLAG[@]}"
+        echo "urls-path=$URLS_PATH" >> "$GITHUB_OUTPUT"
+
     - name: Render comment markdown
       id: render
       if: steps.pr.outputs.mode == 'diff'
       shell: bash
       env:
         SUMMARY: ${{ steps.diff.outputs.summary-json }}
-        URLS_PATH: ${{ steps.upload-assets.outputs.urls-path }}
+        URLS_PATH: ${{ steps.upload-s3.outputs.urls-path || steps.upload-upstash.outputs.urls-path || steps.upload-vercel.outputs.urls-path }}
         RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         MARKER: ${{ inputs.comment-marker }}
         BODY_PATH: ${{ runner.temp }}/microlink-difftool-comment.md
