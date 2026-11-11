@@ -16,14 +16,13 @@ export interface WorkflowOptions {
   provider: StorageProvider
 }
 
-export type S3Provider = "r2" | "aws" | "b2" | "minio"
+export type S3Provider = "r2" | "aws" | "b2"
 export type StorageProvider = S3Provider | "upstash"
 
 export const STORAGE_PROVIDERS: { id: StorageProvider; label: string }[] = [
   { id: "r2", label: "Cloudflare R2" },
   { id: "aws", label: "AWS S3" },
   { id: "b2", label: "Backblaze B2" },
-  { id: "minio", label: "MinIO" },
   { id: "upstash", label: "Upstash Blob" },
 ]
 
@@ -52,14 +51,6 @@ const S3_CONFIGS: Record<S3Provider, Record<string, string | boolean>> = {
   b2: {
     endpoint: "https://s3.us-east-005.backblazeb2.com",
     region: "us-east-005",
-    accessKeyId: "...",
-    secretAccessKey: "...",
-    bucket: "difftool-assets",
-    forcePathStyle: true,
-  },
-  minio: {
-    endpoint: "https://minio.example.com",
-    region: "us-east-1",
     accessKeyId: "...",
     secretAccessKey: "...",
     bucket: "difftool-assets",

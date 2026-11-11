@@ -120,7 +120,7 @@ The action uploads screenshots to a bucket you control: an [S3-compatible object
 
 #### S3-compatible storage
 
-The PR comment references the screenshots via pre-signed URLs. This works for public *and* private repos, and any provider speaking the S3 API: Cloudflare R2 (recommended — free egress), AWS S3, Backblaze B2, MinIO, DigitalOcean Spaces, etc.
+The PR comment references the screenshots via pre-signed URLs. This works for public *and* private repos, and any provider speaking the S3 API: Cloudflare R2 (recommended — free egress), AWS S3, Backblaze B2, DigitalOcean Spaces, etc.
 
 Steps:
 
@@ -167,9 +167,9 @@ Required keys: `accessKeyId`, `secretAccessKey`, `bucket`. Other keys are provid
 }
 ```
 
-##### MinIO / DigitalOcean Spaces / other
+##### DigitalOcean Spaces / other
 
-Use the provider's S3 endpoint URL, set `forcePathStyle: true` for MinIO, and use the provider's regions. Same JSON shape.
+Use the provider's S3 endpoint URL and regions, and set `forcePathStyle: true` if it needs path-style addressing. Same JSON shape.
 
 #### Upstash Blob
 

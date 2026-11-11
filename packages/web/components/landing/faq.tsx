@@ -23,7 +23,7 @@ const QUESTIONS: { question: string; answer: React.ReactNode }[] = [
   {
     question: "Which storage can I use?",
     answer:
-      "Anything that speaks the S3 API: Cloudflare R2, AWS S3, Backblaze B2, MinIO, DigitalOcean Spaces. The token only needs to put, get, delete and list objects in that one bucket. Upstash Blob works too, with just the token of a public bucket. When a pull request closes, everything under its prefix is deleted.",
+      "Anything that speaks the S3 API: Cloudflare R2, AWS S3, Backblaze B2, DigitalOcean Spaces. The token only needs to put, get, delete and list objects in that one bucket. Upstash Blob works too, with just the token of a public bucket. When a pull request closes, everything under its prefix is deleted.",
   },
   {
     question: "What does it cost?",

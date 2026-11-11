@@ -98,7 +98,7 @@ describe('buildWorkflow', () => {
   })
 
   test('every S3 provider reads S3_CONFIG', () => {
-    for (const provider of ['r2', 'aws', 'b2', 'minio']) {
+    for (const provider of ['r2', 'aws', 'b2']) {
       const yaml = buildWorkflow(options({ provider }))
       assert.match(yaml, /^ {10}s3-config: \$\{\{ secrets\.S3_CONFIG \}\}$/m, provider)
       assert.doesNotMatch(yaml, /upstash/, provider)
@@ -199,13 +199,13 @@ describe('validation', () => {
 
 describe('storage providers', () => {
   test('Upstash Blob is offered after the S3 providers, and only it is not S3', () => {
-    assert.deepEqual(STORAGE_PROVIDERS.map(({ id }) => id), ['r2', 'aws', 'b2', 'minio', 'upstash'])
+    assert.deepEqual(STORAGE_PROVIDERS.map(({ id }) => id), ['r2', 'aws', 'b2', 'upstash'])
     assert.deepEqual(STORAGE_PROVIDERS.filter(({ id }) => !isS3Provider(id)), [{ id: 'upstash', label: 'Upstash Blob' }])
   })
 
   test('each provider names the secret and the action input that reads it', () => {
     assert.deepEqual(storageSecret('r2'), { name: 'S3_CONFIG', input: 's3-config' })
-    assert.deepEqual(storageSecret('minio'), { name: 'S3_CONFIG', input: 's3-config' })
+    assert.deepEqual(storageSecret('b2'), { name: 'S3_CONFIG', input: 's3-config' })
     assert.deepEqual(storageSecret('upstash'), { name: 'UPSTASH_BLOB_TOKEN', input: 'upstash-blob-token' })
   })
 })
@@ -229,14 +229,6 @@ describe('storageConfig', () => {
     assert.deepEqual(JSON.parse(storageConfig('b2')), {
       endpoint: 'https://s3.us-east-005.backblazeb2.com',
       region: 'us-east-005',
-      accessKeyId: '...',
-      secretAccessKey: '...',
-      bucket: 'difftool-assets',
-      forcePathStyle: true
-    })
-    assert.deepEqual(JSON.parse(storageConfig('minio')), {
-      endpoint: 'https://minio.example.com',
-      region: 'us-east-1',
       accessKeyId: '...',
       secretAccessKey: '...',
       bucket: 'difftool-assets',
@@ -352,7 +344,7 @@ describe('buildAgentPrompt', () => {
     assert.ok(prompt.includes('Never write secret values into a file or a commit'))
     assert.ok(prompt.includes('`S3_CONFIG`'))
     assert.ok(prompt.includes('r2.cloudflarestorage.com'))
-    assert.ok(prompt.includes('AWS S3, Backblaze B2, MinIO also work'))
+    assert.ok(prompt.includes('AWS S3, Backblaze B2 also work'))
     assert.ok(prompt.includes('If I use Upstash Blob instead, replace the `s3-config` line with `upstash-blob-token: ${{ secrets.UPSTASH_BLOB_TOKEN }}`'))
     assert.ok(prompt.includes('The bucket must be public'))
     assert.ok(prompt.includes('`MICROLINK_API_KEY`: optional'))
