@@ -104,13 +104,16 @@ describe('uploadAssets', () => {
     for (const pathname of store.uploads.keys()) assert.match(pathname, /^acme\/site\/pr-7\/[a-z]+-[a-z]+\.png$/)
   })
 
-  test('a public store is refused after its first upload, with the fix', async () => {
-    const store = fakeStore({ host: 'https://abcd1234.public.blob.vercel-storage.com' })
+  test('a public store is refused after its first upload, and that upload is deleted', async () => {
+    const host = 'https://abcd1234.public.blob.vercel-storage.com'
+    const store = fakeStore({ host })
     await assert.rejects(
       uploadAssets({ summary, outDir, store, keyPrefix: KEY_PREFIX, now: NOW }),
       { message: /^vercel blob: the store is public\. .*Access set to Private/ }
     )
+    const [pathname] = store.uploads.keys()
     assert.equal(store.uploads.size, 1)
+    assert.deepEqual(store.deleted, [`${host}/${pathname}`])
   })
 
   test('an access error from Vercel carries the private-store hint, any other error does not', async () => {
@@ -121,6 +124,10 @@ describe('uploadAssets', () => {
     await assert.rejects(
       uploadAssets({ summary, outDir, store: fakeStore({ putError: new Error('Vercel Blob: Too many requests.') }), keyPrefix: KEY_PREFIX, now: NOW }),
       { message: 'vercel blob: Vercel Blob: Too many requests.' }
+    )
+    await assert.rejects(
+      uploadAssets({ summary, outDir, store: fakeStore({ putError: new Error('Vercel Blob: This store is public.') }), keyPrefix: KEY_PREFIX, now: NOW }),
+      { message: /^vercel blob: Vercel Blob: This store is public\. .*Access set to Private/ }
     )
   })
 
@@ -159,6 +166,16 @@ describe('cleanupPrefix', () => {
       [`${STORE_HOST}/acme/site/pr-1/a.png`, `${STORE_HOST}/acme/site/pr-1/b.png`],
       [`${STORE_HOST}/acme/site/pr-1/c.png`]
     ])
+  })
+
+  test('a finished page is not followed when it still carries a cursor', async () => {
+    const blob = name => ({ url: `${STORE_HOST}/acme/site/pr-1/${name}`, pathname: `acme/site/pr-1/${name}` })
+    const store = fakeStore({
+      pages: [{ blobs: [blob('a.png')], hasMore: false, cursor: 'stale' }]
+    })
+
+    assert.equal(await cleanupPrefix({ store, keyPrefix: 'acme/site/pr-1' }), 1)
+    assert.equal(store.listed.length, 1)
   })
 
   test('an empty prefix deletes nothing', async () => {

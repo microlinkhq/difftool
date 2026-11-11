@@ -7,7 +7,7 @@ import {
 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
-import { screenshotAssets } from './assets.js'
+import { joinPath, screenshotAssets } from './assets.js'
 
 const REQUIRED_CONFIG_FIELDS = ['accessKeyId', 'secretAccessKey', 'bucket']
 
@@ -44,7 +44,7 @@ export const uploadAssets = async ({ summary, outDir, config, keyPrefix, ttlSeco
   const urls = {}
 
   for await (const { slug, basename, body, urlKey } of screenshotAssets({ summary, outDir })) {
-    const key = `${keyPrefix}/${slug}-${basename}`
+    const key = joinPath(keyPrefix, `${slug}-${basename}`)
 
     await client.send(
       new PutObjectCommand({

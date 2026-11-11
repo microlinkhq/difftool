@@ -36,7 +36,7 @@
   },
   "scripts": {
     "start": "./bin/cli.js",
-    "test": "node --test test/*.test.js"
+    "test": "node --experimental-test-module-mocks --test test/*.test.js"
   },
   "repository": {
     "type": "git",

@@ -308,7 +308,7 @@ cli
         outDir: opts.outDir,
         store,
         keyPrefix: opts.keyPrefix,
-        ttlSeconds: opts.ttlSeconds !== undefined ? Number(opts.ttlSeconds) : undefined
+        ttlSeconds: Number(opts.ttlSeconds)
       })
       await writeFile(opts.urlsOut, JSON.stringify(urls, null, 2))
       console.error(`upload-vercel: wrote ${Object.keys(urls).length} URLs to ${opts.urlsOut}`)

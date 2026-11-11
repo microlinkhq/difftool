@@ -11,7 +11,7 @@ export const slugFor = route => {
 export const joinPath = (...segments) => segments.join('/').split('/').filter(Boolean).join('/')
 
 const routeDirFor = (outDir, route) =>
-  !route.outDir || route.outDir === '.' ? outDir : path.join(outDir, route.outDir)
+  route.outDir ? path.join(outDir, route.outDir) : outDir
 
 const readIfPresent = async filePath => {
   try {

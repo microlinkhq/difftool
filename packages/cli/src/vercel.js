@@ -47,7 +47,10 @@ const uploadPrivate = async (store, pathname, body) => {
   } catch (err) {
     throw new Error(describePutError(err))
   }
-  if (!isPrivateStoreUrl(blob.url)) throw new Error(`vercel blob: the store is public. ${PRIVATE_STORE_HINT}`)
+  if (!isPrivateStoreUrl(blob.url)) {
+    await store.del(blob.url)
+    throw new Error(`vercel blob: the store is public. ${PRIVATE_STORE_HINT}`)
+  }
 }
 
 export const uploadAssets = async ({ summary, outDir, store, keyPrefix, ttlSeconds, now = Date.now() }) => {
