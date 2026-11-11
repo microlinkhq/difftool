@@ -4,7 +4,7 @@ import { mock } from 'node:test'
 const sent = []
 
 mock.module('@aws-sdk/client-s3', {
-  namedExports: {
+  exports: {
     S3Client: class {
       async send (command) {
         sent.push(command)
@@ -27,7 +27,7 @@ mock.module('@aws-sdk/client-s3', {
 })
 
 mock.module('@aws-sdk/s3-request-presigner', {
-  namedExports: {
+  exports: {
     getSignedUrl: async (_client, command) => `https://example.test/${command.input.Key}`
   }
 })

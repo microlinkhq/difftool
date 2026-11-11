@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 
 import { cac } from 'cac'
 
@@ -340,5 +341,10 @@ cli
     }
   })
 
-cli.help()
-cli.parse()
+export { cli }
+
+const invokedAsCli = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href
+if (invokedAsCli) {
+  cli.help()
+  cli.parse()
+}
