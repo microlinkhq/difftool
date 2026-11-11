@@ -21,6 +21,7 @@ import {
   removeRouteDisabled,
   secretsHref,
   secretsSettingsUrl,
+  BLOB_STORES,
   STORAGE_PROVIDERS,
   isS3Provider,
   storageConfig,
@@ -48,6 +49,10 @@ describe('buildWorkflow', () => {
       'permissions:',
       '  pull-requests: write',
       '  deployments: read',
+      '',
+      'concurrency:',
+      '  group: visual-diff-${{ github.event.pull_request.number }}',
+      "  cancel-in-progress: ${{ github.event.action != 'closed' }}",
       '',
       'jobs:',
       '  visual-diff:',
@@ -103,6 +108,12 @@ describe('buildWorkflow', () => {
       assert.match(yaml, /^ {10}s3-config: \$\{\{ secrets\.S3_CONFIG \}\}$/m, provider)
       assert.doesNotMatch(yaml, /upstash/, provider)
     }
+  })
+
+  test('Vercel Blob reads its read-write token instead of S3_CONFIG', () => {
+    const yaml = buildWorkflow(options({ provider: 'vercel' }))
+    assert.ok(yaml.endsWith('          vercel-blob-token: ${{ secrets.BLOB_READ_WRITE_TOKEN }}\n'))
+    assert.doesNotMatch(yaml, /s3-config|S3_CONFIG|upstash/)
   })
 
   test('Upstash Blob reads its token instead of S3_CONFIG, as the last input like the README', () => {
@@ -198,15 +209,30 @@ describe('validation', () => {
 })
 
 describe('storage providers', () => {
-  test('Upstash Blob is offered after the S3 providers, and only it is not S3', () => {
-    assert.deepEqual(STORAGE_PROVIDERS.map(({ id }) => id), ['r2', 'aws', 'b2', 'upstash'])
-    assert.deepEqual(STORAGE_PROVIDERS.filter(({ id }) => !isS3Provider(id)), [{ id: 'upstash', label: 'Upstash Blob' }])
+  test('the blob stores are offered after the S3 providers, and only they are not S3', () => {
+    assert.deepEqual(STORAGE_PROVIDERS.map(({ id }) => id), ['r2', 'aws', 'b2', 'upstash', 'vercel'])
+    assert.deepEqual(STORAGE_PROVIDERS.filter(({ id }) => !isS3Provider(id)), [
+      { id: 'upstash', label: 'Upstash Blob' },
+      { id: 'vercel', label: 'Vercel Blob' }
+    ])
+  })
+
+  test('each blob store keeps the label the picker shows', () => {
+    for (const [id, store] of Object.entries(BLOB_STORES)) {
+      assert.equal(STORAGE_PROVIDERS.find(provider => provider.id === id).label, store.label)
+    }
+  })
+
+  test('Upstash needs a public bucket and Vercel a private store, matching what the action enforces', () => {
+    assert.equal(BLOB_STORES.upstash.access, 'public')
+    assert.equal(BLOB_STORES.vercel.access, 'private')
   })
 
   test('each provider names the secret and the action input that reads it', () => {
     assert.deepEqual(storageSecret('r2'), { name: 'S3_CONFIG', input: 's3-config' })
     assert.deepEqual(storageSecret('b2'), { name: 'S3_CONFIG', input: 's3-config' })
     assert.deepEqual(storageSecret('upstash'), { name: 'UPSTASH_BLOB_TOKEN', input: 'upstash-blob-token' })
+    assert.deepEqual(storageSecret('vercel'), { name: 'BLOB_READ_WRITE_TOKEN', input: 'vercel-blob-token' })
   })
 })
 
@@ -275,6 +301,17 @@ describe('install prompt', () => {
     assert.ok(!prompt.includes('S3_CONFIG'))
     assert.ok(!prompt.includes('```json'))
     assert.ok(!prompt.includes('ListBucket'))
+  })
+
+  test('Vercel Blob asks for the read-write token of a private store and no S3 config', () => {
+    const prompt = buildInstallPrompt({ ...answers, provider: 'vercel' })
+    assert.ok(prompt.includes(`\`\`\`yaml\n${buildWorkflow({ ...answers, provider: 'vercel' })}\`\`\``))
+    assert.ok(prompt.includes('`BLOB_READ_WRITE_TOKEN`: the token of the Vercel Blob store'))
+    assert.ok(prompt.includes('https://vercel.com/dashboard/stores'))
+    assert.ok(prompt.includes('The store must be private'))
+    assert.ok(prompt.includes('expire after 24 hours'))
+    assert.ok(!prompt.includes('S3_CONFIG'))
+    assert.ok(!prompt.includes('```json'))
   })
 
   test('without an API key it explains the free tier and asks for no key', () => {
@@ -347,6 +384,8 @@ describe('buildAgentPrompt', () => {
     assert.ok(prompt.includes('AWS S3, Backblaze B2 also work'))
     assert.ok(prompt.includes('If I use Upstash Blob instead, replace the `s3-config` line with `upstash-blob-token: ${{ secrets.UPSTASH_BLOB_TOKEN }}`'))
     assert.ok(prompt.includes('The bucket must be public'))
+    assert.ok(prompt.includes('If I use Vercel Blob instead, replace the `s3-config` line with `vercel-blob-token: ${{ secrets.BLOB_READ_WRITE_TOKEN }}`'))
+    assert.ok(prompt.includes('The store must be private'))
     assert.ok(prompt.includes('`MICROLINK_API_KEY`: optional'))
     assert.ok(prompt.includes('free endpoint, 5 requests a day'))
   })

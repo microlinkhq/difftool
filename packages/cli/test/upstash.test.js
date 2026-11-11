@@ -1,9 +1,7 @@
 import assert from 'node:assert/strict'
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
-import path from 'node:path'
 import { after, before, describe, test } from 'node:test'
 
+import { UPLOADED_KEYS, summary, writeScreenshots } from './helpers/screenshots.js'
 import { BUCKET_OPTIONS, PRIVATE_BUCKET_MESSAGE, cleanupPrefix, createBucket, uploadAssets } from '../src/upstash.js'
 
 const PUBLIC_HOST = 'https://b0f3a91c24d.blob.upstash.io'
@@ -28,41 +26,22 @@ const fakeBucket = ({ isPublic = true } = {}) => {
   }
 }
 
-const summary = {
-  routes: [
-    { route: '/', outDir: 'root' },
-    { route: '/pricing', outDir: 'pricing' }
-  ]
-}
-
+let screenshots
 let outDir
 
 before(async () => {
-  outDir = await mkdtemp(path.join(tmpdir(), 'difftool-upstash-'))
-  await mkdir(path.join(outDir, 'root'))
-  await mkdir(path.join(outDir, 'pricing'))
-  for (const basename of ['base.png', 'head.png', 'diff.png', 'review.png']) {
-    await writeFile(path.join(outDir, 'root', basename), `root-${basename}`)
-  }
-  await writeFile(path.join(outDir, 'pricing', 'base.png'), 'pricing-base.png')
-  await writeFile(path.join(outDir, 'pricing', 'head.png'), 'pricing-head.png')
+  screenshots = await writeScreenshots()
+  outDir = screenshots.outDir
 })
 
-after(() => rm(outDir, { recursive: true, force: true }))
+after(() => screenshots.remove())
 
 describe('uploadAssets', () => {
   test('uploads every screenshot that exists as a PNG and maps it to its public URL', async () => {
     const bucket = fakeBucket()
     const urls = await uploadAssets({ summary, outDir, bucket, keyPrefix: KEY_PREFIX })
 
-    assert.deepEqual(Object.keys(urls).sort(), [
-      'pricing/base.png',
-      'pricing/head.png',
-      'root/base.png',
-      'root/diff.png',
-      'root/head.png',
-      'root/review.png'
-    ])
+    assert.deepEqual(Object.keys(urls).sort(), UPLOADED_KEYS)
     for (const [objectPath, { body, options }] of bucket.objects) {
       assert.equal(options.contentType, 'image/png')
       assert.ok(urls[body.toString().replace('-', '/')].endsWith(objectPath), objectPath)

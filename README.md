@@ -92,6 +92,10 @@ permissions:
   pull-requests: write  # post / update sticky comment
   deployments: read     # poll Vercel deployment status when head=vercel
 
+concurrency:
+  group: visual-diff-${{ github.event.pull_request.number }}
+  cancel-in-progress: ${{ github.event.action != 'closed' }}  # a new push cancels the old diff; closing waits for it, so cleanup runs last
+
 jobs:
   visual-diff:
     runs-on: ubuntu-latest
@@ -106,7 +110,7 @@ jobs:
           s3-config: ${{ secrets.S3_CONFIG }}
 ```
 
-That's it. No checkout, no separate cleanup workflow, no pre-step to discover the preview URL. You do need a bucket for the screenshots: an S3-compatible one or Upstash Blob, see [Storage setup](#storage-setup) below.
+That's it. No checkout, no separate cleanup workflow, no pre-step to discover the preview URL. You do need a bucket for the screenshots: an S3-compatible one, Upstash Blob or Vercel Blob, see [Storage setup](#storage-setup) below.
 
 ### `head: vercel`
 
@@ -114,7 +118,7 @@ Pass `head: vercel` and the action waits for the Vercel deployment associated wi
 
 ### Storage setup
 
-The action uploads screenshots to a bucket you control: an [S3-compatible object store](#s3-storage-setup) through `s3-config`, or [Upstash Blob](#upstash-blob) through `upstash-blob-token`. Set one of the two.
+The action uploads screenshots to a bucket you control: an [S3-compatible object store](#s3-storage-setup) through `s3-config`, [Upstash Blob](#upstash-blob) through `upstash-blob-token`, or [Vercel Blob](#vercel-blob) through `vercel-blob-token`. Set exactly one of them.
 
 <a id="s3-storage-setup"></a>
 
@@ -187,6 +191,22 @@ Use the provider's S3 endpoint URL and regions, and set `forcePathStyle: true` i
 
 The bucket has to be public because Upstash signs read links for 10 minutes at most, too short for a PR comment people open hours later. To keep public links unguessable, every run uploads under a random path (`<owner>/<repo>/pr-<number>/<sha>/<uuid>/<route-slug>-<file>.png`), and the links stay valid until the PR closes and its prefix is deleted. Screenshots are cached for an hour, so a copy already fetched can outlive the deletion by up to that long. Each run writes a fresh set of screenshots rather than overwriting the last one; they all go when the PR closes. `presigned-ttl-seconds` does not apply.
 
+#### Vercel Blob
+
+1. In the Vercel dashboard, open **Storage → Create → Blob** and set access to **Private**.
+2. Store the store's read-write token as a repo secret named `BLOB_READ_WRITE_TOKEN`.
+3. Pass it instead of `s3-config`:
+
+```yaml
+      - uses: microlinkhq/difftool@master
+        with:
+          base: https://unavatar.io
+          head: vercel
+          vercel-blob-token: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+```
+
+It works like S3: screenshots go under `<owner>/<repo>/pr-<number>/<sha>/<route-slug>-<file>.png` in your private store, and the comment links to [presigned URLs](https://vercel.com/docs/vercel-blob/vercel-signed-urls) that expire after `presigned-ttl-seconds` (default 24h, at most 7 days, Vercel's limit) and are refreshed on every run. A public store is refused with a hint to create a private one. When the PR closes, everything under `pr-<number>/` is deleted.
+
 ### How image hosting works
 
 With S3-compatible storage, screenshots are uploaded under `<owner>/<repo>/pr-<number>/<sha>/<route-slug>-<file>.png` (e.g. `microlinkhq/unavatar-www/pr-106/abc123/root-base.png`). The PR comment links to **pre-signed GetObject URLs** — your bucket stays private, the URLs work for anyone viewing the PR, and they expire after `presigned-ttl-seconds` (default 24h).
@@ -199,8 +219,9 @@ The comment is regenerated on every workflow run, so reviewers always see fresh 
 | --- | --- | --- |
 | `base` | *(required)* | Production / baseline URL |
 | `head` | *(required)* | Preview URL, or `vercel` to auto-discover |
-| `s3-config` | *(empty)* | JSON config for an S3-compatible bucket (see above). Set this or `upstash-blob-token` |
-| `upstash-blob-token` | *(empty)* | Token of a public [Upstash Blob](#upstash-blob) bucket. Set this or `s3-config` |
+| `s3-config` | *(empty)* | JSON config for an S3-compatible bucket (see above). Set this, `upstash-blob-token` or `vercel-blob-token` |
+| `upstash-blob-token` | *(empty)* | Token of a public [Upstash Blob](#upstash-blob) bucket. Set this, `s3-config` or `vercel-blob-token` |
+| `vercel-blob-token` | *(empty)* | Read-write token of a private [Vercel Blob](#vercel-blob) store. Set this, `s3-config` or `upstash-blob-token` |
 | `pr-number` | *(event)* | PR number; defaults to the current `pull_request` event |
 | `sha` | *(event)* | Commit SHA; defaults to `github.event.pull_request.head.sha` |
 | `routes` | `["/"]` | Array of paths to diff (JSON array string or YAML list string with `|`) |
@@ -208,7 +229,7 @@ The comment is regenerated on every workflow run, so reviewers always see fresh 
 | `pixel-threshold` | `0.1` | Per-pixel sensitivity (0..1) |
 | `mql` | `{ "force": true }` | JSON object with Microlink API options (`viewport`, `styles`, headers, etc.) |
 | `microlink-api-key` | *(empty)* | Optional paid-tier key |
-| `presigned-ttl-seconds` | `86400` | Pre-signed URL TTL (overrides `s3-config.presignedTtlSeconds`) |
+| `presigned-ttl-seconds` | `86400` | Pre-signed URL TTL (overrides `s3-config.presignedTtlSeconds`; Vercel Blob caps it at 7 days; Upstash Blob ignores it) |
 | `provider-timeout` | `600` | Max seconds to wait for `head: vercel` discovery |
 | `provider-interval` | `10` | Seconds between deployment-status polls |
 | `comment-marker` | `<!-- microlink-difftool -->` | HTML marker for the sticky comment |

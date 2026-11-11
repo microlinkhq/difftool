@@ -2,7 +2,7 @@
 
 The site at [difftool.microlink.io](https://difftool.microlink.io). One page, two jobs:
 
-- **Landing.** Explains difftool and walks you through adding the GitHub Action to a repository. The setup wizard builds `.github/workflows/visual-diff.yml` and the storage secret (`S3_CONFIG`, or `UPSTASH_BLOB_TOKEN` for Upstash Blob) from your answers.
+- **Landing.** Explains difftool and walks you through adding the GitHub Action to a repository. The setup wizard builds `.github/workflows/visual-diff.yml` and the storage secret (`S3_CONFIG`, `UPSTASH_BLOB_TOKEN` for Upstash Blob, or `BLOB_READ_WRITE_TOKEN` for Vercel Blob) from your answers.
 - **Comparison tool.** Drop two images (or paste their URLs) in the hero to compare them in split, fade, slider, highlight, or subtract mode. Nothing is uploaded; the browser does the work.
 
 The GitHub Action's PR comment links here with `?base=<url>&head=<url>`. When both are present the page skips the landing and opens the comparison directly. `?mode=` selects the starting mode.

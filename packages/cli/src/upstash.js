@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 
 import { Bucket } from '@upstash/blob'
 
-import { screenshotAssets } from './assets.js'
+import { joinPath, screenshotAssets } from './assets.js'
 
 export const TOKEN_ENV = 'UPSTASH_BLOB_TOKEN'
 
@@ -15,8 +15,6 @@ export const createBucket = token => {
   if (!token) throw new Error(`upstash blob: ${TOKEN_ENV} is not set`)
   return new Bucket({ token, ...BUCKET_OPTIONS })
 }
-
-const joinPath = (...segments) => segments.join('/').split('/').filter(Boolean).join('/')
 
 const assertPublic = async (bucket, runPrefix) => {
   const url = await bucket.publicUrl(`${runPrefix}/probe.png`)

@@ -15,11 +15,11 @@ import { DOCS_URL, MICROLINK_DASHBOARD_URL } from "@/lib/site"
 import { previewUrlHidden, secretsLinkProps, stepBodyClass, stepConnectorClass, urlField } from "@/lib/wizard"
 import {
   BASE_URL_EXAMPLE,
+  BLOB_STORES,
   DEFAULT_THRESHOLD,
   MICROLINK_SECRET,
   PREVIEW_URL_EXAMPLE,
   STORAGE_PROVIDERS,
-  UPSTASH_CONSOLE_URL,
   WORKFLOW_PATH,
   addRoute,
   buildInstallPrompt,
@@ -59,9 +59,10 @@ function StorageDescription({ provider }: { provider: StorageProvider }) {
       </>
     )
   }
+  const { label, noun } = BLOB_STORES[provider]
   return (
     <>
-      Screenshots go to an Upstash Blob bucket you own. Save its token as a repository secret named{" "}
+      Screenshots go to your own {label} {noun}. Save its token as a repository secret named{" "}
       <SecretName provider={provider} />.
     </>
   )
@@ -71,17 +72,14 @@ function StorageSecretValue({ provider }: { provider: StorageProvider }) {
   if (isS3Provider(provider)) {
     return <CodeBlock code={storageConfig(provider)} language="json" title={storageSecret(provider).name} />
   }
+  const { noun, access, dashboard, why } = BLOB_STORES[provider]
   return (
     <p className="max-w-[60ch] rounded-2xl bg-muted px-4 py-3 text-[16px] leading-[1.6]">
-      Create a <strong className="font-semibold">public</strong> bucket in the{" "}
-      <a href={UPSTASH_CONSOLE_URL} className={TEXT_LINK_CLASS}>
-        Upstash console
+      Create a <strong className="font-semibold">{access}</strong> {noun} in the{" "}
+      <a href={dashboard.url} className={TEXT_LINK_CLASS}>
+        {dashboard.name}
       </a>{" "}
-      and copy its token.{" "}
-      <span className="text-muted-foreground">
-        Private buckets only sign links that expire within 10 minutes, too soon for a pull request comment. Every run
-        uploads under a random path, so the links cannot be guessed.
-      </span>
+      and copy its token. <span className="text-muted-foreground">{why}</span>
     </p>
   )
 }

@@ -1,8 +1,6 @@
 export const DEFAULT_THRESHOLD = 0.001
 export const WORKFLOW_PATH = ".github/workflows/visual-diff.yml"
 export const S3_SECRET = "S3_CONFIG"
-export const UPSTASH_SECRET = "UPSTASH_BLOB_TOKEN"
-export const UPSTASH_CONSOLE_URL = "https://console.upstash.com"
 export const MICROLINK_SECRET = "MICROLINK_API_KEY"
 
 export type Preview = { kind: "vercel" } | { kind: "url"; url: string }
@@ -17,21 +15,54 @@ export interface WorkflowOptions {
 }
 
 export type S3Provider = "r2" | "aws" | "b2"
-export type StorageProvider = S3Provider | "upstash"
+export type BlobProvider = "upstash" | "vercel"
+export type StorageProvider = S3Provider | BlobProvider
 
 export const STORAGE_PROVIDERS: { id: StorageProvider; label: string }[] = [
   { id: "r2", label: "Cloudflare R2" },
   { id: "aws", label: "AWS S3" },
   { id: "b2", label: "Backblaze B2" },
   { id: "upstash", label: "Upstash Blob" },
+  { id: "vercel", label: "Vercel Blob" },
 ]
 
-export const isS3Provider = (provider: StorageProvider): provider is S3Provider => provider !== "upstash"
+export interface BlobStore {
+  label: string
+  noun: "bucket" | "store"
+  secret: string
+  input: string
+  dashboard: { name: string; url: string }
+  access: "public" | "private"
+  why: string
+}
+
+export const BLOB_STORES: Record<BlobProvider, BlobStore> = {
+  upstash: {
+    label: "Upstash Blob",
+    noun: "bucket",
+    secret: "UPSTASH_BLOB_TOKEN",
+    input: "upstash-blob-token",
+    dashboard: { name: "Upstash console", url: "https://console.upstash.com" },
+    access: "public",
+    why: "A private one only signs links that expire within 10 minutes, too soon for a pull request comment. Every run uploads under a random path, so the links cannot be guessed.",
+  },
+  vercel: {
+    label: "Vercel Blob",
+    noun: "store",
+    secret: "BLOB_READ_WRITE_TOKEN",
+    input: "vercel-blob-token",
+    dashboard: { name: "Vercel dashboard", url: "https://vercel.com/dashboard/stores" },
+    access: "private",
+    why: "The comment links to presigned URLs that expire after 24 hours and are refreshed on every run, so private repos stay private.",
+  },
+}
+
+export const isS3Provider = (provider: StorageProvider): provider is S3Provider => !(provider in BLOB_STORES)
 
 export const storageSecret = (provider: StorageProvider) =>
   isS3Provider(provider)
     ? { name: S3_SECRET, input: "s3-config" }
-    : { name: UPSTASH_SECRET, input: "upstash-blob-token" }
+    : { name: BLOB_STORES[provider].secret, input: BLOB_STORES[provider].input }
 
 const S3_CONFIGS: Record<S3Provider, Record<string, string | boolean>> = {
   r2: {
@@ -150,6 +181,10 @@ export function buildWorkflow({ base, preview, routes, threshold, useApiKey, pro
     "permissions:",
     ...permissions,
     "",
+    "concurrency:",
+    "  group: visual-diff-${{ github.event.pull_request.number }}",
+    "  cancel-in-progress: ${{ github.event.action != 'closed' }}",
+    "",
     "jobs:",
     "  visual-diff:",
     "    runs-on: ubuntu-latest",
@@ -168,8 +203,6 @@ export interface InstallPromptOptions extends WorkflowOptions {
 }
 
 const BUCKET_PERMISSIONS = "PutObject, GetObject, DeleteObject and ListBucket"
-const UPSTASH_PUBLIC_BUCKET =
-  "The bucket must be public: a private one only signs links that expire within 10 minutes, too soon for a pull request comment. Every run uploads under a random path, so the links cannot be guessed."
 const FREE_TIER = "5 requests a day"
 const FREE_KEY_TIER = "25 requests a day"
 const COMMENT_TITLE = "@microlink/difftool visual comparison"
@@ -179,6 +212,11 @@ const providerLabel = (provider: StorageProvider) =>
 
 const secretsPlace = (repository: string) =>
   isRepository(repository) ? secretsSettingsUrl(repository) : "Settings → Secrets and variables → Actions"
+
+const blobStoreRequirement = ({ noun, access, why }: BlobStore) => `The ${noun} must be ${access}. ${why}`
+
+const blobStoreSecretLine = (store: BlobStore) =>
+  `- \`${store.secret}\`: the token of the ${store.label} ${store.noun} the screenshots are uploaded to, from ${store.dashboard.url}. ${blobStoreRequirement(store)}`
 
 const storageSecretLines = (provider: StorageProvider) =>
   isS3Provider(provider)
@@ -191,9 +229,7 @@ const storageSecretLines = (provider: StorageProvider) =>
         "",
         `  Its access key only needs ${BUCKET_PERMISSIONS} on that one bucket.`,
       ]
-    : [
-        `- \`${UPSTASH_SECRET}\`: the token of the Upstash Blob bucket the screenshots are uploaded to, from ${UPSTASH_CONSOLE_URL}. ${UPSTASH_PUBLIC_BUCKET}`,
-      ]
+    : [blobStoreSecretLine(BLOB_STORES[provider])]
 
 const secretSteps = ({ provider, repository, useApiKey, dashboardUrl }: InstallPromptOptions) => [
   `Never write secret values into a file or a commit. The workflow reads these repository secrets: ask me to add them at ${secretsPlace(repository)}, or, when the GitHub CLI is installed and signed in, run \`gh secret set <NAME>\` and let me paste the value.`,
@@ -284,7 +320,10 @@ export function buildAgentPrompt({ docsUrl, dashboardUrl, siteUrl }: AgentPrompt
       "```",
       "",
       `  ${otherS3Providers} also work with the same keys; the docs list each shape. The access key only needs ${BUCKET_PERMISSIONS} on that one bucket.`,
-      `  If I use Upstash Blob instead, replace the \`s3-config\` line with \`${secretInput("upstash").trim()}\` and ask me to add \`${UPSTASH_SECRET}\`: the bucket token from ${UPSTASH_CONSOLE_URL}. ${UPSTASH_PUBLIC_BUCKET}`,
+      ...Object.entries(BLOB_STORES).map(
+        ([provider, store]) =>
+          `  If I use ${store.label} instead, replace the \`s3-config\` line with \`${secretInput(provider as BlobProvider).trim()}\` and ask me to add \`${store.secret}\`: the ${store.noun} token from ${store.dashboard.url}. ${blobStoreRequirement(store)}`
+      ),
       `- \`${MICROLINK_SECRET}\`: optional. Without it screenshots use Microlink's free endpoint, ${FREE_TIER}. A free key from ${dashboardUrl} raises that to ${FREE_KEY_TIER}; if I have none, remove the \`microlink-api-key\` line.`,
     ],
     [

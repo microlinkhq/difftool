@@ -8,6 +8,8 @@ export const slugFor = route => {
   return route.outDir
 }
 
+export const joinPath = (...segments) => segments.join('/').split('/').filter(Boolean).join('/')
+
 const routeDirFor = (outDir, route) =>
   !route.outDir || route.outDir === '.' ? outDir : path.join(outDir, route.outDir)
 
