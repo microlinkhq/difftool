@@ -301,6 +301,14 @@ cli
       console.error('upload-vercel: --summary, --out-dir, --key-prefix, --urls-out are all required')
       process.exit(2)
     }
+    let ttlSeconds
+    if (opts.ttlSeconds !== undefined) {
+      ttlSeconds = Number(opts.ttlSeconds)
+      if (!Number.isFinite(ttlSeconds) || ttlSeconds <= 0) {
+        console.error('upload-vercel: --ttl-seconds must be a positive number of seconds')
+        process.exit(2)
+      }
+    }
     try {
       const vercel = await import('../src/vercel.js')
       const store = vercel.createStore(process.env[vercel.TOKEN_ENV])
@@ -310,7 +318,7 @@ cli
         outDir: opts.outDir,
         store,
         keyPrefix: opts.keyPrefix,
-        ttlSeconds: Number(opts.ttlSeconds)
+        ttlSeconds
       })
       await writeFile(opts.urlsOut, JSON.stringify(urls, null, 2))
       console.error(`upload-vercel: wrote ${Object.keys(urls).length} URLs to ${opts.urlsOut}`)
@@ -344,7 +352,8 @@ cli
 
 export { cli }
 
-const invokedAsCli = import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href
+const invokedAsCli = Boolean(process.argv[1]) &&
+  import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href
 if (invokedAsCli) {
   cli.help()
   cli.parse()

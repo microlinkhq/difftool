@@ -77,6 +77,7 @@ describe('uploadAssets', () => {
       const link = new URL(url)
       assert.equal(link.origin, STORE_HOST)
       assert.equal(link.pathname, `/${KEY_PREFIX}/${urlKey.replace('/', '-')}`)
+      assert.equal(link.searchParams.get('cache'), '0')
       assert.ok(link.searchParams.get('vercel-blob-signature'), urlKey)
     }
   })

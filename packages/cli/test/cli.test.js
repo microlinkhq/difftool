@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync, symlinkSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { test } from 'node:test'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const cli = fileURLToPath(new URL('../bin/cli.js', import.meta.url))
 
@@ -64,4 +64,29 @@ test('a symlinked bin still parses arguments', () => {
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }
+})
+
+test('upload-vercel rejects a TTL that is not a positive number', () => {
+  for (const ttl of ['foo', '0']) {
+    const result = run([
+      'upload-vercel',
+      '--summary', 'summary.json',
+      '--out-dir', 'out',
+      '--key-prefix', 'acme/site/pr-1',
+      '--urls-out', 'urls.json',
+      '--ttl-seconds', ttl
+    ])
+    assert.equal(result.status, 2, ttl)
+    assert.match(result.stderr, /--ttl-seconds must be a positive number of seconds/, ttl)
+  }
+})
+
+test('importing the CLI does not require it to be the process entry point', () => {
+  const href = pathToFileURL(cli).href
+  const result = spawnSync(process.execPath, [
+    '--input-type=module',
+    '-e',
+    `await import(${JSON.stringify(href)})`
+  ], { encoding: 'utf8' })
+  assert.equal(result.status, 0, result.stderr)
 })

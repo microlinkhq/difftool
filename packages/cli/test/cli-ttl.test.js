@@ -39,8 +39,7 @@ const run = async ttlSeconds => {
   }
 }
 
-test('upload-vercel passes a numeric TTL, and a missing or non-numeric one becomes NaN', async () => {
+test('upload-vercel passes a numeric TTL and omits it when the flag is absent', async () => {
   assert.equal(await run('3600'), 3600)
-  assert.ok(Number.isNaN(await run(undefined)))
-  assert.ok(Number.isNaN(await run('foo')))
+  assert.equal(await run(undefined), undefined)
 })

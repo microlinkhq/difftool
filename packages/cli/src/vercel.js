@@ -61,7 +61,12 @@ export const uploadAssets = async ({ summary, outDir, store, keyPrefix, ttlSecon
   for await (const { slug, basename, body, urlKey } of screenshotAssets({ summary, outDir })) {
     const pathname = joinPath(keyPrefix, `${slug}-${basename}`)
     await uploadPrivate(store, pathname, body)
-    const { presignedUrl } = await store.presignUrl(signedToken, { operation: 'get', pathname, access: ACCESS })
+    const { presignedUrl } = await store.presignUrl(signedToken, {
+      operation: 'get',
+      pathname,
+      access: ACCESS,
+      useCache: false
+    })
     urls[urlKey] = presignedUrl
   }
   return urls
